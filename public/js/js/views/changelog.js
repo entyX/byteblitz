@@ -6,9 +6,17 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.1",
+    version: "v1.2.2",
     date: "August 14, 2026",
     current: true,
+    items: [
+      "Puzzle leaderboard trophies now use a clear visual status: grey when no times exist and yellow when a puzzle has recorded clears.",
+      "Hovering or keyboard-focusing any puzzle leaderboard trophy now uses the red ByteBlitz action treatment.",
+    ],
+  },
+  {
+    version: "v1.2.1",
+    date: "August 14, 2026",
     items: [
       "Leaderboards now show profile pictures, country flags, and complete ranked records including draws.",
       "The Ranked and Unranked boards received a sharper, more detailed standings layout built around each player's ELO.",

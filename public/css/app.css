@@ -948,24 +948,41 @@ select.input { cursor: pointer; }
 .puz-unknown .puz-head { align-items: center; }
 
 .puz-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-..trophy-btn {
-  flex: none; background: hsl(240 6% 12% / .9); border: 1px solid var(--border-soft);
-  color: var(--muted); padding: 6px; border-radius: var(--radius-sm);
-  display: flex; transition: all .15s;
+/* Per-puzzle leaderboard indicator: neutral before a score exists, gold once it does. */
+.trophy-btn {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted-fg);
+  line-height: 1;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
 }
-.trophy-btn:hover {
-  color: var(--warn); border-color: hsl(var(--warn-raw) / .7);
-  background: hsl(var(--warn-raw) / .14);
-}
-/* Marked when a puzzle actually has leaderboard rows: brighter, yellow tint + glow */
+.trophy-btn svg { display: block; }
+
+/* A recorded leaderboard entry changes the idle indicator to a yellow outline. */
 .trophy-btn.has-board {
-  background: hsl(var(--warn-raw) / .98); /* bright yellow */
-  color: #111; border-color: hsl(var(--warn-raw) / .9);
-  box-shadow: 0 6px 22px hsl(var(--warn-raw) / .22), inset 0 0 6px hsl(var(--warn-raw) / .08);
+  border-color: hsl(var(--warn-raw) / .9);
+  background: hsl(var(--warn-raw) / .08);
+  color: var(--warn);
 }
-.trophy-btn.has-board:hover {
-  filter: brightness(0.98);
-  box-shadow: 0 10px 30px hsl(var(--warn-raw) / .28), inset 0 0 8px hsl(var(--warn-raw) / .12);
+
+/* Hovering any leaderboard control uses the global red action treatment. */
+.trophy-btn:hover,
+.trophy-btn.has-board:hover,
+.trophy-btn:focus-visible {
+  border-color: var(--primary);
+  background: hsl(var(--primary-raw) / .12);
+  color: var(--primary-bright);
+  box-shadow: 0 0 14px hsl(var(--primary-raw) / .18);
+  outline: none;
 }
 
 .discovery-bar {
