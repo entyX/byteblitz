@@ -350,6 +350,30 @@ export async function recordPuzzleTime(profile, puzzle, timeMs, solved) {
 
 }
 
+/**
+ * Return the puzzle IDs that have at least one valid recorded solve. The
+ * Training catalogue uses this to paint its trophy indicators in small batched
+ * queries rather than issuing one Firestore request for every visible card.
+ */
+export async function puzzleLeaderboardIds(archetypeIds) {
+  const ids = [...new Set(archetypeIds.filter(Boolean))];
+  const populated = new Set();
+  // Firestore's `in` operator accepts at most 30 values. Keep the reads
+  // sequential to avoid a large burst when a 200-card catalogue is rendered.
+  for (let i = 0; i < ids.length; i += 30) {
+    const q = query(
+      collection(db, "puzzleTimes"),
+      where("archetypeId", "in", ids.slice(i, i + 30)),
+    );
+    const snap = await getDocs(q);
+    snap.forEach((d) => {
+      const record = d.data();
+      if (record.solved && Number.isFinite(record.timeMs)) populated.add(record.archetypeId);
+    });
+  }
+  return populated;
+}
+
 export async function puzzleLeaderboard(archetypeId, n = 25) {
   // Sort the filtered puzzle records in the client. This intentionally avoids a
   // composite Firestore index requirement (`archetypeId` + `timeMs`) that caused

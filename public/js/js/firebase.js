@@ -1,9 +1,11 @@
 // ── Firebase bootstrap ──────────────────────────────────────────────────────
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence,
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+import {
+  getFirestore, onSnapshot as firebaseOnSnapshot,
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyADxqvXuy61QfRXyd7gLV6mWavokJ3InSg",
@@ -24,18 +26,27 @@ googleProvider.setCustomParameters({ prompt: "select_account" });
 setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 // Re-export the SDK surface the rest of the app uses, so no other module has
-// to repeat the CDN URLs.
+// to repeat the CDN URLs. Every real-time stream uses this guard: Firestore
+// errors stay visible in the console but cannot become unhandled rejections
+// that leave the surrounding component in a half-loaded state.
+export function onSnapshot(target, next, onError) {
+  return firebaseOnSnapshot(target, next, (error) => {
+    console.error("Firestore listener stopped", error);
+    if (typeof onError === "function") onError(error);
+  });
+}
+
 // Anonymous auth is deliberately absent: guest play is local-only and never
 // talks to Firebase (see local.js).
 export {
   signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup,
   signOut, onAuthStateChanged, updateProfile,
   sendPasswordResetEmail, linkWithPopup, EmailAuthProvider, linkWithCredential,
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
 export {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection,
-  query, where, orderBy, limit, onSnapshot, serverTimestamp, increment,
+  query, where, orderBy, limit, serverTimestamp, increment,
   writeBatch, runTransaction, collectionGroup, arrayUnion, arrayRemove,
   deleteField, startAfter,
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";

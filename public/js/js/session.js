@@ -27,6 +27,17 @@ const listeners = new Set();
 let profileUnsub = null;
 let presenceInterval = null;
 let unloadHandler = null;
+let authEpoch = 0;
+
+function stopRealtimeSession() {
+  profileUnsub?.();
+  profileUnsub = null;
+  if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; }
+  if (unloadHandler) {
+    window.removeEventListener("beforeunload", unloadHandler);
+    unloadHandler = null;
+  }
+}
 
 export function onSession(fn) {
   listeners.add(fn);
@@ -56,16 +67,22 @@ export function startSession() {
   return new Promise((resolve) => {
     let first = true;
     onAuthStateChanged(auth, async (user) => {
-      profileUnsub?.();
-      profileUnsub = null;
+      const epoch = ++authEpoch;
+      stopRealtimeSession();
 
       session.user = user;
       session.profile = null;
 
       if (user) {
         try {
-          session.profile = await ensureProfile(user);
+          const profile = await ensureProfile(user);
+          // Authentication can change while the profile read is in flight. Do
+          // not let that stale task re-attach a listener for a former user.
+          if (epoch !== authEpoch || auth.currentUser?.uid !== user.uid) return;
+
+          session.profile = profile;
           profileUnsub = watchProfile(user.uid, (p) => {
+            if (epoch !== authEpoch) return;
             session.profile = p;
             emit();
           });
@@ -73,15 +90,14 @@ export function startSession() {
           // Presence heartbeat: best-effort online indicator. Update immediately
           // and then every 25s while the tab is active.
           try { setPresence(user.uid, { online: true, inMatch: false }); } catch {}
-          if (presenceInterval) clearInterval(presenceInterval);
           presenceInterval = setInterval(() => { try { setPresence(user.uid, { online: true }); } catch {} }, 25000);
 
           // Attempt to mark offline on unload — best-effort only.
-          if (unloadHandler) window.removeEventListener("beforeunload", unloadHandler);
           unloadHandler = () => { try { setPresence(user.uid, { online: false }); } catch {}; };
           window.addEventListener("beforeunload", unloadHandler);
 
         } catch (e) {
+          if (epoch !== authEpoch) return;
           console.error("profile load failed", e);
           toast("Could not load your profile — check your connection.", "err");
         }
@@ -101,12 +117,10 @@ export function startSession() {
 
 export async function logout() {
   const uid = session.profile?.uid;
-  profileUnsub?.();
-  profileUnsub = null;
   const wasGuest = session.profile?.isGuest;
+  ++authEpoch;
+  stopRealtimeSession();
   session.profile = null;
-  if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; }
-  if (unloadHandler) { window.removeEventListener("beforeunload", unloadHandler); unloadHandler = null; }
   if (wasGuest) {
     // Leave the saved guest alone — signing out of a guest session should not
     // silently destroy that device's unranked rating and discovered puzzles.

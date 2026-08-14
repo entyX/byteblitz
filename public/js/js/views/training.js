@@ -13,8 +13,8 @@ import { session, onSession } from "../session.js";
 import { TIERS, TIME_LIMITS, displayRating, rankFor } from "../glicko.js";
 import { loadPool } from "../problems.js";
 import {
-  getMyPuzzleRecords, puzzleLeaderboard, puzzleLeaderboardDetailed, seenMap, isPermissionDenied,
-  isRevealed, starterCount,
+  getMyPuzzleRecords, puzzleLeaderboard, puzzleLeaderboardDetailed, puzzleLeaderboardIds,
+  seenMap, isPermissionDenied, isRevealed, starterCount,
 } from "../store.js";
 import { startTraining } from "../game.js";
 import { navigate } from "../router.js";
@@ -30,7 +30,9 @@ export async function renderTraining(params, root) {
   let records = {};
   let searchTerm = "";
   let showOnly = sessionStorage.getItem("bb_train_filter") || "all"; // all | found
-  let unknownLimit = UNKNOWN_PREVIEW;
+    let unknownLimit = UNKNOWN_PREVIEW;
+  let paintEpoch = 0;
+  let trophyButtons = new Map();
 
   const tabsHost = h("div", { class: "tabs mb-5" });
   const bodyHost = h("div", {});
@@ -80,12 +82,18 @@ export async function renderTraining(params, root) {
 
   // ── Body ─────────────────────────────────────────────────────────────────
   async function paintBody() {
+    const epoch = ++paintEpoch;
+    trophyButtons = new Map();
     clear(progressHost);
     clear(bodyHost).append(h("div", { class: "empty" }, "Loading puzzles…"));
 
     let pool = [];
     try { pool = await loadPool(active); }
-    catch { clear(bodyHost).append(emptyState("Couldn't load this difficulty's puzzles.")); return; }
+    catch {
+      if (epoch === paintEpoch) clear(bodyHost).append(emptyState("Couldn't load this difficulty's puzzles."));
+      return;
+    }
+    if (epoch !== paintEpoch) return;
 
     const seen = seenMap(session.profile);
     const tier = TIERS.find((t) => t.name === active);
@@ -132,8 +140,8 @@ export async function renderTraining(params, root) {
 
     // The undiscovered half is listed so the catalogue's real size is visible,
     // but compactly and folded up — a wall of 200 identical ??? cards is noise.
+    const shown = unknown.slice(0, unknownLimit);
     if (unknown.length) {
-      const shown = unknown.slice(0, unknownLimit);
       const grid = h("div", { class: "puz-grid puz-grid-compact" });
       shown.forEach((pz) => grid.append(unknownCard(pz)));
 
@@ -148,6 +156,23 @@ export async function renderTraining(params, root) {
               `Show all ${unknown.length} locked`)
           : null,
       );
+        }
+
+    // One bounded query batch paints all rendered trophy indicators. This keeps
+    // the Training page responsive instead of sending one Firestore read per card.
+    void paintTrophyStates([...known, ...shown], epoch);
+  }
+
+  async function paintTrophyStates(puzzles, epoch) {
+    try {
+      const populated = await puzzleLeaderboardIds(puzzles.map((pz) => pz.archetypeId));
+      if (epoch !== paintEpoch) return;
+      trophyButtons.forEach((buttons, archetypeId) => {
+        if (populated.has(archetypeId)) buttons.forEach((btn) => btn.classList.add("has-board"));
+      });
+    } catch (error) {
+      // The neutral trophy state remains usable when its indicator lookup fails.
+      console.warn("Could not load puzzle leaderboard indicators", error);
     }
   }
 
@@ -204,14 +229,9 @@ export async function renderTraining(params, root) {
       onClick: (e) => { e.stopPropagation(); openBoard(pz, unknown); },
     }, icon("trophy", 14));
 
-    // Check quickly whether this puzzle has any leaderboard rows and mark the
-    // button visually if it does. Fire-and-forget; failures are non-fatal.
-    try {
-      puzzleLeaderboard(pz.archetypeId, 1).then((rows) => {
-        if (rows && rows.length > 0) btn.classList.add('has-board');
-      }).catch(() => {});
-    } catch (e) { /* ignore */ }
-
+    const buttons = trophyButtons.get(pz.archetypeId) ?? [];
+    buttons.push(btn);
+    trophyButtons.set(pz.archetypeId, buttons);
     return btn;
   }
 
