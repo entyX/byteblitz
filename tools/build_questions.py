@@ -28,7 +28,7 @@ from solvers.corrections import CORRECTIONS, INPUT_FIXES  # noqa: E402
 import solvers  # noqa: F401,E402  (importing registers every solver)
 
 DIVISIONS = ["bronze", "silver", "gold", "platinum", "diamond", "master"]
-SRC = ROOT / "byteblitz_{}_questions.csv"
+SRC = ROOT / "public" / "data" / "byteblitz_{}_questions.csv"
 OUT = ROOT / "public" / "data" / "burst_{}.csv"
 
 N_GIVEN = 8

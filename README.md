@@ -34,7 +34,7 @@ the same data.
 public/
   index.html            app shell (everything else is loaded as a module)
   css/app.css           the whole design system
-  data/burst_*.csv      the problem set, one file per tier
+  data/byteblitz_*_questions.csv  the problem set, one file per tier
   js/
     app.js              nav, search, notifications, routing, boot
     router.js           hash router
@@ -266,18 +266,18 @@ Answers are compared whitespace-tolerantly (`outputMatches` in `problems.js`).
 
 ## Problem set
 
-Six CSVs under `public/data/`, 995 problems, **12 test cases each** — the first
-four are shown in the arena, the remaining eight are hidden and decide a duel
-that runs out the clock.
+Six authored Byteblitz CSVs under `public/data/`, with **8 test cases each** —
+the first four are shown in the arena and the remaining four are hidden during
+a duel.
 
 | Tier | Problems | Test cases |
 |---|---|---|
-| Bronze | 150 | 1,800 |
-| Silver | 175 | 2,100 |
-| Gold | 200 | 2,400 |
-| Platinum | 200 | 2,400 |
-| Diamond | 150 | 1,800 |
-| Master | 120 | 1,440 |
+| Bronze | 150 | 1,200 |
+| Silver | 175 | 1,400 |
+| Gold | 200 | 1,600 |
+| Platinum | 200 | 1,600 |
+| Diamond | 150 | 1,200 |
+| Master | 120 | 960 |
 
 Every column is read by name, so column order in the CSV isn't load-bearing.
 Statement fields (`background`, `task`, `input_format`, `constraints`) are shown
@@ -286,20 +286,16 @@ so there is no reconstruction step.
 
 ### Regenerating the problem set
 
-The shipped CSVs are built, not hand-edited:
+The shipped CSVs are the authored Byteblitz files in `public/data/`:
 
 ```
-python tools/build_questions.py --check   # validate, write nothing
-python tools/build_questions.py           # write public/data/burst_*.csv
-node   tools/check_frontend.mjs           # load the result through problems.js
+node tools/check_frontend.mjs           # load the shipped files through problems.js
 ```
 
-The source of truth is `byteblitz_<tier>_questions.csv` in the repo root, which
-carries eight authored test cases per question. `tools/solvers/` holds one
-reference solver per question. The build replays all eight authored cases
-through the solver and refuses to emit anything that disagrees; only a solver
-that reproduces all eight is allowed to mint the four extra cases that bring
-each question to twelve.
+Each `byteblitz_<tier>_questions.csv` file carries eight authored test cases per
+question. `tools/solvers/` holds one reference solver per question. The
+optional validation script replays the authored cases through their matching
+solvers before any derived data is created.
 
 That cross-check is also a fact-check of the authored data. It caught 44
 questions whose expected output was wrong — a "shortest" answer that gave the

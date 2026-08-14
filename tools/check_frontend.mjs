@@ -23,8 +23,8 @@ globalThis.localStorage = {
   setItem(k, v) { this.store.set(k, v); },
 };
 
-const problems = await import("../public/js/problems.js");
-const { TIER_NAMES, TIME_LIMITS, PAR_TIME } = await import("../public/js/glicko.js");
+const problems = await import("../public/js/js/problems.js");
+const { TIER_NAMES, TIME_LIMITS, PAR_TIME } = await import("../public/js/js/glicko.js");
 
 let failures = 0;
 const check = (ok, msg) => {
@@ -70,7 +70,8 @@ for (const tier of TIER_NAMES) {
 
 // The two picker paths the arena actually uses.
 const seeded = await problems.problemForSeed("Gold", 12345);
-check(seeded && seeded.testCases.length === 12, "problemForSeed returned nothing usable");
+check(seeded && seeded.testCases.length === problems.TESTS_PER_PROBLEM,
+  "problemForSeed returned nothing usable");
 const byId = await problems.problemById("Master", seeded ? "M-001-1" : "");
 check(byId && byId.title === "Missing and Duplicate Value", "problemById lookup failed");
 const rand = await problems.randomProblem("Diamond");
