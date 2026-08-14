@@ -1,0 +1,4510 @@
+"id","name","division","category","background","task","input_format","constraints","sample_input","sample_output","test1_input","test1_output","test2_input","test2_output","test3_input","test3_output","test4_input","test4_output","test5_input","test5_output","test6_input","test6_output","test7_input","test7_output","test8_input","test8_output","test9_input","test9_output","test10_input","test10_output","test11_input","test11_output","test12_input","test12_output"
+"D-001-1","Discounted Route Cost","Diamond","Dijkstra","A directed edge has a nonnegative travel cost. You may use one half-price coupon on at most one edge; half-price means integer floor division by two.","Print the minimum cost from node 1 to node N, or -1 if unreachable. Follow every stated tie rule.","Line 1: N M.
+Next M lines: from to cost.","2 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","2","2 1
+1 2 5","2","3 3
+1 2 10
+2 3 10
+1 3 25","12","3 2
+1 2 1
+2 3 100","51","4 4
+1 2 5
+2 4 5
+1 3 8
+3 4 1","5","2 0
+","-1","4 3
+1 2 4
+2 3 4
+3 4 4","10","3 3
+1 2 7
+2 3 7
+1 3 20","10","4 4
+1 2 100
+1 3 1
+3 4 100
+2 4 1","51","2 2
+1 1 2
+2 2 1","-1","3 2
+3 3 5
+1 2 1","-1","4 3
+2 4 7
+4 3 3
+4 2 4","-1","6 1
+6 1 0","-1"
+"D-001-2","Discounted Route Cost Planner","Diamond","Dijkstra","A directed edge has a nonnegative travel cost. You may use one half-price coupon on at most one edge; half-price means integer floor division by two.","Print the minimum cost from node 1 to node N, or -1 if unreachable. Print only the required result.","Line 1: N M.
+Next M lines: from to cost.","2 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","2","2 1
+1 2 5","2","3 3
+1 2 10
+2 3 10
+1 3 25","12","3 2
+1 2 1
+2 3 100","51","4 4
+1 2 5
+2 4 5
+1 3 8
+3 4 1","5","2 0
+","-1","4 3
+1 2 4
+2 3 4
+3 4 4","10","3 3
+1 2 7
+2 3 7
+1 3 20","10","4 4
+1 2 100
+1 3 1
+3 4 100
+2 4 1","51","2 2
+2 2 7
+2 1 2","-1","3 3
+3 2 6
+1 2 1
+2 2 7","-1","4 5
+1 1 5
+1 3 4
+2 3 3
+4 4 4
+3 4 8","8","6 1
+3 6 5","-1"
+"D-001-3","Discounted Route Cost Checkpoint","Diamond","Dijkstra","A directed edge has a nonnegative travel cost. You may use one half-price coupon on at most one edge; half-price means integer floor division by two.","Print the minimum cost from node 1 to node N, or -1 if unreachable. Treat each input as one independent scenario.","Line 1: N M.
+Next M lines: from to cost.","2 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","2","2 1
+1 2 5","2","3 3
+1 2 10
+2 3 10
+1 3 25","12","3 2
+1 2 1
+2 3 100","51","4 4
+1 2 5
+2 4 5
+1 3 8
+3 4 1","5","2 0
+","-1","4 3
+1 2 4
+2 3 4
+3 4 4","10","3 3
+1 2 7
+2 3 7
+1 3 20","10","4 4
+1 2 100
+1 3 1
+3 4 100
+2 4 1","51","2 4
+1 1 7
+1 1 5
+2 1 7
+1 1 1","-1","3 4
+3 3 7
+3 3 2
+1 2 9
+2 2 4","-1","4 5
+1 4 9
+2 4 2
+1 1 1
+3 2 0
+2 2 1","4","6 4
+6 6 6
+3 4 9
+4 3 6
+4 1 0","-1"
+"D-001-4","Discounted Route Cost Tracker","Diamond","Dijkstra","A directed edge has a nonnegative travel cost. You may use one half-price coupon on at most one edge; half-price means integer floor division by two.","Print the minimum cost from node 1 to node N, or -1 if unreachable. Keep the input and output format exact.","Line 1: N M.
+Next M lines: from to cost.","2 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","2","2 1
+1 2 5","2","3 3
+1 2 10
+2 3 10
+1 3 25","12","3 2
+1 2 1
+2 3 100","51","4 4
+1 2 5
+2 4 5
+1 3 8
+3 4 1","5","2 0
+","-1","4 3
+1 2 4
+2 3 4
+3 4 4","10","3 3
+1 2 7
+2 3 7
+1 3 20","10","4 4
+1 2 100
+1 3 1
+3 4 100
+2 4 1","51","3 5
+3 2 9
+2 3 4
+2 1 3
+2 3 5
+2 1 1","-1","4 5
+2 4 6
+1 2 4
+4 1 3
+2 2 1
+3 1 9","7","6 4
+5 3 6
+1 3 6
+6 3 2
+2 2 9","-1","2 1
+1 1 5","-1"
+"D-001-5","Discounted Route Cost Verifier","Diamond","Dijkstra","A directed edge has a nonnegative travel cost. You may use one half-price coupon on at most one edge; half-price means integer floor division by two.","Print the minimum cost from node 1 to node N, or -1 if unreachable. Use the same definition for all tests.","Line 1: N M.
+Next M lines: from to cost.","2 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","2","2 1
+1 2 5","2","3 3
+1 2 10
+2 3 10
+1 3 25","12","3 2
+1 2 1
+2 3 100","51","4 4
+1 2 5
+2 4 5
+1 3 8
+3 4 1","5","2 0
+","-1","4 3
+1 2 4
+2 3 4
+3 4 4","10","3 3
+1 2 7
+2 3 7
+1 3 20","10","4 4
+1 2 100
+1 3 1
+3 4 100
+2 4 1","51","2 4
+2 1 8
+1 1 2
+1 1 3
+2 2 5","-1","3 3
+1 3 8
+1 3 5
+1 3 3","1","4 0","-1","6 4
+2 5 1
+1 5 9
+4 3 3
+3 5 8","-1"
+"D-002-1","Limited-Hop Cheapest Route","Diamond","Graphs","A route may use no more than K directed edges. Costs add across the edges used.","Print the least cost from node 1 to node N using at most K edges, or -1 if impossible. Follow every stated tie rule.","Line 1: N M K.
+Next M lines: from to cost.","2 <= N <= 200
+0 <= M <= 5000
+0 <= K <= 50
+cost: 0 to 10^9","2 1 1
+1 2 5","5","2 1 1
+1 2 5","5","3 3 1
+1 2 5
+2 3 5
+1 3 20","20","3 3 2
+1 2 5
+2 3 5
+1 3 20","10","4 3 2
+1 2 1
+2 3 1
+3 4 1","-1","2 0 3
+","-1","4 4 3
+1 2 10
+1 3 1
+3 2 1
+2 4 1","3","3 4 2
+1 2 100
+1 3 5
+3 2 5
+2 3 1","5","4 3 1
+1 4 50
+1 2 20
+2 4 20","50","2 1 3
+1 2 9","9","3 0 0","-1","4 1 4
+4 4 3","-1","6 4 3
+5 3 0
+1 3 7
+5 6 2
+4 6 8","-1"
+"D-002-2","Limited-Hop Cheapest Route Planner","Diamond","Graphs","A route may use no more than K directed edges. Costs add across the edges used.","Print the least cost from node 1 to node N using at most K edges, or -1 if impossible. Print only the required result.","Line 1: N M K.
+Next M lines: from to cost.","2 <= N <= 200
+0 <= M <= 5000
+0 <= K <= 50
+cost: 0 to 10^9","2 1 1
+1 2 5","5","2 1 1
+1 2 5","5","3 3 1
+1 2 5
+2 3 5
+1 3 20","20","3 3 2
+1 2 5
+2 3 5
+1 3 20","10","4 3 2
+1 2 1
+2 3 1
+3 4 1","-1","2 0 3
+","-1","4 4 3
+1 2 10
+1 3 1
+3 2 1
+2 4 1","3","3 4 2
+1 2 100
+1 3 5
+3 2 5
+2 3 1","5","4 3 1
+1 4 50
+1 2 20
+2 4 20","50","2 1 1
+2 1 3","-1","3 5 1
+3 2 8
+3 2 1
+3 1 0
+3 2 9
+3 3 8","-1","4 3 2
+2 3 5
+4 2 9
+4 2 4","-1","6 0 0","-1"
+"D-002-3","Limited-Hop Cheapest Route Checkpoint","Diamond","Graphs","A route may use no more than K directed edges. Costs add across the edges used.","Print the least cost from node 1 to node N using at most K edges, or -1 if impossible. Treat each input as one independent scenario.","Line 1: N M K.
+Next M lines: from to cost.","2 <= N <= 200
+0 <= M <= 5000
+0 <= K <= 50
+cost: 0 to 10^9","2 1 1
+1 2 5","5","2 1 1
+1 2 5","5","3 3 1
+1 2 5
+2 3 5
+1 3 20","20","3 3 2
+1 2 5
+2 3 5
+1 3 20","10","4 3 2
+1 2 1
+2 3 1
+3 4 1","-1","2 0 3
+","-1","4 4 3
+1 2 10
+1 3 1
+3 2 1
+2 4 1","3","3 4 2
+1 2 100
+1 3 5
+3 2 5
+2 3 1","5","4 3 1
+1 4 50
+1 2 20
+2 4 20","50","2 3 4
+2 1 7
+1 1 6
+2 1 0","-1","3 4 3
+2 1 2
+3 2 6
+2 2 4
+2 2 8","-1","4 1 0
+3 4 8","-1","6 2 0
+2 1 3
+6 4 4","-1"
+"D-002-4","Limited-Hop Cheapest Route Tracker","Diamond","Graphs","A route may use no more than K directed edges. Costs add across the edges used.","Print the least cost from node 1 to node N using at most K edges, or -1 if impossible. Keep the input and output format exact.","Line 1: N M K.
+Next M lines: from to cost.","2 <= N <= 200
+0 <= M <= 5000
+0 <= K <= 50
+cost: 0 to 10^9","2 1 1
+1 2 5","5","2 1 1
+1 2 5","5","3 3 1
+1 2 5
+2 3 5
+1 3 20","20","3 3 2
+1 2 5
+2 3 5
+1 3 20","10","4 3 2
+1 2 1
+2 3 1
+3 4 1","-1","2 0 3
+","-1","4 4 3
+1 2 10
+1 3 1
+3 2 1
+2 4 1","3","3 4 2
+1 2 100
+1 3 5
+3 2 5
+2 3 1","5","4 3 1
+1 4 50
+1 2 20
+2 4 20","50","2 0 2","-1","3 1 0
+1 3 8","-1","4 5 0
+1 2 9
+3 1 8
+2 1 1
+4 2 7
+1 4 9","-1","6 2 0
+6 3 2
+3 1 3","-1"
+"D-002-5","Limited-Hop Cheapest Route Verifier","Diamond","Graphs","A route may use no more than K directed edges. Costs add across the edges used.","Print the least cost from node 1 to node N using at most K edges, or -1 if impossible. Use the same definition for all tests.","Line 1: N M K.
+Next M lines: from to cost.","2 <= N <= 200
+0 <= M <= 5000
+0 <= K <= 50
+cost: 0 to 10^9","2 1 1
+1 2 5","5","2 1 1
+1 2 5","5","3 3 1
+1 2 5
+2 3 5
+1 3 20","20","3 3 2
+1 2 5
+2 3 5
+1 3 20","10","4 3 2
+1 2 1
+2 3 1
+3 4 1","-1","2 0 3
+","-1","4 4 3
+1 2 10
+1 3 1
+3 2 1
+2 4 1","3","3 4 2
+1 2 100
+1 3 5
+3 2 5
+2 3 1","5","4 3 1
+1 4 50
+1 2 20
+2 4 20","50","2 0 0","-1","3 2 4
+2 3 3
+3 3 5","-1","4 3 1
+3 2 5
+3 2 2
+1 4 7","7","6 1 2
+4 5 1","-1"
+"D-003-1","Added-Edge Connectivity","Diamond","DSU","Nodes joined by a chain of added undirected edges are connected. Queries ask whether two nodes are in the same connected component after all listed additions.","Answer each connectivity query with YES or NO. Follow every stated tie rule.","Line 1: N E Q.
+Next E lines: added edge u v.
+Next Q lines: query u v.","1 <= N,E,Q <= 200000
+node labels: 1 to N","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","4 2 2
+1 2
+3 4
+1 4
+2 1","NO
+YES","2 1 1
+1 2
+1 2","YES","4 0 2
+1 1
+1 2","YES
+NO","5 3 3
+1 2
+2 3
+4 5
+1 3
+1 5
+4 5","YES
+NO
+YES","3 2 1
+1 2
+1 3
+2 3","YES","4 1 2
+2 3
+1 4
+2 3","NO
+YES","5 2 2
+1 5
+2 4
+1 4
+2 5","NO
+NO","1 2 2
+1 1
+1 1
+1 1
+1 1","YES
+YES","3 1 1
+3 3
+1 1","YES","4 3 2
+1 4
+2 4
+1 1
+4 1
+4 2","YES
+YES","5 0 1
+5 5","YES"
+"D-003-2","Added-Edge Connectivity Planner","Diamond","DSU","Nodes joined by a chain of added undirected edges are connected. Queries ask whether two nodes are in the same connected component after all listed additions.","Answer each connectivity query with YES or NO. Print only the required result.","Line 1: N E Q.
+Next E lines: added edge u v.
+Next Q lines: query u v.","1 <= N,E,Q <= 200000
+node labels: 1 to N","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","4 2 2
+1 2
+3 4
+1 4
+2 1","NO
+YES","2 1 1
+1 2
+1 2","YES","4 0 2
+1 1
+1 2","YES
+NO","5 3 3
+1 2
+2 3
+4 5
+1 3
+1 5
+4 5","YES
+NO
+YES","3 2 1
+1 2
+1 3
+2 3","YES","4 1 2
+2 3
+1 4
+2 3","NO
+YES","5 2 2
+1 5
+2 4
+1 4
+2 5","NO
+NO","1 2 2
+1 1
+1 1
+1 1
+1 1","YES
+YES","3 3 2
+1 1
+1 2
+1 3
+1 1
+2 2","YES
+YES","4 0 1
+2 4","NO","5 2 3
+5 3
+5 5
+3 4
+1 5
+5 1","NO
+NO
+NO"
+"D-003-3","Added-Edge Connectivity Checkpoint","Diamond","DSU","Nodes joined by a chain of added undirected edges are connected. Queries ask whether two nodes are in the same connected component after all listed additions.","Answer each connectivity query with YES or NO. Treat each input as one independent scenario.","Line 1: N E Q.
+Next E lines: added edge u v.
+Next Q lines: query u v.","1 <= N,E,Q <= 200000
+node labels: 1 to N","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","4 2 2
+1 2
+3 4
+1 4
+2 1","NO
+YES","2 1 1
+1 2
+1 2","YES","4 0 2
+1 1
+1 2","YES
+NO","5 3 3
+1 2
+2 3
+4 5
+1 3
+1 5
+4 5","YES
+NO
+YES","3 2 1
+1 2
+1 3
+2 3","YES","4 1 2
+2 3
+1 4
+2 3","NO
+YES","5 2 2
+1 5
+2 4
+1 4
+2 5","NO
+NO","1 3 1
+1 1
+1 1
+1 1
+1 1","YES","3 2 3
+3 1
+3 2
+1 3
+2 2
+3 3","YES
+YES
+YES","4 3 2
+4 1
+3 2
+1 4
+3 3
+1 2","YES
+NO","5 2 2
+3 4
+5 1
+2 5
+2 5","NO
+NO"
+"D-003-4","Added-Edge Connectivity Tracker","Diamond","DSU","Nodes joined by a chain of added undirected edges are connected. Queries ask whether two nodes are in the same connected component after all listed additions.","Answer each connectivity query with YES or NO. Keep the input and output format exact.","Line 1: N E Q.
+Next E lines: added edge u v.
+Next Q lines: query u v.","1 <= N,E,Q <= 200000
+node labels: 1 to N","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","4 2 2
+1 2
+3 4
+1 4
+2 1","NO
+YES","2 1 1
+1 2
+1 2","YES","4 0 2
+1 1
+1 2","YES
+NO","5 3 3
+1 2
+2 3
+4 5
+1 3
+1 5
+4 5","YES
+NO
+YES","3 2 1
+1 2
+1 3
+2 3","YES","4 1 2
+2 3
+1 4
+2 3","NO
+YES","5 2 2
+1 5
+2 4
+1 4
+2 5","NO
+NO","1 3 2
+1 1
+1 1
+1 1
+1 1
+1 1","YES
+YES","3 3 2
+2 3
+3 3
+3 1
+1 2
+1 1","YES
+YES","4 3 3
+4 2
+2 1
+1 4
+2 3
+1 4
+1 3","NO
+YES
+NO","5 2 2
+1 1
+3 2
+5 1
+1 1","NO
+YES"
+"D-003-5","Added-Edge Connectivity Verifier","Diamond","DSU","Nodes joined by a chain of added undirected edges are connected. Queries ask whether two nodes are in the same connected component after all listed additions.","Answer each connectivity query with YES or NO. Use the same definition for all tests.","Line 1: N E Q.
+Next E lines: added edge u v.
+Next Q lines: query u v.","1 <= N,E,Q <= 200000
+node labels: 1 to N","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","3 2 2
+1 2
+2 3
+1 3
+1 2","YES
+YES","4 2 2
+1 2
+3 4
+1 4
+2 1","NO
+YES","2 1 1
+1 2
+1 2","YES","4 0 2
+1 1
+1 2","YES
+NO","5 3 3
+1 2
+2 3
+4 5
+1 3
+1 5
+4 5","YES
+NO
+YES","3 2 1
+1 2
+1 3
+2 3","YES","4 1 2
+2 3
+1 4
+2 3","NO
+YES","5 2 2
+1 5
+2 4
+1 4
+2 5","NO
+NO","1 2 3
+1 1
+1 1
+1 1
+1 1
+1 1","YES
+YES
+YES","3 0 1
+2 1","NO","4 0 3
+4 1
+2 3
+4 1","NO
+NO
+NO","5 0 1
+4 3","NO"
+"D-004-1","First Cycle-Closing Edge","Diamond","DSU","Adding an edge creates a cycle when its two endpoints are already connected by earlier edges.","Print the 1-indexed first edge that creates a cycle, or NONE if no edge does. Follow every stated tie rule.","Line 1: N M.
+Next M lines: undirected edge u v.","1 <= N,M <= 200000
+node labels: 1 to N","3 3
+1 2
+2 3
+1 3","3","3 3
+1 2
+2 3
+1 3","3","3 2
+1 2
+2 3","NONE","2 2
+1 2
+1 2","2","4 4
+1 2
+3 4
+2 3
+4 1","4","1 1
+1 1","1","5 4
+1 2
+2 3
+3 4
+4 5","NONE","4 4
+1 2
+2 3
+3 1
+1 4","3","4 3
+1 2
+2 4
+1 4","3","3 4
+2 1
+3 1
+2 1
+1 3","3","4 2
+2 3
+4 2","NONE","5 2
+5 1
+2 3","NONE","1 3
+1 1
+1 1
+1 1","1"
+"D-004-2","First Cycle-Closing Edge Planner","Diamond","DSU","Adding an edge creates a cycle when its two endpoints are already connected by earlier edges.","Print the 1-indexed first edge that creates a cycle, or NONE if no edge does. Print only the required result.","Line 1: N M.
+Next M lines: undirected edge u v.","1 <= N,M <= 200000
+node labels: 1 to N","3 3
+1 2
+2 3
+1 3","3","3 3
+1 2
+2 3
+1 3","3","3 2
+1 2
+2 3","NONE","2 2
+1 2
+1 2","2","4 4
+1 2
+3 4
+2 3
+4 1","4","1 1
+1 1","1","5 4
+1 2
+2 3
+3 4
+4 5","NONE","4 4
+1 2
+2 3
+3 1
+1 4","3","4 3
+1 2
+2 4
+1 4","3","1 3
+1 1
+1 1
+1 1","1","3 1
+3 3","1","4 3
+2 1
+3 3
+4 4","2","5 3
+2 3
+5 5
+3 1","2"
+"D-004-3","First Cycle-Closing Edge Checkpoint","Diamond","DSU","Adding an edge creates a cycle when its two endpoints are already connected by earlier edges.","Print the 1-indexed first edge that creates a cycle, or NONE if no edge does. Treat each input as one independent scenario.","Line 1: N M.
+Next M lines: undirected edge u v.","1 <= N,M <= 200000
+node labels: 1 to N","3 3
+1 2
+2 3
+1 3","3","3 3
+1 2
+2 3
+1 3","3","3 2
+1 2
+2 3","NONE","2 2
+1 2
+1 2","2","4 4
+1 2
+3 4
+2 3
+4 1","4","1 1
+1 1","1","5 4
+1 2
+2 3
+3 4
+4 5","NONE","4 4
+1 2
+2 3
+3 1
+1 4","3","4 3
+1 2
+2 4
+1 4","3","1 0","NONE","3 4
+2 1
+3 1
+3 3
+2 1","3","4 1
+4 4","1","5 4
+3 2
+3 1
+3 5
+4 3","NONE"
+"D-004-4","First Cycle-Closing Edge Tracker","Diamond","DSU","Adding an edge creates a cycle when its two endpoints are already connected by earlier edges.","Print the 1-indexed first edge that creates a cycle, or NONE if no edge does. Keep the input and output format exact.","Line 1: N M.
+Next M lines: undirected edge u v.","1 <= N,M <= 200000
+node labels: 1 to N","3 3
+1 2
+2 3
+1 3","3","3 3
+1 2
+2 3
+1 3","3","3 2
+1 2
+2 3","NONE","2 2
+1 2
+1 2","2","4 4
+1 2
+3 4
+2 3
+4 1","4","1 1
+1 1","1","5 4
+1 2
+2 3
+3 4
+4 5","NONE","4 4
+1 2
+2 3
+3 1
+1 4","3","4 3
+1 2
+2 4
+1 4","3","3 4
+2 1
+3 3
+1 1
+2 1","2","4 0","NONE","5 3
+1 1
+1 5
+5 3","1","1 5
+1 1
+1 1
+1 1
+1 1
+1 1","1"
+"D-004-5","First Cycle-Closing Edge Verifier","Diamond","DSU","Adding an edge creates a cycle when its two endpoints are already connected by earlier edges.","Print the 1-indexed first edge that creates a cycle, or NONE if no edge does. Use the same definition for all tests.","Line 1: N M.
+Next M lines: undirected edge u v.","1 <= N,M <= 200000
+node labels: 1 to N","3 3
+1 2
+2 3
+1 3","3","3 3
+1 2
+2 3
+1 3","3","3 2
+1 2
+2 3","NONE","2 2
+1 2
+1 2","2","4 4
+1 2
+3 4
+2 3
+4 1","4","1 1
+1 1","1","5 4
+1 2
+2 3
+3 4
+4 5","NONE","4 4
+1 2
+2 3
+3 1
+1 4","3","4 3
+1 2
+2 4
+1 4","3","1 4
+1 1
+1 1
+1 1
+1 1","1","3 1
+3 2","NONE","4 2
+3 1
+1 4","NONE","5 4
+4 5
+2 3
+2 2
+3 3","3"
+"D-005-1","Minimum Network Cost","Diamond","DSU","An undirected edge can connect two nodes for its stated cost. A spanning connection reaches every node from every other node.","Print the minimum total cost to connect all nodes, or -1 when impossible. Follow every stated tie rule.","Line 1: N M.
+Next M lines: u v cost.","1 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","5","2 1
+1 2 5","5","3 3
+1 2 1
+2 3 2
+1 3 5","3","3 1
+1 2 1","-1","4 4
+1 2 1
+2 3 1
+3 4 1
+4 1 10","3","1 0
+","0","4 5
+1 2 5
+1 3 6
+1 4 7
+2 3 1
+3 4 1","7","3 3
+1 2 0
+2 3 0
+1 3 1","0","5 5
+1 2 3
+2 3 4
+3 4 5
+4 5 6
+1 5 100","18","1 2
+1 1 3
+1 1 6","0","3 5
+2 1 0
+3 2 2
+1 2 5
+2 2 9
+1 1 0","2","4 5
+3 4 5
+3 3 4
+3 3 9
+2 1 4
+2 1 2","-1","5 2
+2 1 5
+5 5 6","-1"
+"D-005-2","Minimum Network Cost Planner","Diamond","DSU","An undirected edge can connect two nodes for its stated cost. A spanning connection reaches every node from every other node.","Print the minimum total cost to connect all nodes, or -1 when impossible. Print only the required result.","Line 1: N M.
+Next M lines: u v cost.","1 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","5","2 1
+1 2 5","5","3 3
+1 2 1
+2 3 2
+1 3 5","3","3 1
+1 2 1","-1","4 4
+1 2 1
+2 3 1
+3 4 1
+4 1 10","3","1 0
+","0","4 5
+1 2 5
+1 3 6
+1 4 7
+2 3 1
+3 4 1","7","3 3
+1 2 0
+2 3 0
+1 3 1","0","5 5
+1 2 3
+2 3 4
+3 4 5
+4 5 6
+1 5 100","18","1 4
+1 1 0
+1 1 6
+1 1 9
+1 1 1","0","3 5
+3 3 5
+3 1 4
+1 2 6
+3 2 5
+3 3 8","9","4 5
+2 2 6
+2 3 3
+2 4 3
+4 4 5
+2 3 4","-1","5 1
+1 5 4","-1"
+"D-005-3","Minimum Network Cost Checkpoint","Diamond","DSU","An undirected edge can connect two nodes for its stated cost. A spanning connection reaches every node from every other node.","Print the minimum total cost to connect all nodes, or -1 when impossible. Treat each input as one independent scenario.","Line 1: N M.
+Next M lines: u v cost.","1 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","5","2 1
+1 2 5","5","3 3
+1 2 1
+2 3 2
+1 3 5","3","3 1
+1 2 1","-1","4 4
+1 2 1
+2 3 1
+3 4 1
+4 1 10","3","1 0
+","0","4 5
+1 2 5
+1 3 6
+1 4 7
+2 3 1
+3 4 1","7","3 3
+1 2 0
+2 3 0
+1 3 1","0","5 5
+1 2 3
+2 3 4
+3 4 5
+4 5 6
+1 5 100","18","1 2
+1 1 9
+1 1 1","0","3 1
+2 3 7","-1","4 5
+3 1 5
+1 2 2
+1 4 6
+1 1 0
+2 3 5","13","5 2
+3 1 1
+2 2 0","-1"
+"D-005-4","Minimum Network Cost Tracker","Diamond","DSU","An undirected edge can connect two nodes for its stated cost. A spanning connection reaches every node from every other node.","Print the minimum total cost to connect all nodes, or -1 when impossible. Keep the input and output format exact.","Line 1: N M.
+Next M lines: u v cost.","1 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","5","2 1
+1 2 5","5","3 3
+1 2 1
+2 3 2
+1 3 5","3","3 1
+1 2 1","-1","4 4
+1 2 1
+2 3 1
+3 4 1
+4 1 10","3","1 0
+","0","4 5
+1 2 5
+1 3 6
+1 4 7
+2 3 1
+3 4 1","7","3 3
+1 2 0
+2 3 0
+1 3 1","0","5 5
+1 2 3
+2 3 4
+3 4 5
+4 5 6
+1 5 100","18","3 1
+1 3 4","-1","4 2
+4 4 6
+1 3 1","-1","5 3
+2 3 1
+5 5 8
+2 4 4","-1","1 3
+1 1 4
+1 1 6
+1 1 6","0"
+"D-005-5","Minimum Network Cost Verifier","Diamond","DSU","An undirected edge can connect two nodes for its stated cost. A spanning connection reaches every node from every other node.","Print the minimum total cost to connect all nodes, or -1 when impossible. Use the same definition for all tests.","Line 1: N M.
+Next M lines: u v cost.","1 <= N <= 200000
+0 <= M <= 300000
+cost: 0 to 10^9","2 1
+1 2 5","5","2 1
+1 2 5","5","3 3
+1 2 1
+2 3 2
+1 3 5","3","3 1
+1 2 1","-1","4 4
+1 2 1
+2 3 1
+3 4 1
+4 1 10","3","1 0
+","0","4 5
+1 2 5
+1 3 6
+1 4 7
+2 3 1
+3 4 1","7","3 3
+1 2 0
+2 3 0
+1 3 1","0","5 5
+1 2 3
+2 3 4
+3 4 5
+4 5 6
+1 5 100","18","1 5
+1 1 4
+1 1 0
+1 1 1
+1 1 3
+1 1 8","0","3 3
+1 3 7
+1 1 8
+3 3 7","-1","4 2
+1 2 6
+1 4 8","-1","5 1
+4 5 4","-1"
+"D-006-1","Weighted Tree Diameter","Diamond","Trees","A tree has exactly one simple path between every two nodes. The distance of a path is the sum of its edge weights.","Print the maximum distance between any two nodes. Follow every stated tie rule.","Line 1: N.
+Next N-1 lines: u v weight.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit distances","1
+","0","1
+","0","2
+1 2 5","5","3
+1 2 1
+2 3 2","3","4
+1 2 1
+1 3 5
+1 4 2","7","4
+1 2 3
+2 3 4
+3 4 5","12","5
+1 2 1
+2 3 1
+3 4 1
+3 5 10","12","3
+1 2 0
+2 3 0","0","5
+1 2 7
+1 3 2
+3 4 9
+3 5 1","18","2
+1 2 2","2","4
+1 2 3
+2 3 4
+3 4 0","7","6
+1 2 1
+1 3 0
+2 4 9
+4 5 0
+1 6 6","16","2
+1 2 0","0"
+"D-006-2","Weighted Tree Diameter Planner","Diamond","Trees","A tree has exactly one simple path between every two nodes. The distance of a path is the sum of its edge weights.","Print the maximum distance between any two nodes. Print only the required result.","Line 1: N.
+Next N-1 lines: u v weight.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit distances","1
+","0","1
+","0","2
+1 2 5","5","3
+1 2 1
+2 3 2","3","4
+1 2 1
+1 3 5
+1 4 2","7","4
+1 2 3
+2 3 4
+3 4 5","12","5
+1 2 1
+2 3 1
+3 4 1
+3 5 10","12","3
+1 2 0
+2 3 0","0","5
+1 2 7
+1 3 2
+3 4 9
+3 5 1","18","2
+1 2 4","4","4
+1 2 9
+1 3 0
+1 4 2","11","6
+1 2 9
+1 3 5
+2 4 9
+4 5 0
+4 6 5","28","2
+1 2 8","8"
+"D-006-3","Weighted Tree Diameter Checkpoint","Diamond","Trees","A tree has exactly one simple path between every two nodes. The distance of a path is the sum of its edge weights.","Print the maximum distance between any two nodes. Treat each input as one independent scenario.","Line 1: N.
+Next N-1 lines: u v weight.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit distances","1
+","0","1
+","0","2
+1 2 5","5","3
+1 2 1
+2 3 2","3","4
+1 2 1
+1 3 5
+1 4 2","7","4
+1 2 3
+2 3 4
+3 4 5","12","5
+1 2 1
+2 3 1
+3 4 1
+3 5 10","12","3
+1 2 0
+2 3 0","0","5
+1 2 7
+1 3 2
+3 4 9
+3 5 1","18","2
+1 2 7","7","4
+1 2 7
+1 3 4
+1 4 6","13","6
+1 2 8
+2 3 7
+1 4 5
+4 5 7
+4 6 1","27","4
+1 2 6
+1 3 1
+1 4 0","7"
+"D-006-4","Weighted Tree Diameter Tracker","Diamond","Trees","A tree has exactly one simple path between every two nodes. The distance of a path is the sum of its edge weights.","Print the maximum distance between any two nodes. Keep the input and output format exact.","Line 1: N.
+Next N-1 lines: u v weight.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit distances","1
+","0","1
+","0","2
+1 2 5","5","3
+1 2 1
+2 3 2","3","4
+1 2 1
+1 3 5
+1 4 2","7","4
+1 2 3
+2 3 4
+3 4 5","12","5
+1 2 1
+2 3 1
+3 4 1
+3 5 10","12","3
+1 2 0
+2 3 0","0","5
+1 2 7
+1 3 2
+3 4 9
+3 5 1","18","2
+1 2 7","7","4
+1 2 9
+1 3 4
+2 4 2","15","6
+1 2 2
+1 3 9
+3 4 1
+4 5 2
+4 6 0","14","2
+1 2 6","6"
+"D-006-5","Weighted Tree Diameter Verifier","Diamond","Trees","A tree has exactly one simple path between every two nodes. The distance of a path is the sum of its edge weights.","Print the maximum distance between any two nodes. Use the same definition for all tests.","Line 1: N.
+Next N-1 lines: u v weight.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit distances","1
+","0","1
+","0","2
+1 2 5","5","3
+1 2 1
+2 3 2","3","4
+1 2 1
+1 3 5
+1 4 2","7","4
+1 2 3
+2 3 4
+3 4 5","12","5
+1 2 1
+2 3 1
+3 4 1
+3 5 10","12","3
+1 2 0
+2 3 0","0","5
+1 2 7
+1 3 2
+3 4 9
+3 5 1","18","2
+1 2 1","1","4
+1 2 5
+1 3 8
+1 4 6","14","6
+1 2 8
+2 3 9
+3 4 3
+2 5 3
+2 6 0","20","4
+1 2 4
+2 3 8
+1 4 6","18"
+"D-007-1","Tree Distance Totals","Diamond","Trees","The distance between two tree nodes is the number of edges on their unique connecting path.","For nodes 1 through N, print each node’s sum of distances to all nodes. Follow every stated tie rule.","Line 1: N.
+Next N-1 lines: undirected edge u v.","1 <= N <= 200000
+node labels: 1 to N","1
+","0","1
+","0","2
+1 2","1 1","3
+1 2
+2 3","3 2 3","4
+1 2
+1 3
+1 4","3 5 5 5","4
+1 2
+2 3
+3 4","6 4 4 6","5
+1 2
+2 3
+2 4
+4 5","8 5 8 6 9","3
+1 2
+1 3","2 3 3","5
+1 2
+1 3
+3 4
+3 5","6 9 5 8 8","4
+1 2
+2 3
+2 4","5 3 5 5","6
+1 2
+1 3
+3 4
+1 5
+4 6","8 12 8 10 12 14","4
+1 2
+1 3
+2 4","4 4 6 6","6
+1 2
+2 3
+2 4
+2 5
+2 6","9 5 9 9 9 9"
+"D-007-2","Tree Distance Totals Planner","Diamond","Trees","The distance between two tree nodes is the number of edges on their unique connecting path.","For nodes 1 through N, print each node’s sum of distances to all nodes. Print only the required result.","Line 1: N.
+Next N-1 lines: undirected edge u v.","1 <= N <= 200000
+node labels: 1 to N","1
+","0","1
+","0","2
+1 2","1 1","3
+1 2
+2 3","3 2 3","4
+1 2
+1 3
+1 4","3 5 5 5","4
+1 2
+2 3
+3 4","6 4 4 6","5
+1 2
+2 3
+2 4
+4 5","8 5 8 6 9","3
+1 2
+1 3","2 3 3","5
+1 2
+1 3
+3 4
+3 5","6 9 5 8 8","6
+1 2
+2 3
+2 4
+4 5
+1 6","9 7 11 9 13 13","4
+1 2
+1 3
+2 4","4 4 6 6","6
+1 2
+2 3
+1 4
+2 5
+5 6","9 7 11 13 9 13","6
+1 2
+1 3
+3 4
+3 5
+4 6","9 13 7 9 11 13"
+"D-007-3","Tree Distance Totals Checkpoint","Diamond","Trees","The distance between two tree nodes is the number of edges on their unique connecting path.","For nodes 1 through N, print each node’s sum of distances to all nodes. Treat each input as one independent scenario.","Line 1: N.
+Next N-1 lines: undirected edge u v.","1 <= N <= 200000
+node labels: 1 to N","1
+","0","1
+","0","2
+1 2","1 1","3
+1 2
+2 3","3 2 3","4
+1 2
+1 3
+1 4","3 5 5 5","4
+1 2
+2 3
+3 4","6 4 4 6","5
+1 2
+2 3
+2 4
+4 5","8 5 8 6 9","3
+1 2
+1 3","2 3 3","5
+1 2
+1 3
+3 4
+3 5","6 9 5 8 8","4
+1 2
+1 3
+2 4","4 4 6 6","6
+1 2
+1 3
+3 4
+4 5
+3 6","9 13 7 9 13 11","6
+1 2
+1 3
+2 4
+3 5
+2 6","8 8 10 12 14 12","6
+1 2
+1 3
+2 4
+4 5
+2 6","9 7 13 9 13 11"
+"D-007-4","Tree Distance Totals Tracker","Diamond","Trees","The distance between two tree nodes is the number of edges on their unique connecting path.","For nodes 1 through N, print each node’s sum of distances to all nodes. Keep the input and output format exact.","Line 1: N.
+Next N-1 lines: undirected edge u v.","1 <= N <= 200000
+node labels: 1 to N","1
+","0","1
+","0","2
+1 2","1 1","3
+1 2
+2 3","3 2 3","4
+1 2
+1 3
+1 4","3 5 5 5","4
+1 2
+2 3
+3 4","6 4 4 6","5
+1 2
+2 3
+2 4
+4 5","8 5 8 6 9","3
+1 2
+1 3","2 3 3","5
+1 2
+1 3
+3 4
+3 5","6 9 5 8 8","6
+1 2
+2 3
+1 4
+3 5
+4 6","9 9 11 11 15 15","4
+1 2
+1 3
+3 4","4 6 4 6","6
+1 2
+1 3
+3 4
+3 5
+3 6","8 12 6 10 10 10","4
+1 2
+2 3
+2 4","5 3 5 5"
+"D-007-5","Tree Distance Totals Verifier","Diamond","Trees","The distance between two tree nodes is the number of edges on their unique connecting path.","For nodes 1 through N, print each node’s sum of distances to all nodes. Use the same definition for all tests.","Line 1: N.
+Next N-1 lines: undirected edge u v.","1 <= N <= 200000
+node labels: 1 to N","1
+","0","1
+","0","2
+1 2","1 1","3
+1 2
+2 3","3 2 3","4
+1 2
+1 3
+1 4","3 5 5 5","4
+1 2
+2 3
+3 4","6 4 4 6","5
+1 2
+2 3
+2 4
+4 5","8 5 8 6 9","3
+1 2
+1 3","2 3 3","5
+1 2
+1 3
+3 4
+3 5","6 9 5 8 8","6
+1 2
+2 3
+2 4
+3 5
+1 6","9 7 9 11 13 13","6
+1 2
+2 3
+1 4
+2 5
+4 6","8 8 12 10 12 14","4
+1 2
+1 3
+2 4","4 4 6 6","6
+1 2
+1 3
+2 4
+3 5
+5 6","9 11 9 15 11 15"
+"D-008-1","Ancestor Meeting Queries","Diamond","Trees","Root the tree at node 1. The lowest common ancestor of two nodes is their deepest shared ancestor.","Answer every query by printing the lowest common ancestor. Follow every stated tie rule.","Line 1: N Q.
+Next N-1 lines: tree edges.
+Next Q lines: query nodes a b.","1 <= N,Q <= 200000
+node labels: 1 to N","2 2
+1 2
+1 2
+2 2","1
+2","2 2
+1 2
+1 2
+2 2","1
+2","3 2
+1 2
+1 3
+2 3
+1 2","1
+1","4 2
+1 2
+2 3
+2 4
+3 4
+3 2","2
+2","5 2
+1 2
+1 3
+3 4
+3 5
+4 5
+2 4","3
+1","1 1
+1 1","1","4 2
+1 2
+1 3
+3 4
+2 4
+3 4","1
+3","5 2
+1 2
+2 3
+3 4
+4 5
+4 5
+2 5","4
+2","6 2
+1 2
+1 3
+2 4
+2 5
+3 6
+4 5
+4 6","2
+1","1 2
+1 1
+1 1","1
+1","2 2
+1 2
+1 2
+1 2","1
+1","4 2
+1 2
+2 3
+2 4
+3 1
+1 2","1
+1","6 2
+1 2
+1 3
+1 4
+4 5
+1 6
+3 3
+4 6","3
+1"
+"D-008-2","Ancestor Meeting Queries Planner","Diamond","Trees","Root the tree at node 1. The lowest common ancestor of two nodes is their deepest shared ancestor.","Answer every query by printing the lowest common ancestor. Print only the required result.","Line 1: N Q.
+Next N-1 lines: tree edges.
+Next Q lines: query nodes a b.","1 <= N,Q <= 200000
+node labels: 1 to N","2 2
+1 2
+1 2
+2 2","1
+2","2 2
+1 2
+1 2
+2 2","1
+2","3 2
+1 2
+1 3
+2 3
+1 2","1
+1","4 2
+1 2
+2 3
+2 4
+3 4
+3 2","2
+2","5 2
+1 2
+1 3
+3 4
+3 5
+4 5
+2 4","3
+1","1 1
+1 1","1","4 2
+1 2
+1 3
+3 4
+2 4
+3 4","1
+3","5 2
+1 2
+2 3
+3 4
+4 5
+4 5
+2 5","4
+2","6 2
+1 2
+1 3
+2 4
+2 5
+3 6
+4 5
+4 6","2
+1","1 2
+1 1
+1 1","1
+1","2 2
+1 2
+1 1
+2 1","1
+1","4 2
+1 2
+1 3
+2 4
+3 1
+1 1","1
+1","6 2
+1 2
+1 3
+1 4
+2 5
+2 6
+1 4
+4 3","1
+1"
+"D-008-3","Ancestor Meeting Queries Checkpoint","Diamond","Trees","Root the tree at node 1. The lowest common ancestor of two nodes is their deepest shared ancestor.","Answer every query by printing the lowest common ancestor. Treat each input as one independent scenario.","Line 1: N Q.
+Next N-1 lines: tree edges.
+Next Q lines: query nodes a b.","1 <= N,Q <= 200000
+node labels: 1 to N","2 2
+1 2
+1 2
+2 2","1
+2","2 2
+1 2
+1 2
+2 2","1
+2","3 2
+1 2
+1 3
+2 3
+1 2","1
+1","4 2
+1 2
+2 3
+2 4
+3 4
+3 2","2
+2","5 2
+1 2
+1 3
+3 4
+3 5
+4 5
+2 4","3
+1","1 1
+1 1","1","4 2
+1 2
+1 3
+3 4
+2 4
+3 4","1
+3","5 2
+1 2
+2 3
+3 4
+4 5
+4 5
+2 5","4
+2","6 2
+1 2
+1 3
+2 4
+2 5
+3 6
+4 5
+4 6","2
+1","1 2
+1 1
+1 1","1
+1","2 2
+1 2
+2 1
+2 2","1
+2","4 2
+1 2
+2 3
+3 4
+1 4
+3 3","1
+3","6 2
+1 2
+1 3
+2 4
+1 5
+4 6
+2 4
+5 1","2
+1"
+"D-008-4","Ancestor Meeting Queries Tracker","Diamond","Trees","Root the tree at node 1. The lowest common ancestor of two nodes is their deepest shared ancestor.","Answer every query by printing the lowest common ancestor. Keep the input and output format exact.","Line 1: N Q.
+Next N-1 lines: tree edges.
+Next Q lines: query nodes a b.","1 <= N,Q <= 200000
+node labels: 1 to N","2 2
+1 2
+1 2
+2 2","1
+2","2 2
+1 2
+1 2
+2 2","1
+2","3 2
+1 2
+1 3
+2 3
+1 2","1
+1","4 2
+1 2
+2 3
+2 4
+3 4
+3 2","2
+2","5 2
+1 2
+1 3
+3 4
+3 5
+4 5
+2 4","3
+1","1 1
+1 1","1","4 2
+1 2
+1 3
+3 4
+2 4
+3 4","1
+3","5 2
+1 2
+2 3
+3 4
+4 5
+4 5
+2 5","4
+2","6 2
+1 2
+1 3
+2 4
+2 5
+3 6
+4 5
+4 6","2
+1","1 2
+1 1
+1 1","1
+1","2 2
+1 2
+2 2
+2 1","2
+1","4 2
+1 2
+1 3
+1 4
+3 4
+4 3","1
+1","6 2
+1 2
+1 3
+3 4
+1 5
+3 6
+6 3
+2 4","3
+1"
+"D-008-5","Ancestor Meeting Queries Verifier","Diamond","Trees","Root the tree at node 1. The lowest common ancestor of two nodes is their deepest shared ancestor.","Answer every query by printing the lowest common ancestor. Use the same definition for all tests.","Line 1: N Q.
+Next N-1 lines: tree edges.
+Next Q lines: query nodes a b.","1 <= N,Q <= 200000
+node labels: 1 to N","2 2
+1 2
+1 2
+2 2","1
+2","2 2
+1 2
+1 2
+2 2","1
+2","3 2
+1 2
+1 3
+2 3
+1 2","1
+1","4 2
+1 2
+2 3
+2 4
+3 4
+3 2","2
+2","5 2
+1 2
+1 3
+3 4
+3 5
+4 5
+2 4","3
+1","1 1
+1 1","1","4 2
+1 2
+1 3
+3 4
+2 4
+3 4","1
+3","5 2
+1 2
+2 3
+3 4
+4 5
+4 5
+2 5","4
+2","6 2
+1 2
+1 3
+2 4
+2 5
+3 6
+4 5
+4 6","2
+1","1 2
+1 1
+1 1","1
+1","2 2
+1 2
+1 1
+1 2","1
+1","4 2
+1 2
+2 3
+2 4
+3 2
+1 1","2
+1","6 2
+1 2
+1 3
+1 4
+3 5
+3 6
+3 6
+1 1","3
+1"
+"D-009-1","Dynamic Range Sums","Diamond","Fenwick Tree","An update adds a value to one position. A range-sum query asks for the inclusive total between two positions.","For each type-2 query, print the inclusive range sum. Follow every stated tie rule.","Line 1: N Q.
+Line 2: N integers.
+Next Q lines: 1 index delta or 2 left right.","1 <= N,Q <= 200000
+indices are 1-based
+use 64-bit sums","1 2
+1
+1 1 5
+2 1 1","6","1 2
+1
+1 1 5
+2 1 1","6","3 3
+1 2 3
+2 1 3
+1 2 5
+2 2 3","6
+10","2 2
+0 0
+1 1 -1
+2 1 2","-1","3 3
+5 5 5
+2 1 2
+1 3 -2
+2 2 3","10
+8","4 2
+1 1 1 1
+1 4 10
+2 1 4","14","3 1
+2 4 6
+2 2 2","4","3 3
+0 1 0
+1 1 3
+1 3 4
+2 1 3","8","2 2
+9 8
+1 2 1
+2 1 2","18","1 3
+-1
+2 1 1
+1 1 1
+1 1 -4","-1","2 3
+6 8
+1 1 1
+1 1 -2
+2 1 2","13","3 2
+9 -4 7
+2 3 3
+2 1 2","7
+5","4 3
+0 -2 3 0
+1 4 -5
+1 3 0
+1 2 -1",""
+"D-009-2","Dynamic Range Sums Planner","Diamond","Fenwick Tree","An update adds a value to one position. A range-sum query asks for the inclusive total between two positions.","For each type-2 query, print the inclusive range sum. Print only the required result.","Line 1: N Q.
+Line 2: N integers.
+Next Q lines: 1 index delta or 2 left right.","1 <= N,Q <= 200000
+indices are 1-based
+use 64-bit sums","1 2
+1
+1 1 5
+2 1 1","6","1 2
+1
+1 1 5
+2 1 1","6","3 3
+1 2 3
+2 1 3
+1 2 5
+2 2 3","6
+10","2 2
+0 0
+1 1 -1
+2 1 2","-1","3 3
+5 5 5
+2 1 2
+1 3 -2
+2 2 3","10
+8","4 2
+1 1 1 1
+1 4 10
+2 1 4","14","3 1
+2 4 6
+2 2 2","4","3 3
+0 1 0
+1 1 3
+1 3 4
+2 1 3","8","2 2
+9 8
+1 2 1
+2 1 2","18","1 3
+7
+2 1 1
+2 1 1
+1 1 0","7
+7","2 2
+-5 -1
+1 1 1
+1 1 3","","3 1
+4 3 1
+2 3 3","1","4 1
+-1 -4 -3 2
+2 4 4","2"
+"D-009-3","Dynamic Range Sums Checkpoint","Diamond","Fenwick Tree","An update adds a value to one position. A range-sum query asks for the inclusive total between two positions.","For each type-2 query, print the inclusive range sum. Treat each input as one independent scenario.","Line 1: N Q.
+Line 2: N integers.
+Next Q lines: 1 index delta or 2 left right.","1 <= N,Q <= 200000
+indices are 1-based
+use 64-bit sums","1 2
+1
+1 1 5
+2 1 1","6","1 2
+1
+1 1 5
+2 1 1","6","3 3
+1 2 3
+2 1 3
+1 2 5
+2 2 3","6
+10","2 2
+0 0
+1 1 -1
+2 1 2","-1","3 3
+5 5 5
+2 1 2
+1 3 -2
+2 2 3","10
+8","4 2
+1 1 1 1
+1 4 10
+2 1 4","14","3 1
+2 4 6
+2 2 2","4","3 3
+0 1 0
+1 1 3
+1 3 4
+2 1 3","8","2 2
+9 8
+1 2 1
+2 1 2","18","1 3
+-5
+2 1 1
+1 1 5
+2 1 1","-5
+0","2 3
+5 6
+1 1 5
+1 1 4
+2 1 2","20","3 1
+5 -1 0
+2 2 3","-1","4 1
+7 0 3 4
+2 4 4","4"
+"D-009-4","Dynamic Range Sums Tracker","Diamond","Fenwick Tree","An update adds a value to one position. A range-sum query asks for the inclusive total between two positions.","For each type-2 query, print the inclusive range sum. Keep the input and output format exact.","Line 1: N Q.
+Line 2: N integers.
+Next Q lines: 1 index delta or 2 left right.","1 <= N,Q <= 200000
+indices are 1-based
+use 64-bit sums","1 2
+1
+1 1 5
+2 1 1","6","1 2
+1
+1 1 5
+2 1 1","6","3 3
+1 2 3
+2 1 3
+1 2 5
+2 2 3","6
+10","2 2
+0 0
+1 1 -1
+2 1 2","-1","3 3
+5 5 5
+2 1 2
+1 3 -2
+2 2 3","10
+8","4 2
+1 1 1 1
+1 4 10
+2 1 4","14","3 1
+2 4 6
+2 2 2","4","3 3
+0 1 0
+1 1 3
+1 3 4
+2 1 3","8","2 2
+9 8
+1 2 1
+2 1 2","18","1 3
+1
+1 1 1
+2 1 1
+2 1 1","2
+2","2 1
+3 9
+2 2 2","9","3 1
+8 -3 0
+2 3 3","0","4 2
+3 -5 -5 -2
+1 1 -5
+2 2 4","-12"
+"D-009-5","Dynamic Range Sums Verifier","Diamond","Fenwick Tree","An update adds a value to one position. A range-sum query asks for the inclusive total between two positions.","For each type-2 query, print the inclusive range sum. Use the same definition for all tests.","Line 1: N Q.
+Line 2: N integers.
+Next Q lines: 1 index delta or 2 left right.","1 <= N,Q <= 200000
+indices are 1-based
+use 64-bit sums","1 2
+1
+1 1 5
+2 1 1","6","1 2
+1
+1 1 5
+2 1 1","6","3 3
+1 2 3
+2 1 3
+1 2 5
+2 2 3","6
+10","2 2
+0 0
+1 1 -1
+2 1 2","-1","3 3
+5 5 5
+2 1 2
+1 3 -2
+2 2 3","10
+8","4 2
+1 1 1 1
+1 4 10
+2 1 4","14","3 1
+2 4 6
+2 2 2","4","3 3
+0 1 0
+1 1 3
+1 3 4
+2 1 3","8","2 2
+9 8
+1 2 1
+2 1 2","18","1 1
+0
+1 1 5","","2 3
+-5 1
+2 1 1
+1 2 -2
+1 2 5","-5","3 2
+3 2 9
+2 3 3
+2 2 3","9
+11","4 2
+4 4 6 7
+1 2 -3
+2 2 4","14"
+"D-010-1","Out-of-Order Pair Count","Diamond","Fenwick Tree","An inversion is a pair of positions i < j where the earlier value is larger than the later value. Equal values are not inversions.","Print the number of inversions. Follow every stated tie rule.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+count may require 64-bit","1
+1","0","1
+1","0","2
+2 1","1","3
+3 1 2","2","3
+1 1 1","0","5
+5 4 3 2 1","10","3
+-1 3 0","1","5
+2 4 1 3 5","3","5
+3 3 2 2 1","8","1
+-2","0","3
+1 5 3","1","5
+-4 -3 4 2 -5","5","7
+-5 1 -3 0 1 3 1","3"
+"D-010-2","Out-of-Order Pair Count Planner","Diamond","Fenwick Tree","An inversion is a pair of positions i < j where the earlier value is larger than the later value. Equal values are not inversions.","Print the number of inversions. Print only the required result.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+count may require 64-bit","1
+1","0","1
+1","0","2
+2 1","1","3
+3 1 2","2","3
+1 1 1","0","5
+5 4 3 2 1","10","3
+-1 3 0","1","5
+2 4 1 3 5","3","5
+3 3 2 2 1","8","1
+-4","0","3
+5 1 3","2","5
+5 5 2 4 -3","8","7
+3 0 -5 1 -1 -2 5","11"
+"D-010-3","Out-of-Order Pair Count Checkpoint","Diamond","Fenwick Tree","An inversion is a pair of positions i < j where the earlier value is larger than the later value. Equal values are not inversions.","Print the number of inversions. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+count may require 64-bit","1
+1","0","1
+1","0","2
+2 1","1","3
+3 1 2","2","3
+1 1 1","0","5
+5 4 3 2 1","10","3
+-1 3 0","1","5
+2 4 1 3 5","3","5
+3 3 2 2 1","8","1
+4","0","3
+-2 2 -3","2","5
+3 5 1 2 -2","8","7
+-5 0 4 3 0 -1 5","7"
+"D-010-4","Out-of-Order Pair Count Tracker","Diamond","Fenwick Tree","An inversion is a pair of positions i < j where the earlier value is larger than the later value. Equal values are not inversions.","Print the number of inversions. Keep the input and output format exact.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+count may require 64-bit","1
+1","0","1
+1","0","2
+2 1","1","3
+3 1 2","2","3
+1 1 1","0","5
+5 4 3 2 1","10","3
+-1 3 0","1","5
+2 4 1 3 5","3","5
+3 3 2 2 1","8","1
+-3","0","3
+-4 -4 -3","0","5
+2 2 -3 2 -3","5","7
+-5 -1 -1 4 -4 -4 5","6"
+"D-010-5","Out-of-Order Pair Count Verifier","Diamond","Fenwick Tree","An inversion is a pair of positions i < j where the earlier value is larger than the later value. Equal values are not inversions.","Print the number of inversions. Use the same definition for all tests.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+count may require 64-bit","1
+1","0","1
+1","0","2
+2 1","1","3
+3 1 2","2","3
+1 1 1","0","5
+5 4 3 2 1","10","3
+-1 3 0","1","5
+2 4 1 3 5","3","5
+3 3 2 2 1","8","1
+4","0","3
+3 2 -4","3","5
+2 0 1 1 -2","7","7
+4 4 -2 -4 1 -1 2","12"
+"D-011-1","Later Smaller Counts","Diamond","Fenwick Tree","For each position, look only to the right. Count later values that are strictly smaller than the current value.","Print one count for every position. Follow every stated tie rule.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","2
+2 1","1 0","3
+3 1 2","2 0 0","3
+1 1 1","0 0 0","5
+5 4 3 2 1","4 3 2 1 0","3
+-1 3 0","0 1 0","5
+2 4 1 3 5","1 2 0 0 0","5
+3 3 2 2 1","3 3 1 1 0","1
+-3","0","3
+5 2 -2","2 1 0","5
+4 1 -3 2 1","4 1 0 1 0","7
+-1 2 4 5 -4 3 -5","2 2 3 3 1 1 0"
+"D-011-2","Later Smaller Counts Planner","Diamond","Fenwick Tree","For each position, look only to the right. Count later values that are strictly smaller than the current value.","Print one count for every position. Print only the required result.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","2
+2 1","1 0","3
+3 1 2","2 0 0","3
+1 1 1","0 0 0","5
+5 4 3 2 1","4 3 2 1 0","3
+-1 3 0","0 1 0","5
+2 4 1 3 5","1 2 0 0 0","5
+3 3 2 2 1","3 3 1 1 0","1
+3","0","3
+0 -2 1","1 0 0","5
+-5 -1 -1 3 -2","0 1 1 1 0","7
+1 4 5 2 -1 -2 -2","3 4 4 3 2 0 0"
+"D-011-3","Later Smaller Counts Checkpoint","Diamond","Fenwick Tree","For each position, look only to the right. Count later values that are strictly smaller than the current value.","Print one count for every position. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","2
+2 1","1 0","3
+3 1 2","2 0 0","3
+1 1 1","0 0 0","5
+5 4 3 2 1","4 3 2 1 0","3
+-1 3 0","0 1 0","5
+2 4 1 3 5","1 2 0 0 0","5
+3 3 2 2 1","3 3 1 1 0","1
+5","0","3
+3 2 -5","2 1 0","5
+-3 5 0 4 4","0 3 0 0 0","7
+4 0 0 1 0 5 0","5 0 0 2 0 1 0"
+"D-011-4","Later Smaller Counts Tracker","Diamond","Fenwick Tree","For each position, look only to the right. Count later values that are strictly smaller than the current value.","Print one count for every position. Keep the input and output format exact.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","2
+2 1","1 0","3
+3 1 2","2 0 0","3
+1 1 1","0 0 0","5
+5 4 3 2 1","4 3 2 1 0","3
+-1 3 0","0 1 0","5
+2 4 1 3 5","1 2 0 0 0","5
+3 3 2 2 1","3 3 1 1 0","1
+-5","0","3
+1 5 1","0 1 0","5
+5 5 0 -2 -4","3 3 2 1 0","7
+2 -1 -5 5 0 0 5","4 1 0 2 0 0 0"
+"D-011-5","Later Smaller Counts Verifier","Diamond","Fenwick Tree","For each position, look only to the right. Count later values that are strictly smaller than the current value.","Print one count for every position. Use the same definition for all tests.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","2
+2 1","1 0","3
+3 1 2","2 0 0","3
+1 1 1","0 0 0","5
+5 4 3 2 1","4 3 2 1 0","3
+-1 3 0","0 1 0","5
+2 4 1 3 5","1 2 0 0 0","5
+3 3 2 2 1","3 3 1 1 0","1
+-3","0","3
+-3 1 -5","1 1 0","5
+3 -3 2 -5 -2","4 1 2 0 0","7
+5 -2 3 4 0 4 0","6 0 2 2 0 1 0"
+"D-012-1","Axis Segment Intersection Count","Diamond","Sweep Line","A horizontal segment is given by x1 x2 y and includes every point from x1 through x2. A vertical segment x y1 y2 includes its endpoints.","Count intersections between one horizontal and one vertical segment. Follow every stated tie rule.","Line 1: H V.
+Next H lines: x1 x2 y.
+Next V lines: x y1 y2.","0 <= H,V <= 200000
+endpoints are inclusive
+coordinates: -10^9 to 10^9","0 0
+","0","0 0
+","0","1 1
+0 2 1
+1 0 2","1","2 1
+0 5 1
+1 4 3
+2 0 4","2","1 1
+0 1 0
+2 0 1","0","2 2
+0 5 2
+2 6 4
+3 1 5
+5 0 3","3","2 1
+1 3 1
+1 3 2
+2 0 3","2","1 1
+-2 2 0
+0 -1 1","1","1 3
+0 10 5
+1 5 5
+2 5 5
+3 0 4","2","1 1
+4 4 1
+2 -1 4","0","2 1
+-4 0 -1
+-2 -1 2
+-4 3 7","0","2 3
+0 2 -1
+-5 0 -1
+1 -5 1
+1 -4 -3
+4 -5 -1","1","1 1
+-1 2 4
+1 4 4","1"
+"D-012-2","Axis Segment Intersection Count Planner","Diamond","Sweep Line","A horizontal segment is given by x1 x2 y and includes every point from x1 through x2. A vertical segment x y1 y2 includes its endpoints.","Count intersections between one horizontal and one vertical segment. Print only the required result.","Line 1: H V.
+Next H lines: x1 x2 y.
+Next V lines: x y1 y2.","0 <= H,V <= 200000
+endpoints are inclusive
+coordinates: -10^9 to 10^9","0 0
+","0","0 0
+","0","1 1
+0 2 1
+1 0 2","1","2 1
+0 5 1
+1 4 3
+2 0 4","2","1 1
+0 1 0
+2 0 1","0","2 2
+0 5 2
+2 6 4
+3 1 5
+5 0 3","3","2 1
+1 3 1
+1 3 2
+2 0 3","2","1 1
+-2 2 0
+0 -1 1","1","1 3
+0 10 5
+1 5 5
+2 5 5
+3 0 4","2","1 1
+3 8 3
+-5 -4 -3","0","2 1
+4 8 0
+5 11 2
+4 2 7","0","2 3
+4 8 4
+0 3 -5
+-4 -4 -2
+-2 5 9
+3 0 6","0","1 1
+-4 -1 4
+-5 -2 4","0"
+"D-012-3","Axis Segment Intersection Count Checkpoint","Diamond","Sweep Line","A horizontal segment is given by x1 x2 y and includes every point from x1 through x2. A vertical segment x y1 y2 includes its endpoints.","Count intersections between one horizontal and one vertical segment. Treat each input as one independent scenario.","Line 1: H V.
+Next H lines: x1 x2 y.
+Next V lines: x y1 y2.","0 <= H,V <= 200000
+endpoints are inclusive
+coordinates: -10^9 to 10^9","0 0
+","0","0 0
+","0","1 1
+0 2 1
+1 0 2","1","2 1
+0 5 1
+1 4 3
+2 0 4","2","1 1
+0 1 0
+2 0 1","0","2 2
+0 5 2
+2 6 4
+3 1 5
+5 0 3","3","2 1
+1 3 1
+1 3 2
+2 0 3","2","1 1
+-2 2 0
+0 -1 1","1","1 3
+0 10 5
+1 5 5
+2 5 5
+3 0 4","2","1 1
+4 9 2
+-3 -5 -3","0","2 1
+3 9 4
+0 4 -4
+4 -2 2","0","2 3
+5 6 2
+4 8 -3
+2 2 6
+0 -2 -1
+1 0 2","0","1 1
+-3 0 1
+3 -5 0","0"
+"D-012-4","Axis Segment Intersection Count Tracker","Diamond","Sweep Line","A horizontal segment is given by x1 x2 y and includes every point from x1 through x2. A vertical segment x y1 y2 includes its endpoints.","Count intersections between one horizontal and one vertical segment. Keep the input and output format exact.","Line 1: H V.
+Next H lines: x1 x2 y.
+Next V lines: x y1 y2.","0 <= H,V <= 200000
+endpoints are inclusive
+coordinates: -10^9 to 10^9","0 0
+","0","0 0
+","0","1 1
+0 2 1
+1 0 2","1","2 1
+0 5 1
+1 4 3
+2 0 4","2","1 1
+0 1 0
+2 0 1","0","2 2
+0 5 2
+2 6 4
+3 1 5
+5 0 3","3","2 1
+1 3 1
+1 3 2
+2 0 3","2","1 1
+-2 2 0
+0 -1 1","1","1 3
+0 10 5
+1 5 5
+2 5 5
+3 0 4","2","1 1
+-5 0 -2
+2 2 4","0","2 1
+-4 0 -1
+4 5 -4
+3 3 6","0","2 3
+-4 -4 3
+5 11 3
+5 0 4
+-4 0 3
+-4 2 3","3","1 1
+3 4 -1
+-4 0 2","0"
+"D-012-5","Axis Segment Intersection Count Verifier","Diamond","Sweep Line","A horizontal segment is given by x1 x2 y and includes every point from x1 through x2. A vertical segment x y1 y2 includes its endpoints.","Count intersections between one horizontal and one vertical segment. Use the same definition for all tests.","Line 1: H V.
+Next H lines: x1 x2 y.
+Next V lines: x y1 y2.","0 <= H,V <= 200000
+endpoints are inclusive
+coordinates: -10^9 to 10^9","0 0
+","0","0 0
+","0","1 1
+0 2 1
+1 0 2","1","2 1
+0 5 1
+1 4 3
+2 0 4","2","1 1
+0 1 0
+2 0 1","0","2 2
+0 5 2
+2 6 4
+3 1 5
+5 0 3","3","2 1
+1 3 1
+1 3 2
+2 0 3","2","1 1
+-2 2 0
+0 -1 1","1","1 3
+0 10 5
+1 5 5
+2 5 5
+3 0 4","2","1 1
+-4 2 0
+-2 -2 1","1","2 1
+-2 0 -4
+-2 -1 -2
+-3 2 6","0","2 3
+-3 2 2
+-1 5 -3
+1 -2 -1
+-2 0 0
+4 0 0","0","1 1
+3 4 -5
+4 -2 -2","0"
+"D-013-1","Window Maximum Stream","Diamond","Monotonic Deque","A window is a consecutive block of exactly K values. As it moves one step, one value leaves and one may enter.","Print the maximum for every length-K window from left to right. Follow every stated tie rule.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","3 2
+1 2 3","2 3","8 3
+1 3 -1 -3 5 3 6 7","3 3 5 5 6 7","3 2
+5 5 5","5 5","3 2
+-1 -2 -3","-1 -2","5 4
+9 1 8 2 7","9 8","4 1
+0 0 1 0","0 0 1 0","6 3
+4 2 12 3 8 7","12 12 12 8","1 1
+-4","-4","3 1
+1 -7 3","1 -7 3","5 3
+-8 -4 1 3 3","1 3 3","7 2
+-9 -6 9 -4 2 1 -7","-6 9 9 2 2 1"
+"D-013-2","Window Maximum Stream Planner","Diamond","Monotonic Deque","A window is a consecutive block of exactly K values. As it moves one step, one value leaves and one may enter.","Print the maximum for every length-K window from left to right. Print only the required result.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","3 2
+1 2 3","2 3","8 3
+1 3 -1 -3 5 3 6 7","3 3 5 5 6 7","3 2
+5 5 5","5 5","3 2
+-1 -2 -3","-1 -2","5 4
+9 1 8 2 7","9 8","4 1
+0 0 1 0","0 0 1 0","6 3
+4 2 12 3 8 7","12 12 12 8","1 1
+-3","-3","3 1
+-1 -6 -4","-1 -6 -4","5 2
+8 5 2 -9 6","8 5 2 6","7 4
+9 8 9 -7 -1 -8 8","9 9 9 8"
+"D-013-3","Window Maximum Stream Checkpoint","Diamond","Monotonic Deque","A window is a consecutive block of exactly K values. As it moves one step, one value leaves and one may enter.","Print the maximum for every length-K window from left to right. Treat each input as one independent scenario.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","3 2
+1 2 3","2 3","8 3
+1 3 -1 -3 5 3 6 7","3 3 5 5 6 7","3 2
+5 5 5","5 5","3 2
+-1 -2 -3","-1 -2","5 4
+9 1 8 2 7","9 8","4 1
+0 0 1 0","0 0 1 0","6 3
+4 2 12 3 8 7","12 12 12 8","1 1
+-2","-2","3 1
+-7 4 4","-7 4 4","5 4
+-2 2 3 -1 -7","3 3","7 7
+4 5 2 -5 -4 -4 6","6"
+"D-013-4","Window Maximum Stream Tracker","Diamond","Monotonic Deque","A window is a consecutive block of exactly K values. As it moves one step, one value leaves and one may enter.","Print the maximum for every length-K window from left to right. Keep the input and output format exact.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","3 2
+1 2 3","2 3","8 3
+1 3 -1 -3 5 3 6 7","3 3 5 5 6 7","3 2
+5 5 5","5 5","3 2
+-1 -2 -3","-1 -2","5 4
+9 1 8 2 7","9 8","4 1
+0 0 1 0","0 0 1 0","6 3
+4 2 12 3 8 7","12 12 12 8","1 1
+7","7","3 2
+8 -5 -6","8 -5","5 1
+-5 4 2 -1 -1","-5 4 2 -1 -1","7 4
+4 1 -7 -5 -1 6 -8","4 1 6 6"
+"D-013-5","Window Maximum Stream Verifier","Diamond","Monotonic Deque","A window is a consecutive block of exactly K values. As it moves one step, one value leaves and one may enter.","Print the maximum for every length-K window from left to right. Use the same definition for all tests.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","3 2
+1 2 3","2 3","8 3
+1 3 -1 -3 5 3 6 7","3 3 5 5 6 7","3 2
+5 5 5","5 5","3 2
+-1 -2 -3","-1 -2","5 4
+9 1 8 2 7","9 8","4 1
+0 0 1 0","0 0 1 0","6 3
+4 2 12 3 8 7","12 12 12 8","1 1
+-1","-1","3 1
+-5 2 6","-5 2 6","5 2
+4 -7 -2 -1 3","4 -2 -1 3","7 7
+0 9 7 -2 6 4 -6","9"
+"D-014-1","Shortest Target-Sum Segment","Diamond","Monotonic Deque","A subarray is a consecutive segment. Values may be negative, so extending a segment can reduce its sum.","Print the shortest non-empty subarray length whose sum is at least K, or -1 if none exists. Follow every stated tie rule.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+values and K: -10^9 to 10^9
+use 64-bit sums","1 1
+1","1","1 1
+1","1","2 4
+1 2","-1","3 3
+2 -1 2","3","5 3
+1 -1 5 -2 3","1","5 167
+84 -37 32 40 95","3","3 -2
+-1 -2 -3","1","3 3
+1 2 3","1","5 6
+3 -2 5 -1 2","3","1 8
+-7","-1","3 4
+1 7 9","1","5 0
+-9 -6 -7 1 4","1","7 6
+7 -9 2 -4 7 -4 -7","1"
+"D-014-2","Shortest Target-Sum Segment Planner","Diamond","Monotonic Deque","A subarray is a consecutive segment. Values may be negative, so extending a segment can reduce its sum.","Print the shortest non-empty subarray length whose sum is at least K, or -1 if none exists. Print only the required result.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+values and K: -10^9 to 10^9
+use 64-bit sums","1 1
+1","1","1 1
+1","1","2 4
+1 2","-1","3 3
+2 -1 2","3","5 3
+1 -1 5 -2 3","1","5 167
+84 -37 32 40 95","3","3 -2
+-1 -2 -3","1","3 3
+1 2 3","1","5 6
+3 -2 5 -1 2","3","1 -2
+-5","-1","3 7
+-9 -9 -7","-1","5 5
+-8 -4 -3 -8 -2","-1","7 7
+9 -9 7 -5 -1 0 -1","1"
+"D-014-3","Shortest Target-Sum Segment Checkpoint","Diamond","Monotonic Deque","A subarray is a consecutive segment. Values may be negative, so extending a segment can reduce its sum.","Print the shortest non-empty subarray length whose sum is at least K, or -1 if none exists. Treat each input as one independent scenario.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+values and K: -10^9 to 10^9
+use 64-bit sums","1 1
+1","1","1 1
+1","1","2 4
+1 2","-1","3 3
+2 -1 2","3","5 3
+1 -1 5 -2 3","1","5 167
+84 -37 32 40 95","3","3 -2
+-1 -2 -3","1","3 3
+1 2 3","1","5 6
+3 -2 5 -1 2","3","1 8
+5","-1","3 10
+-2 8 7","2","5 11
+-8 -4 -9 2 -6","-1","7 5
+-3 -4 4 -8 -1 -9 -1","-1"
+"D-014-4","Shortest Target-Sum Segment Tracker","Diamond","Monotonic Deque","A subarray is a consecutive segment. Values may be negative, so extending a segment can reduce its sum.","Print the shortest non-empty subarray length whose sum is at least K, or -1 if none exists. Keep the input and output format exact.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+values and K: -10^9 to 10^9
+use 64-bit sums","1 1
+1","1","1 1
+1","1","2 4
+1 2","-1","3 3
+2 -1 2","3","5 3
+1 -1 5 -2 3","1","5 167
+84 -37 32 40 95","3","3 -2
+-1 -2 -3","1","3 3
+1 2 3","1","5 6
+3 -2 5 -1 2","3","1 4
+-4","-1","3 -4
+-3 4 9","1","5 -2
+-5 -2 -1 -5 -5","1","7 -1
+-7 -2 5 0 -5 2 -2","1"
+"D-014-5","Shortest Target-Sum Segment Verifier","Diamond","Monotonic Deque","A subarray is a consecutive segment. Values may be negative, so extending a segment can reduce its sum.","Print the shortest non-empty subarray length whose sum is at least K, or -1 if none exists. Use the same definition for all tests.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+values and K: -10^9 to 10^9
+use 64-bit sums","1 1
+1","1","1 1
+1","1","2 4
+1 2","-1","3 3
+2 -1 2","3","5 3
+1 -1 5 -2 3","1","5 167
+84 -37 32 40 95","3","3 -2
+-1 -2 -3","1","3 3
+1 2 3","1","5 6
+3 -2 5 -1 2","3","1 1
+9","1","3 8
+8 -9 4","1","5 7
+-3 5 3 9 -5","1","7 1
+-2 5 -9 3 4 6 4","1"
+"D-015-1","Best Subarray With One Skip","Diamond","Dynamic Programming","A subarray is consecutive. You may delete at most one element from the chosen subarray; deleting nothing is allowed.","Print the maximum possible remaining sum. Follow every stated tie rule.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","1","1
+1","1","4
+1 -2 0 3","4","4
+1 -2 -2 3","3","3
+-1 -1 -1","-1","4
+2 3 -2 4","9","4
+-2 1 -2 1","2","5
+8 -1 6 -7 3","16","4
+1 2 3 4","10","1
+-1","-1","3
+3 5 -3","8","5
+-3 6 -6 -2 8","12","7
+-7 -2 3 7 1 -6 -1","11"
+"D-015-2","Best Subarray With One Skip Planner","Diamond","Dynamic Programming","A subarray is consecutive. You may delete at most one element from the chosen subarray; deleting nothing is allowed.","Print the maximum possible remaining sum. Print only the required result.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","1","1
+1","1","4
+1 -2 0 3","4","4
+1 -2 -2 3","3","3
+-1 -1 -1","-1","4
+2 3 -2 4","9","4
+-2 1 -2 1","2","5
+8 -1 6 -7 3","16","4
+1 2 3 4","10","1
+-3","-3","3
+-2 5 0","5","5
+-1 -8 9 0 4","13","7
+-1 3 -6 -4 -2 4 -6","4"
+"D-015-3","Best Subarray With One Skip Checkpoint","Diamond","Dynamic Programming","A subarray is consecutive. You may delete at most one element from the chosen subarray; deleting nothing is allowed.","Print the maximum possible remaining sum. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","1","1
+1","1","4
+1 -2 0 3","4","4
+1 -2 -2 3","3","3
+-1 -1 -1","-1","4
+2 3 -2 4","9","4
+-2 1 -2 1","2","5
+8 -1 6 -7 3","16","4
+1 2 3 4","10","1
+3","3","3
+1 -2 7","8","5
+-8 7 -2 -9 8","13","7
+-1 3 0 -6 6 2 -6","11"
+"D-015-4","Best Subarray With One Skip Tracker","Diamond","Dynamic Programming","A subarray is consecutive. You may delete at most one element from the chosen subarray; deleting nothing is allowed.","Print the maximum possible remaining sum. Keep the input and output format exact.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","1","1
+1","1","4
+1 -2 0 3","4","4
+1 -2 -2 3","3","3
+-1 -1 -1","-1","4
+2 3 -2 4","9","4
+-2 1 -2 1","2","5
+8 -1 6 -7 3","16","4
+1 2 3 4","10","1
+2","2","3
+-1 6 -4","6","5
+-3 -5 4 -7 -5","4","7
+9 4 4 2 -9 2 2","23"
+"D-015-5","Best Subarray With One Skip Verifier","Diamond","Dynamic Programming","A subarray is consecutive. You may delete at most one element from the chosen subarray; deleting nothing is allowed.","Print the maximum possible remaining sum. Use the same definition for all tests.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","1","1
+1","1","4
+1 -2 0 3","4","4
+1 -2 -2 3","3","3
+-1 -1 -1","-1","4
+2 3 -2 4","9","4
+-2 1 -2 1","2","5
+8 -1 6 -7 3","16","4
+1 2 3 4","10","1
+-2","-2","3
+-9 -3 -3","-3","5
+-1 -3 1 7 0","8","7
+4 -2 0 -2 8 8 0","18"
+"D-016-1","Longest Palindromic Subsequence","Diamond","Dynamic Programming","A subsequence keeps character order but may skip characters. A palindrome reads the same forward and backward.","Print the length of the longest palindromic subsequence. Follow every stated tie rule.","Line 1: lowercase string S.","1 <= |S| <= 1000
+S uses lowercase English letters","a","1","a","1","bbbab","4","cbbd","2","character","5","abcde","1","agbdba","5","aaaa","4","abca","3","bbc","2","babbcaa","4","ccc","3","ccbab","3"
+"D-016-2","Longest Palindromic Subsequence Planner","Diamond","Dynamic Programming","A subsequence keeps character order but may skip characters. A palindrome reads the same forward and backward.","Print the length of the longest palindromic subsequence. Print only the required result.","Line 1: lowercase string S.","1 <= |S| <= 1000
+S uses lowercase English letters","a","1","a","1","bbbab","4","cbbd","2","character","5","abcde","1","agbdba","5","aaaa","4","abca","3","c","1","aac","2","bccbc","4","bccbcbb","5"
+"D-016-3","Longest Palindromic Subsequence Checkpoint","Diamond","Dynamic Programming","A subsequence keeps character order but may skip characters. A palindrome reads the same forward and backward.","Print the length of the longest palindromic subsequence. Treat each input as one independent scenario.","Line 1: lowercase string S.","1 <= |S| <= 1000
+S uses lowercase English letters","a","1","a","1","bbbab","4","cbbd","2","character","5","abcde","1","agbdba","5","aaaa","4","abca","3","cca","2","bcccb","5","cacbbcc","6","b","1"
+"D-016-4","Longest Palindromic Subsequence Tracker","Diamond","Dynamic Programming","A subsequence keeps character order but may skip characters. A palindrome reads the same forward and backward.","Print the length of the longest palindromic subsequence. Keep the input and output format exact.","Line 1: lowercase string S.","1 <= |S| <= 1000
+S uses lowercase English letters","a","1","a","1","bbbab","4","cbbd","2","character","5","abcde","1","agbdba","5","aaaa","4","abca","3","c","1","bbc","2","abbac","4","babbaac","4"
+"D-016-5","Longest Palindromic Subsequence Verifier","Diamond","Dynamic Programming","A subsequence keeps character order but may skip characters. A palindrome reads the same forward and backward.","Print the length of the longest palindromic subsequence. Use the same definition for all tests.","Line 1: lowercase string S.","1 <= |S| <= 1000
+S uses lowercase English letters","a","1","a","1","bbbab","4","cbbd","2","character","5","abcde","1","agbdba","5","aaaa","4","abca","3","c","1","bca","1","caacc","4","aaaabab","5"
+"D-017-1","Best Nonoverlap Reward","Diamond","Dynamic Programming","Each interval has a start, end, and reward. Two selected intervals may touch at an endpoint but may not overlap in their interiors.","Print the maximum total reward from nonoverlapping intervals. Follow every stated tie rule.","Line 1: N.
+Next N lines: start end reward.","0 <= N <= 200000
+start < end
+reward: 0 to 10^9","0
+","0","0
+","0","1
+1 2 5","5","2
+1 3 5
+2 5 6","6","2
+1 2 5
+2 3 6","11","3
+1 4 5
+2 3 10
+4 5 7","17","3
+1 3 4
+3 5 4
+0 6 10","10","3
+1 2 2
+2 4 4
+4 6 6","12","4
+1 10 100
+2 3 10
+3 4 10
+4 5 10","100","1
+6 7 2","2","2
+2 6 5
+2 5 7","7","4
+8 12 5
+6 7 8
+1 2 0
+8 10 6","14","1
+7 11 4","4"
+"D-017-2","Best Nonoverlap Reward Planner","Diamond","Dynamic Programming","Each interval has a start, end, and reward. Two selected intervals may touch at an endpoint but may not overlap in their interiors.","Print the maximum total reward from nonoverlapping intervals. Print only the required result.","Line 1: N.
+Next N lines: start end reward.","0 <= N <= 200000
+start < end
+reward: 0 to 10^9","0
+","0","0
+","0","1
+1 2 5","5","2
+1 3 5
+2 5 6","6","2
+1 2 5
+2 3 6","11","3
+1 4 5
+2 3 10
+4 5 7","17","3
+1 3 4
+3 5 4
+0 6 10","10","3
+1 2 2
+2 4 4
+4 6 6","12","4
+1 10 100
+2 3 10
+3 4 10
+4 5 10","100","1
+0 1 4","4","2
+7 8 2
+2 6 0","2","4
+3 4 3
+1 2 5
+8 9 9
+4 6 2","19","1
+4 7 4","4"
+"D-017-3","Best Nonoverlap Reward Checkpoint","Diamond","Dynamic Programming","Each interval has a start, end, and reward. Two selected intervals may touch at an endpoint but may not overlap in their interiors.","Print the maximum total reward from nonoverlapping intervals. Treat each input as one independent scenario.","Line 1: N.
+Next N lines: start end reward.","0 <= N <= 200000
+start < end
+reward: 0 to 10^9","0
+","0","0
+","0","1
+1 2 5","5","2
+1 3 5
+2 5 6","6","2
+1 2 5
+2 3 6","11","3
+1 4 5
+2 3 10
+4 5 7","17","3
+1 3 4
+3 5 4
+0 6 10","10","3
+1 2 2
+2 4 4
+4 6 6","12","4
+1 10 100
+2 3 10
+3 4 10
+4 5 10","100","1
+5 9 5","5","2
+4 5 8
+8 9 8","16","4
+0 3 2
+1 3 3
+1 2 7
+6 8 8","15","1
+1 5 0","0"
+"D-017-4","Best Nonoverlap Reward Tracker","Diamond","Dynamic Programming","Each interval has a start, end, and reward. Two selected intervals may touch at an endpoint but may not overlap in their interiors.","Print the maximum total reward from nonoverlapping intervals. Keep the input and output format exact.","Line 1: N.
+Next N lines: start end reward.","0 <= N <= 200000
+start < end
+reward: 0 to 10^9","0
+","0","0
+","0","1
+1 2 5","5","2
+1 3 5
+2 5 6","6","2
+1 2 5
+2 3 6","11","3
+1 4 5
+2 3 10
+4 5 7","17","3
+1 3 4
+3 5 4
+0 6 10","10","3
+1 2 2
+2 4 4
+4 6 6","12","4
+1 10 100
+2 3 10
+3 4 10
+4 5 10","100","1
+3 4 1","1","2
+2 3 4
+2 5 8","8","4
+2 4 2
+6 7 7
+7 11 6
+2 5 3","16","1
+1 2 8","8"
+"D-017-5","Best Nonoverlap Reward Verifier","Diamond","Dynamic Programming","Each interval has a start, end, and reward. Two selected intervals may touch at an endpoint but may not overlap in their interiors.","Print the maximum total reward from nonoverlapping intervals. Use the same definition for all tests.","Line 1: N.
+Next N lines: start end reward.","0 <= N <= 200000
+start < end
+reward: 0 to 10^9","0
+","0","0
+","0","1
+1 2 5","5","2
+1 3 5
+2 5 6","6","2
+1 2 5
+2 3 6","11","3
+1 4 5
+2 3 10
+4 5 7","17","3
+1 3 4
+3 5 4
+0 6 10","10","3
+1 2 2
+2 4 4
+4 6 6","12","4
+1 10 100
+2 3 10
+3 4 10
+4 5 10","100","1
+5 6 0","0","2
+1 2 9
+3 7 7","16","4
+3 5 1
+0 4 3
+7 10 8
+6 8 7","11","1
+4 7 8","8"
+"D-018-1","Minimum Interval Points","Diamond","Greedy","A point hits an interval when it lies between its inclusive endpoints. One point may hit many overlapping intervals.","Print the minimum number of points needed to hit every interval. Follow every stated tie rule.","Line 1: N.
+Next N lines: inclusive start end.","0 <= N <= 200000
+start <= end
+coordinates: -10^9 to 10^9","0
+","0","0
+","0","1
+1 2","1","2
+1 2
+2 3","1","4
+1 6
+2 8
+7 12
+10 16","2","2
+1 2
+3 4","2","3
+1 10
+2 3
+4 5","2","2
+1 1
+1 1","1","3
+0 5
+1 4
+2 3","1","1
+5 8","1","2
+0 3
+-3 -3","2","4
+1 5
+8 8
+2 7
+7 9","2","1
+4 8","1"
+"D-018-2","Minimum Interval Points Planner","Diamond","Greedy","A point hits an interval when it lies between its inclusive endpoints. One point may hit many overlapping intervals.","Print the minimum number of points needed to hit every interval. Print only the required result.","Line 1: N.
+Next N lines: inclusive start end.","0 <= N <= 200000
+start <= end
+coordinates: -10^9 to 10^9","0
+","0","0
+","0","1
+1 2","1","2
+1 2
+2 3","1","4
+1 6
+2 8
+7 12
+10 16","2","2
+1 2
+3 4","2","3
+1 10
+2 3
+4 5","2","2
+1 1
+1 1","1","3
+0 5
+1 4
+2 3","1","1
+5 7","1","2
+5 6
+1 1","2","4
+6 7
+-4 0
+1 4
+4 9","3","1
+7 7","1"
+"D-018-3","Minimum Interval Points Checkpoint","Diamond","Greedy","A point hits an interval when it lies between its inclusive endpoints. One point may hit many overlapping intervals.","Print the minimum number of points needed to hit every interval. Treat each input as one independent scenario.","Line 1: N.
+Next N lines: inclusive start end.","0 <= N <= 200000
+start <= end
+coordinates: -10^9 to 10^9","0
+","0","0
+","0","1
+1 2","1","2
+1 2
+2 3","1","4
+1 6
+2 8
+7 12
+10 16","2","2
+1 2
+3 4","2","3
+1 10
+2 3
+4 5","2","2
+1 1
+1 1","1","3
+0 5
+1 4
+2 3","1","1
+-5 -3","1","2
+-3 -1
+-2 3","1","4
+-3 2
+1 3
+-3 2
+8 13","2","1
+-3 2","1"
+"D-018-4","Minimum Interval Points Tracker","Diamond","Greedy","A point hits an interval when it lies between its inclusive endpoints. One point may hit many overlapping intervals.","Print the minimum number of points needed to hit every interval. Keep the input and output format exact.","Line 1: N.
+Next N lines: inclusive start end.","0 <= N <= 200000
+start <= end
+coordinates: -10^9 to 10^9","0
+","0","0
+","0","1
+1 2","1","2
+1 2
+2 3","1","4
+1 6
+2 8
+7 12
+10 16","2","2
+1 2
+3 4","2","3
+1 10
+2 3
+4 5","2","2
+1 1
+1 1","1","3
+0 5
+1 4
+2 3","1","1
+-1 4","1","2
+2 5
+-3 -1","2","4
+3 4
+-1 2
+8 11
+2 4","3","1
+2 2","1"
+"D-018-5","Minimum Interval Points Verifier","Diamond","Greedy","A point hits an interval when it lies between its inclusive endpoints. One point may hit many overlapping intervals.","Print the minimum number of points needed to hit every interval. Use the same definition for all tests.","Line 1: N.
+Next N lines: inclusive start end.","0 <= N <= 200000
+start <= end
+coordinates: -10^9 to 10^9","0
+","0","0
+","0","1
+1 2","1","2
+1 2
+2 3","1","4
+1 6
+2 8
+7 12
+10 16","2","2
+1 2
+3 4","2","3
+1 10
+2 3
+4 5","2","2
+1 1
+1 1","1","3
+0 5
+1 4
+2 3","1","1
+4 7","1","2
+-3 2
+7 7","2","4
+-2 2
+7 11
+-2 2
+6 8","2","2
+-1 0
+5 6","2"
+"D-019-1","Circular Fuel Start","Diamond","Greedy","At station i, you gain gas[i] fuel and spend cost[i] to reach the next station. The route wraps from the last station back to the first.","Print the smallest valid 0-based start index that completes the route, or -1 if none exists. Follow every stated tie rule.","Line 1: N.
+Line 2: N gas values.
+Line 3: N cost values.","1 <= N <= 200000
+values: 0 to 10^9","1
+1
+1","0","1
+1
+1","0","5
+1 2 3 4 5
+3 4 5 1 2","3","3
+2 3 4
+3 4 3","-1","1
+5
+4","0","5
+4 4 1 5 1
+1 5 3 1 2","0","3
+1 1 1
+1 1 1","0","3
+0 5 0
+1 0 1","1","3
+2 2 2
+1 2 3","0","1
+6
+4","0","2
+0 1
+2 1","-1","3
+3 0 6
+3 5 6","-1","5
+2 3 4 5 3
+4 1 6 2 3","1"
+"D-019-2","Circular Fuel Start Planner","Diamond","Greedy","At station i, you gain gas[i] fuel and spend cost[i] to reach the next station. The route wraps from the last station back to the first.","Print the smallest valid 0-based start index that completes the route, or -1 if none exists. Print only the required result.","Line 1: N.
+Line 2: N gas values.
+Line 3: N cost values.","1 <= N <= 200000
+values: 0 to 10^9","1
+1
+1","0","1
+1
+1","0","5
+1 2 3 4 5
+3 4 5 1 2","3","3
+2 3 4
+3 4 3","-1","1
+5
+4","0","5
+4 4 1 5 1
+1 5 3 1 2","0","3
+1 1 1
+1 1 1","0","3
+0 5 0
+1 0 1","1","3
+2 2 2
+1 2 3","0","1
+4
+0","0","2
+0 4
+2 3","-1","3
+2 5 3
+4 4 5","-1","5
+1 1 2 4 2
+4 6 1 2 5","-1"
+"D-019-3","Circular Fuel Start Checkpoint","Diamond","Greedy","At station i, you gain gas[i] fuel and spend cost[i] to reach the next station. The route wraps from the last station back to the first.","Print the smallest valid 0-based start index that completes the route, or -1 if none exists. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N gas values.
+Line 3: N cost values.","1 <= N <= 200000
+values: 0 to 10^9","1
+1
+1","0","1
+1
+1","0","5
+1 2 3 4 5
+3 4 5 1 2","3","3
+2 3 4
+3 4 3","-1","1
+5
+4","0","5
+4 4 1 5 1
+1 5 3 1 2","0","3
+1 1 1
+1 1 1","0","3
+0 5 0
+1 0 1","1","3
+2 2 2
+1 2 3","0","1
+0
+3","-1","2
+1 0
+1 0","0","3
+2 2 2
+2 5 5","-1","5
+0 3 6 6 4
+2 0 6 6 0","1"
+"D-019-4","Circular Fuel Start Tracker","Diamond","Greedy","At station i, you gain gas[i] fuel and spend cost[i] to reach the next station. The route wraps from the last station back to the first.","Print the smallest valid 0-based start index that completes the route, or -1 if none exists. Keep the input and output format exact.","Line 1: N.
+Line 2: N gas values.
+Line 3: N cost values.","1 <= N <= 200000
+values: 0 to 10^9","1
+1
+1","0","1
+1
+1","0","5
+1 2 3 4 5
+3 4 5 1 2","3","3
+2 3 4
+3 4 3","-1","1
+5
+4","0","5
+4 4 1 5 1
+1 5 3 1 2","0","3
+1 1 1
+1 1 1","0","3
+0 5 0
+1 0 1","1","3
+2 2 2
+1 2 3","0","1
+3
+2","0","2
+3 6
+0 5","0","3
+6 0 2
+0 3 1","0","5
+5 3 0 1 5
+4 4 5 3 1","-1"
+"D-019-5","Circular Fuel Start Verifier","Diamond","Greedy","At station i, you gain gas[i] fuel and spend cost[i] to reach the next station. The route wraps from the last station back to the first.","Print the smallest valid 0-based start index that completes the route, or -1 if none exists. Use the same definition for all tests.","Line 1: N.
+Line 2: N gas values.
+Line 3: N cost values.","1 <= N <= 200000
+values: 0 to 10^9","1
+1
+1","0","1
+1
+1","0","5
+1 2 3 4 5
+3 4 5 1 2","3","3
+2 3 4
+3 4 3","-1","1
+5
+4","0","5
+4 4 1 5 1
+1 5 3 1 2","0","3
+1 1 1
+1 1 1","0","3
+0 5 0
+1 0 1","1","3
+2 2 2
+1 2 3","0","1
+3
+6","-1","2
+1 1
+3 0","-1","3
+5 3 3
+5 5 0","2","5
+2 2 3 4 1
+6 1 2 6 5","-1"
+"D-020-1","Minimum Starting Health","Diamond","Greedy","Health changes by each room’s signed value. Health must stay at least 1 after every room.","Print the smallest initial health that survives the whole sequence. Follow every stated tie rule.","Line 1: N.
+Line 2: N room changes.","1 <= N <= 200000
+changes: -10^9 to 10^9
+use 64-bit values","1
+0","1","1
+0","1","1
+-1","2","3
+1 -2 3","2","2
+-2 -3","6","3
+-5 10 -5","6","3
+1 1 1","1","4
+-1 2 -1 2","2","4
+-10 20 -30 40","21","1
+-2","3","2
+-7 -8","16","3
+8 0 -2","1","5
+-8 1 -1 0 -5","14"
+"D-020-2","Minimum Starting Health Planner","Diamond","Greedy","Health changes by each room’s signed value. Health must stay at least 1 after every room.","Print the smallest initial health that survives the whole sequence. Print only the required result.","Line 1: N.
+Line 2: N room changes.","1 <= N <= 200000
+changes: -10^9 to 10^9
+use 64-bit values","1
+0","1","1
+0","1","1
+-1","2","3
+1 -2 3","2","2
+-2 -3","6","3
+-5 10 -5","6","3
+1 1 1","1","4
+-1 2 -1 2","2","4
+-10 20 -30 40","21","1
+8","1","2
+4 4","1","3
+4 9 -6","1","5
+1 3 9 -1 -2","1"
+"D-020-3","Minimum Starting Health Checkpoint","Diamond","Greedy","Health changes by each room’s signed value. Health must stay at least 1 after every room.","Print the smallest initial health that survives the whole sequence. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N room changes.","1 <= N <= 200000
+changes: -10^9 to 10^9
+use 64-bit values","1
+0","1","1
+0","1","1
+-1","2","3
+1 -2 3","2","2
+-2 -3","6","3
+-5 10 -5","6","3
+1 1 1","1","4
+-1 2 -1 2","2","4
+-10 20 -30 40","21","1
+-7","8","2
+-2 -7","10","3
+-2 4 6","3","5
+3 -4 7 -8 4","3"
+"D-020-4","Minimum Starting Health Tracker","Diamond","Greedy","Health changes by each room’s signed value. Health must stay at least 1 after every room.","Print the smallest initial health that survives the whole sequence. Keep the input and output format exact.","Line 1: N.
+Line 2: N room changes.","1 <= N <= 200000
+changes: -10^9 to 10^9
+use 64-bit values","1
+0","1","1
+0","1","1
+-1","2","3
+1 -2 3","2","2
+-2 -3","6","3
+-5 10 -5","6","3
+1 1 1","1","4
+-1 2 -1 2","2","4
+-10 20 -30 40","21","1
+-8","9","2
+-6 7","7","3
+9 -1 7","1","5
+-6 -9 8 -1 -9","18"
+"D-020-5","Minimum Starting Health Verifier","Diamond","Greedy","Health changes by each room’s signed value. Health must stay at least 1 after every room.","Print the smallest initial health that survives the whole sequence. Use the same definition for all tests.","Line 1: N.
+Line 2: N room changes.","1 <= N <= 200000
+changes: -10^9 to 10^9
+use 64-bit values","1
+0","1","1
+0","1","1
+-1","2","3
+1 -2 3","2","2
+-2 -3","6","3
+-5 10 -5","6","3
+1 1 1","1","4
+-1 2 -1 2","2","4
+-10 20 -30 40","21","1
+5","1","2
+8 -7","1","3
+2 -4 6","3","5
+5 4 7 5 -3","1"
+"D-021-1","Maximum Product Segment","Diamond","Dynamic Programming","A subarray is a non-empty consecutive segment. Negative values can turn a small negative product into a large positive product.","Print the maximum product of any non-empty subarray. Follow every stated tie rule.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10 to 10
+product fits signed 64-bit","1
+1","1","1
+1","1","4
+2 3 -2 4","6","3
+-2 0 -1","0","3
+-2 3 -4","24","2
+0 0","0","3
+-1 -2 -3","6","1
+-1","-1","5
+2 -5 -2 -4 3","24","1
+3","3","2
+0 1","1","4
+-2 -3 -2 3","18","6
+-3 1 4 0 2 -1","4"
+"D-021-2","Maximum Product Segment Planner","Diamond","Dynamic Programming","A subarray is a non-empty consecutive segment. Negative values can turn a small negative product into a large positive product.","Print the maximum product of any non-empty subarray. Print only the required result.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10 to 10
+product fits signed 64-bit","1
+1","1","1
+1","1","4
+2 3 -2 4","6","3
+-2 0 -1","0","3
+-2 3 -4","24","2
+0 0","0","3
+-1 -2 -3","6","1
+-1","-1","5
+2 -5 -2 -4 3","24","1
+0","0","2
+-2 2","2","4
+0 -1 1 3","3","6
+-4 -4 -4 -1 3 3","576"
+"D-021-3","Maximum Product Segment Checkpoint","Diamond","Dynamic Programming","A subarray is a non-empty consecutive segment. Negative values can turn a small negative product into a large positive product.","Print the maximum product of any non-empty subarray. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10 to 10
+product fits signed 64-bit","1
+1","1","1
+1","1","4
+2 3 -2 4","6","3
+-2 0 -1","0","3
+-2 3 -4","24","2
+0 0","0","3
+-1 -2 -3","6","1
+-1","-1","5
+2 -5 -2 -4 3","24","1
+4","4","2
+1 -3","1","4
+-4 -1 1 0","4","6
+-4 3 -3 3 0 3","108"
+"D-021-4","Maximum Product Segment Tracker","Diamond","Dynamic Programming","A subarray is a non-empty consecutive segment. Negative values can turn a small negative product into a large positive product.","Print the maximum product of any non-empty subarray. Keep the input and output format exact.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10 to 10
+product fits signed 64-bit","1
+1","1","1
+1","1","4
+2 3 -2 4","6","3
+-2 0 -1","0","3
+-2 3 -4","24","2
+0 0","0","3
+-1 -2 -3","6","1
+-1","-1","5
+2 -5 -2 -4 3","24","1
+4","4","2
+2 2","4","4
+0 3 2 4","24","6
+-3 0 0 -1 -2 -1","2"
+"D-021-5","Maximum Product Segment Verifier","Diamond","Dynamic Programming","A subarray is a non-empty consecutive segment. Negative values can turn a small negative product into a large positive product.","Print the maximum product of any non-empty subarray. Use the same definition for all tests.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10 to 10
+product fits signed 64-bit","1
+1","1","1
+1","1","4
+2 3 -2 4","6","3
+-2 0 -1","0","3
+-2 3 -4","24","2
+0 0","0","3
+-1 -2 -3","6","1
+-1","-1","5
+2 -5 -2 -4 3","24","1
+-2","-2","2
+4 3","12","4
+-3 -1 4 0","12","6
+-2 2 -4 -1 2 0","16"
+"D-022-1","Kth Pair Distance","Diamond","Binary Search","The distance of an unordered pair is the absolute difference of its values. Sort all pair distances with repeats included.","Print the Kth smallest pair distance. Follow every stated tie rule.","Line 1: N K.
+Line 2: N integers.","2 <= N <= 200000
+1 <= K <= N(N-1)/2
+values: -10^9 to 10^9","3 1
+1 3 1","0","3 1
+1 3 1","0","3 2
+1 1 1","0","3 3
+1 6 1","5","2 1
+1 2","1","3 2
+1 4 7","3","4 4
+0 5 10 15","10","4 5
+2 2 3 3","1","6 7
+10 1 2 7 1 3","3","2 1
+-4 -5","1","3 3
+-9 2 0","11","4 4
+3 -4 -1 -6","5","6 7
+8 -5 1 0 9 7","6"
+"D-022-2","Kth Pair Distance Planner","Diamond","Binary Search","The distance of an unordered pair is the absolute difference of its values. Sort all pair distances with repeats included.","Print the Kth smallest pair distance. Print only the required result.","Line 1: N K.
+Line 2: N integers.","2 <= N <= 200000
+1 <= K <= N(N-1)/2
+values: -10^9 to 10^9","3 1
+1 3 1","0","3 1
+1 3 1","0","3 2
+1 1 1","0","3 3
+1 6 1","5","2 1
+1 2","1","3 2
+1 4 7","3","4 4
+0 5 10 15","10","4 5
+2 2 3 3","1","6 7
+10 1 2 7 1 3","3","2 1
+-2 8","10","3 3
+-6 7 9","15","4 3
+-8 4 -9 -6","3","6 7
+6 0 -2 7 7 5","2"
+"D-022-3","Kth Pair Distance Checkpoint","Diamond","Binary Search","The distance of an unordered pair is the absolute difference of its values. Sort all pair distances with repeats included.","Print the Kth smallest pair distance. Treat each input as one independent scenario.","Line 1: N K.
+Line 2: N integers.","2 <= N <= 200000
+1 <= K <= N(N-1)/2
+values: -10^9 to 10^9","3 1
+1 3 1","0","3 1
+1 3 1","0","3 2
+1 1 1","0","3 3
+1 6 1","5","2 1
+1 2","1","3 2
+1 4 7","3","4 4
+0 5 10 15","10","4 5
+2 2 3 3","1","6 7
+10 1 2 7 1 3","3","2 1
+-2 -4","2","3 3
+3 -9 -5","12","4 6
+-1 -1 -3 2","5","6 3
+-3 9 5 8 5 6","1"
+"D-022-4","Kth Pair Distance Tracker","Diamond","Binary Search","The distance of an unordered pair is the absolute difference of its values. Sort all pair distances with repeats included.","Print the Kth smallest pair distance. Keep the input and output format exact.","Line 1: N K.
+Line 2: N integers.","2 <= N <= 200000
+1 <= K <= N(N-1)/2
+values: -10^9 to 10^9","3 1
+1 3 1","0","3 1
+1 3 1","0","3 2
+1 1 1","0","3 3
+1 6 1","5","2 1
+1 2","1","3 2
+1 4 7","3","4 4
+0 5 10 15","10","4 5
+2 2 3 3","1","6 7
+10 1 2 7 1 3","3","2 1
+6 7","1","3 3
+-8 -5 -5","3","4 4
+9 8 1 5","4","6 5
+-8 -1 5 5 -9 6","6"
+"D-022-5","Kth Pair Distance Verifier","Diamond","Binary Search","The distance of an unordered pair is the absolute difference of its values. Sort all pair distances with repeats included.","Print the Kth smallest pair distance. Use the same definition for all tests.","Line 1: N K.
+Line 2: N integers.","2 <= N <= 200000
+1 <= K <= N(N-1)/2
+values: -10^9 to 10^9","3 1
+1 3 1","0","3 1
+1 3 1","0","3 2
+1 1 1","0","3 3
+1 6 1","5","2 1
+1 2","1","3 2
+1 4 7","3","4 4
+0 5 10 15","10","4 5
+2 2 3 3","1","6 7
+10 1 2 7 1 3","3","2 1
+-8 2","10","3 3
+-7 -3 1","8","4 3
+9 2 2 1","1","6 8
+5 1 1 -4 -2 -4","4"
+"D-023-1","Divisible Sum Range Count","Diamond","Hash Maps","A subarray sum is divisible by K when dividing it by K leaves remainder zero. Negative sums follow the same divisibility rule.","Count non-empty subarrays whose sum is divisible by K. Follow every stated tie rule.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+1 <= K <= 10^9
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","6 5
+4 5 0 -2 -3 1","7","1 9
+5","0","3 3
+0 0 0","6","3 2
+-1 2 9","2","4 2
+2 2 2 2","10","3 3
+1 2 3","3","4 7
+7 -7 7 -7","10","1 3
+-3","1","3 3
+2 7 5","2","4 4
+-7 7 -4 -4","6","6 2
+0 -4 6 -8 -2 -6","21"
+"D-023-2","Divisible Sum Range Count Planner","Diamond","Hash Maps","A subarray sum is divisible by K when dividing it by K leaves remainder zero. Negative sums follow the same divisibility rule.","Count non-empty subarrays whose sum is divisible by K. Print only the required result.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+1 <= K <= 10^9
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","6 5
+4 5 0 -2 -3 1","7","1 9
+5","0","3 3
+0 0 0","6","3 2
+-1 2 9","2","4 2
+2 2 2 2","10","3 3
+1 2 3","3","4 7
+7 -7 7 -7","10","1 1
+-3","1","3 1
+7 0 5","6","4 3
+2 7 1 5","3","6 2
+-3 -2 4 -3 -3 0","11"
+"D-023-3","Divisible Sum Range Count Checkpoint","Diamond","Hash Maps","A subarray sum is divisible by K when dividing it by K leaves remainder zero. Negative sums follow the same divisibility rule.","Count non-empty subarrays whose sum is divisible by K. Treat each input as one independent scenario.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+1 <= K <= 10^9
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","6 5
+4 5 0 -2 -3 1","7","1 9
+5","0","3 3
+0 0 0","6","3 2
+-1 2 9","2","4 2
+2 2 2 2","10","3 3
+1 2 3","3","4 7
+7 -7 7 -7","10","1 6
+-3","0","3 2
+1 0 2","3","4 3
+8 -8 -5 -5","2","6 6
+-8 7 4 8 -7 1","4"
+"D-023-4","Divisible Sum Range Count Tracker","Diamond","Hash Maps","A subarray sum is divisible by K when dividing it by K leaves remainder zero. Negative sums follow the same divisibility rule.","Count non-empty subarrays whose sum is divisible by K. Keep the input and output format exact.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+1 <= K <= 10^9
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","6 5
+4 5 0 -2 -3 1","7","1 9
+5","0","3 3
+0 0 0","6","3 2
+-1 2 9","2","4 2
+2 2 2 2","10","3 3
+1 2 3","3","4 7
+7 -7 7 -7","10","1 5
+-9","0","3 6
+-9 -3 4","1","4 3
+0 1 1 -7","2","6 5
+4 9 9 -3 4 -7","2"
+"D-023-5","Divisible Sum Range Count Verifier","Diamond","Hash Maps","A subarray sum is divisible by K when dividing it by K leaves remainder zero. Negative sums follow the same divisibility rule.","Count non-empty subarrays whose sum is divisible by K. Use the same definition for all tests.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+1 <= K <= 10^9
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","6 5
+4 5 0 -2 -3 1","7","1 9
+5","0","3 3
+0 0 0","6","3 2
+-1 2 9","2","4 2
+2 2 2 2","10","3 3
+1 2 3","3","4 7
+7 -7 7 -7","10","1 3
+4","0","3 2
+-9 -6 5","2","4 6
+5 3 -2 -1","2","6 1
+8 6 1 -5 7 -2","21"
+"D-024-1","Pairwise Coprime Subset Count","Diamond","Bit Manipulation","Two numbers are coprime when their greatest common divisor is 1. A chosen subset is valid only when every pair inside it is coprime.","Count all valid subsets, including the empty subset. Follow every stated tie rule.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 20
+values: 1 to 10^6","1
+2","2","1
+2","2","2
+2 3","4","2
+2 4","3","3
+2 3 5","8","3
+6 10 15","4","3
+1 1 1","8","4
+2 3 4 5","12","3
+6 35 10","5","1
+16","2","2
+5 10","3","3
+14 3 20","6","4
+26 22 23 26","8"
+"D-024-2","Pairwise Coprime Subset Count Planner","Diamond","Bit Manipulation","Two numbers are coprime when their greatest common divisor is 1. A chosen subset is valid only when every pair inside it is coprime.","Count all valid subsets, including the empty subset. Print only the required result.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 20
+values: 1 to 10^6","1
+2","2","1
+2","2","2
+2 3","4","2
+2 4","3","3
+2 3 5","8","3
+6 10 15","4","3
+1 1 1","8","4
+2 3 4 5","12","3
+6 35 10","5","1
+8","2","2
+6 12","3","3
+7 17 3","8","4
+11 19 9 13","16"
+"D-024-3","Pairwise Coprime Subset Count Checkpoint","Diamond","Bit Manipulation","Two numbers are coprime when their greatest common divisor is 1. A chosen subset is valid only when every pair inside it is coprime.","Count all valid subsets, including the empty subset. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 20
+values: 1 to 10^6","1
+2","2","1
+2","2","2
+2 3","4","2
+2 4","3","3
+2 3 5","8","3
+6 10 15","4","3
+1 1 1","8","4
+2 3 4 5","12","3
+6 35 10","5","1
+25","2","2
+15 20","3","3
+7 3 8","8","4
+27 20 15 11","10"
+"D-024-4","Pairwise Coprime Subset Count Tracker","Diamond","Bit Manipulation","Two numbers are coprime when their greatest common divisor is 1. A chosen subset is valid only when every pair inside it is coprime.","Count all valid subsets, including the empty subset. Keep the input and output format exact.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 20
+values: 1 to 10^6","1
+2","2","1
+2","2","2
+2 3","4","2
+2 4","3","3
+2 3 5","8","3
+6 10 15","4","3
+1 1 1","8","4
+2 3 4 5","12","3
+6 35 10","5","1
+4","2","2
+23 9","4","3
+7 27 6","6","4
+22 4 1 14","8"
+"D-024-5","Pairwise Coprime Subset Count Verifier","Diamond","Bit Manipulation","Two numbers are coprime when their greatest common divisor is 1. A chosen subset is valid only when every pair inside it is coprime.","Count all valid subsets, including the empty subset. Use the same definition for all tests.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 20
+values: 1 to 10^6","1
+2","2","1
+2","2","2
+2 3","4","2
+2 4","3","3
+2 3 5","8","3
+6 10 15","4","3
+1 1 1","8","4
+2 3 4 5","12","3
+6 35 10","5","1
+10","2","2
+18 25","4","3
+1 12 11","8","4
+12 22 20 3","7"
+"D-025-1","Monotone Grid Path Count","Diamond","Dynamic Programming","Start at the top-left cell and finish at the bottom-right cell. Move only right or down through 0 cells; a 1 cell is blocked.","Print the number of valid paths. Follow every stated tie rule.","Line 1: R C.
+Next R lines: C characters 0 or 1.","1 <= R,C <= 30
+answer fits signed 64-bit","1 1
+0","1","1 1
+0","1","2 2
+00
+00","2","2 2
+01
+00","1","2 2
+00
+01","0","3 3
+000
+000
+000","6","3 3
+010
+000
+000","3","3 3
+001
+010
+000","1","3 3
+000
+111
+000","0","2 2
+00
+10","1","3 3
+000
+011
+000","1","3 4
+0101
+0000
+0000","4","3 4
+0000
+0100
+0100","3"
+"D-025-2","Monotone Grid Path Count Planner","Diamond","Dynamic Programming","Start at the top-left cell and finish at the bottom-right cell. Move only right or down through 0 cells; a 1 cell is blocked.","Print the number of valid paths. Print only the required result.","Line 1: R C.
+Next R lines: C characters 0 or 1.","1 <= R,C <= 30
+answer fits signed 64-bit","1 1
+0","1","1 1
+0","1","2 2
+00
+00","2","2 2
+01
+00","1","2 2
+00
+01","0","3 3
+000
+000
+000","6","3 3
+010
+000
+000","3","3 3
+001
+010
+000","1","3 3
+000
+111
+000","0","2 2
+00
+10","1","3 3
+000
+000
+100","5","3 4
+0001
+0000
+0010","3","3 3
+010
+100
+000","0"
+"D-025-3","Monotone Grid Path Count Checkpoint","Diamond","Dynamic Programming","Start at the top-left cell and finish at the bottom-right cell. Move only right or down through 0 cells; a 1 cell is blocked.","Print the number of valid paths. Treat each input as one independent scenario.","Line 1: R C.
+Next R lines: C characters 0 or 1.","1 <= R,C <= 30
+answer fits signed 64-bit","1 1
+0","1","1 1
+0","1","2 2
+00
+00","2","2 2
+01
+00","1","2 2
+00
+01","0","3 3
+000
+000
+000","6","3 3
+010
+000
+000","3","3 3
+001
+010
+000","1","3 3
+000
+111
+000","0","3 3
+000
+000
+010","3","3 4
+0110
+0000
+0000","4","2 2
+00
+10","1","3 4
+0010
+0000
+0000","7"
+"D-025-4","Monotone Grid Path Count Tracker","Diamond","Dynamic Programming","Start at the top-left cell and finish at the bottom-right cell. Move only right or down through 0 cells; a 1 cell is blocked.","Print the number of valid paths. Keep the input and output format exact.","Line 1: R C.
+Next R lines: C characters 0 or 1.","1 <= R,C <= 30
+answer fits signed 64-bit","1 1
+0","1","1 1
+0","1","2 2
+00
+00","2","2 2
+01
+00","1","2 2
+00
+01","0","3 3
+000
+000
+000","6","3 3
+010
+000
+000","3","3 3
+001
+010
+000","1","3 3
+000
+111
+000","0","2 2
+01
+10","0","3 3
+010
+001
+010","0","3 4
+0010
+0000
+0000","7","2 2
+00
+10","1"
+"D-025-5","Monotone Grid Path Count Verifier","Diamond","Dynamic Programming","Start at the top-left cell and finish at the bottom-right cell. Move only right or down through 0 cells; a 1 cell is blocked.","Print the number of valid paths. Use the same definition for all tests.","Line 1: R C.
+Next R lines: C characters 0 or 1.","1 <= R,C <= 30
+answer fits signed 64-bit","1 1
+0","1","1 1
+0","1","2 2
+00
+00","2","2 2
+01
+00","1","2 2
+00
+01","0","3 3
+000
+000
+000","6","3 3
+010
+000
+000","3","3 3
+001
+010
+000","1","3 3
+000
+111
+000","0","3 3
+010
+101
+010","0","3 4
+0000
+0010
+0000","4","3 3
+000
+100
+000","3","3 4
+0000
+0110
+0110","1"
+"D-026-1","Distinct Subarray OR Count","Diamond","Bit Manipulation","Bitwise OR keeps a bit when any value has that bit. A subarray is a non-empty consecutive segment.","Print the number of distinct bitwise OR values across all subarrays. Follow every stated tie rule.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30 - 1","1
+1","1","1
+1","1","2
+1 2","3","3
+1 1 2","3","2
+0 0","1","3
+1 2 4","6","2
+3 7","2","3
+5 1 2","5","4
+8 4 2 1","10","1
+2","1","2
+9 7","3","4
+6 12 12 0","4","6
+2 14 9 0 2 5","8"
+"D-026-2","Distinct Subarray OR Count Planner","Diamond","Bit Manipulation","Bitwise OR keeps a bit when any value has that bit. A subarray is a non-empty consecutive segment.","Print the number of distinct bitwise OR values across all subarrays. Print only the required result.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30 - 1","1
+1","1","1
+1","1","2
+1 2","3","3
+1 1 2","3","2
+0 0","1","3
+1 2 4","6","2
+3 7","2","3
+5 1 2","5","4
+8 4 2 1","10","1
+13","1","2
+2 5","3","4
+8 6 11 2","6","6
+12 0 3 15 0 14","5"
+"D-026-3","Distinct Subarray OR Count Checkpoint","Diamond","Bit Manipulation","Bitwise OR keeps a bit when any value has that bit. A subarray is a non-empty consecutive segment.","Print the number of distinct bitwise OR values across all subarrays. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30 - 1","1
+1","1","1
+1","1","2
+1 2","3","3
+1 1 2","3","2
+0 0","1","3
+1 2 4","6","2
+3 7","2","3
+5 1 2","5","4
+8 4 2 1","10","1
+10","1","2
+6 0","2","4
+3 12 12 10","5","6
+10 4 13 12 2 10","7"
+"D-026-4","Distinct Subarray OR Count Tracker","Diamond","Bit Manipulation","Bitwise OR keeps a bit when any value has that bit. A subarray is a non-empty consecutive segment.","Print the number of distinct bitwise OR values across all subarrays. Keep the input and output format exact.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30 - 1","1
+1","1","1
+1","1","2
+1 2","3","3
+1 1 2","3","2
+0 0","1","3
+1 2 4","6","2
+3 7","2","3
+5 1 2","5","4
+8 4 2 1","10","1
+11","1","2
+7 4","2","4
+14 7 3 6","5","6
+0 10 12 5 5 12","7"
+"D-026-5","Distinct Subarray OR Count Verifier","Diamond","Bit Manipulation","Bitwise OR keeps a bit when any value has that bit. A subarray is a non-empty consecutive segment.","Print the number of distinct bitwise OR values across all subarrays. Use the same definition for all tests.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30 - 1","1
+1","1","1
+1","1","2
+1 2","3","3
+1 1 2","3","2
+0 0","1","3
+1 2 4","6","2
+3 7","2","3
+5 1 2","5","4
+8 4 2 1","10","1
+4","1","2
+8 3","3","4
+15 4 3 5","5","6
+13 11 15 5 0 4","6"
+"D-027-1","Nim Winner","Diamond","Game Theory","Players alternate reducing exactly one heap by any positive amount. A player who takes the last object wins.","Print FIRST if the first player has a winning strategy; otherwise print SECOND. Follow every stated tie rule.","Line 1: N.
+Line 2: N non-negative heap sizes.","1 <= N <= 200000
+heap sizes: 0 to 10^9","1
+1","FIRST","1
+1","FIRST","2
+1 1","SECOND","3
+1 2 3","SECOND","2
+4 4","SECOND","3
+7 3 5","FIRST","1
+0","SECOND","2
+0 0","SECOND","3
+10 20 30","SECOND","1
+9","FIRST","2
+9 9","SECOND","3
+9 2 9","FIRST","5
+9 5 6 1 8","FIRST"
+"D-027-2","Nim Winner Planner","Diamond","Game Theory","Players alternate reducing exactly one heap by any positive amount. A player who takes the last object wins.","Print FIRST if the first player has a winning strategy; otherwise print SECOND. Print only the required result.","Line 1: N.
+Line 2: N non-negative heap sizes.","1 <= N <= 200000
+heap sizes: 0 to 10^9","1
+1","FIRST","1
+1","FIRST","2
+1 1","SECOND","3
+1 2 3","SECOND","2
+4 4","SECOND","3
+7 3 5","FIRST","1
+0","SECOND","2
+0 0","SECOND","3
+10 20 30","SECOND","1
+5","FIRST","2
+6 8","FIRST","3
+4 7 7","FIRST","5
+1 5 2 2 1","FIRST"
+"D-027-3","Nim Winner Checkpoint","Diamond","Game Theory","Players alternate reducing exactly one heap by any positive amount. A player who takes the last object wins.","Print FIRST if the first player has a winning strategy; otherwise print SECOND. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N non-negative heap sizes.","1 <= N <= 200000
+heap sizes: 0 to 10^9","1
+1","FIRST","1
+1","FIRST","2
+1 1","SECOND","3
+1 2 3","SECOND","2
+4 4","SECOND","3
+7 3 5","FIRST","1
+0","SECOND","2
+0 0","SECOND","3
+10 20 30","SECOND","1
+9","FIRST","2
+2 1","FIRST","3
+0 5 9","FIRST","5
+9 3 0 2 4","FIRST"
+"D-027-4","Nim Winner Tracker","Diamond","Game Theory","Players alternate reducing exactly one heap by any positive amount. A player who takes the last object wins.","Print FIRST if the first player has a winning strategy; otherwise print SECOND. Keep the input and output format exact.","Line 1: N.
+Line 2: N non-negative heap sizes.","1 <= N <= 200000
+heap sizes: 0 to 10^9","1
+1","FIRST","1
+1","FIRST","2
+1 1","SECOND","3
+1 2 3","SECOND","2
+4 4","SECOND","3
+7 3 5","FIRST","1
+0","SECOND","2
+0 0","SECOND","3
+10 20 30","SECOND","1
+3","FIRST","2
+7 5","FIRST","3
+4 7 3","SECOND","5
+6 9 4 1 8","FIRST"
+"D-027-5","Nim Winner Verifier","Diamond","Game Theory","Players alternate reducing exactly one heap by any positive amount. A player who takes the last object wins.","Print FIRST if the first player has a winning strategy; otherwise print SECOND. Use the same definition for all tests.","Line 1: N.
+Line 2: N non-negative heap sizes.","1 <= N <= 200000
+heap sizes: 0 to 10^9","1
+1","FIRST","1
+1","FIRST","2
+1 1","SECOND","3
+1 2 3","SECOND","2
+4 4","SECOND","3
+7 3 5","FIRST","1
+0","SECOND","2
+0 0","SECOND","3
+10 20 30","SECOND","2
+5 2","FIRST","3
+7 3 1","FIRST","5
+8 2 7 2 3","FIRST","1
+2","FIRST"
+"D-028-1","Tiny Traveling Path","Diamond","Dynamic Programming","Start at node 1 and visit every other node exactly once; you do not need to return to node 1. Edge costs are given by a full cost matrix.","Print the minimum path cost. Follow every stated tie rule.","Line 1: N.
+Next N lines: N space-separated cost values.","1 <= N <= 12
+costs: 0 to 10^9
+use 64-bit totals","1
+0","0","1
+0","0","2
+0 5
+5 0","5","3
+0 1 5
+1 0 2
+5 2 0","3","4
+0 10 15 20
+10 0 35 25
+15 35 0 30
+20 25 30 0","65","3
+0 1 2
+1 0 1
+2 1 0","2","4
+0 3 4 2
+3 0 4 6
+4 4 0 5
+2 6 5 0","11","3
+0 7 3
+7 0 2
+3 2 0","5","4
+0 2 9 10
+2 0 6 4
+9 6 0 8
+10 4 8 0","14","2
+0 14
+14 0","14","3
+0 19 9
+19 0 3
+9 3 0","12","4
+0 6 15 10
+6 0 7 16
+15 7 0 19
+10 16 19 0","32","3
+0 6 0
+6 0 11
+0 11 0","11"
+"D-028-2","Tiny Traveling Path Planner","Diamond","Dynamic Programming","Start at node 1 and visit every other node exactly once; you do not need to return to node 1. Edge costs are given by a full cost matrix.","Print the minimum path cost. Print only the required result.","Line 1: N.
+Next N lines: N space-separated cost values.","1 <= N <= 12
+costs: 0 to 10^9
+use 64-bit totals","1
+0","0","1
+0","0","2
+0 5
+5 0","5","3
+0 1 5
+1 0 2
+5 2 0","3","4
+0 10 15 20
+10 0 35 25
+15 35 0 30
+20 25 30 0","65","3
+0 1 2
+1 0 1
+2 1 0","2","4
+0 3 4 2
+3 0 4 6
+4 4 0 5
+2 6 5 0","11","3
+0 7 3
+7 0 2
+3 2 0","5","4
+0 2 9 10
+2 0 6 4
+9 6 0 8
+10 4 8 0","14","2
+0 12
+12 0","12","3
+0 17 12
+17 0 18
+12 18 0","30","4
+0 15 12 5
+15 0 10 2
+12 10 0 17
+5 2 17 0","17","2
+0 13
+13 0","13"
+"D-028-3","Tiny Traveling Path Checkpoint","Diamond","Dynamic Programming","Start at node 1 and visit every other node exactly once; you do not need to return to node 1. Edge costs are given by a full cost matrix.","Print the minimum path cost. Treat each input as one independent scenario.","Line 1: N.
+Next N lines: N space-separated cost values.","1 <= N <= 12
+costs: 0 to 10^9
+use 64-bit totals","1
+0","0","1
+0","0","2
+0 5
+5 0","5","3
+0 1 5
+1 0 2
+5 2 0","3","4
+0 10 15 20
+10 0 35 25
+15 35 0 30
+20 25 30 0","65","3
+0 1 2
+1 0 1
+2 1 0","2","4
+0 3 4 2
+3 0 4 6
+4 4 0 5
+2 6 5 0","11","3
+0 7 3
+7 0 2
+3 2 0","5","4
+0 2 9 10
+2 0 6 4
+9 6 0 8
+10 4 8 0","14","2
+0 1
+1 0","1","3
+0 6 20
+6 0 18
+20 18 0","24","4
+0 1 12 5
+1 0 16 2
+12 16 0 14
+5 2 14 0","17","2
+0 3
+3 0","3"
+"D-028-4","Tiny Traveling Path Tracker","Diamond","Dynamic Programming","Start at node 1 and visit every other node exactly once; you do not need to return to node 1. Edge costs are given by a full cost matrix.","Print the minimum path cost. Keep the input and output format exact.","Line 1: N.
+Next N lines: N space-separated cost values.","1 <= N <= 12
+costs: 0 to 10^9
+use 64-bit totals","1
+0","0","1
+0","0","2
+0 5
+5 0","5","3
+0 1 5
+1 0 2
+5 2 0","3","4
+0 10 15 20
+10 0 35 25
+15 35 0 30
+20 25 30 0","65","3
+0 1 2
+1 0 1
+2 1 0","2","4
+0 3 4 2
+3 0 4 6
+4 4 0 5
+2 6 5 0","11","3
+0 7 3
+7 0 2
+3 2 0","5","4
+0 2 9 10
+2 0 6 4
+9 6 0 8
+10 4 8 0","14","2
+0 6
+6 0","6","3
+0 15 5
+15 0 9
+5 9 0","14","4
+0 19 1 18
+19 0 2 13
+1 2 0 7
+18 13 7 0","16","2
+0 20
+20 0","20"
+"D-028-5","Tiny Traveling Path Verifier","Diamond","Dynamic Programming","Start at node 1 and visit every other node exactly once; you do not need to return to node 1. Edge costs are given by a full cost matrix.","Print the minimum path cost. Use the same definition for all tests.","Line 1: N.
+Next N lines: N space-separated cost values.","1 <= N <= 12
+costs: 0 to 10^9
+use 64-bit totals","1
+0","0","1
+0","0","2
+0 5
+5 0","5","3
+0 1 5
+1 0 2
+5 2 0","3","4
+0 10 15 20
+10 0 35 25
+15 35 0 30
+20 25 30 0","65","3
+0 1 2
+1 0 1
+2 1 0","2","4
+0 3 4 2
+3 0 4 6
+4 4 0 5
+2 6 5 0","11","3
+0 7 3
+7 0 2
+3 2 0","5","4
+0 2 9 10
+2 0 6 4
+9 6 0 8
+10 4 8 0","14","2
+0 1
+1 0","1","3
+0 5 3
+5 0 6
+3 6 0","9","4
+0 20 4 18
+20 0 9 6
+4 9 0 0
+18 6 0 0","10","2
+0 6
+6 0","6"
+"D-029-1","Network Broadcast Delay","Diamond","Dijkstra","A signal starts at one node and travels through directed edges with nonnegative delays. A node receives the signal at its shortest travel time.","Print the time until every node receives the signal, or -1 if any node is unreachable. Follow every stated tie rule.","Line 1: N M S.
+Next M lines: from to delay.","1 <= N <= 200000
+0 <= M <= 300000
+delay: 0 to 10^9","1 0 1
+","0","1 0 1
+","0","2 1 1
+1 2 5","5","3 2 1
+1 2 1
+2 3 2","3","3 1 1
+1 2 1","-1","4 3 1
+1 2 5
+1 3 1
+3 4 1","5","3 2 2
+2 1 2
+2 3 2","2","4 4 1
+1 2 1
+2 3 1
+3 4 1
+1 4 10","3","3 2 1
+1 2 0
+2 3 0","0","1 3 1
+1 1 7
+1 1 8
+1 1 7","0","2 2 2
+1 2 2
+2 1 8","8","4 0 4","-1","6 4 1
+2 1 6
+1 1 9
+1 5 7
+6 1 0","-1"
+"D-029-2","Network Broadcast Delay Planner","Diamond","Dijkstra","A signal starts at one node and travels through directed edges with nonnegative delays. A node receives the signal at its shortest travel time.","Print the time until every node receives the signal, or -1 if any node is unreachable. Print only the required result.","Line 1: N M S.
+Next M lines: from to delay.","1 <= N <= 200000
+0 <= M <= 300000
+delay: 0 to 10^9","1 0 1
+","0","1 0 1
+","0","2 1 1
+1 2 5","5","3 2 1
+1 2 1
+2 3 2","3","3 1 1
+1 2 1","-1","4 3 1
+1 2 5
+1 3 1
+3 4 1","5","3 2 2
+2 1 2
+2 3 2","2","4 4 1
+1 2 1
+2 3 1
+3 4 1
+1 4 10","3","3 2 1
+1 2 0
+2 3 0","0","1 5 1
+1 1 9
+1 1 3
+1 1 5
+1 1 8
+1 1 8","0","2 1 1
+2 1 6","-1","4 1 2
+3 4 3","-1","6 2 4
+6 2 0
+3 1 3","-1"
+"D-029-3","Network Broadcast Delay Checkpoint","Diamond","Dijkstra","A signal starts at one node and travels through directed edges with nonnegative delays. A node receives the signal at its shortest travel time.","Print the time until every node receives the signal, or -1 if any node is unreachable. Treat each input as one independent scenario.","Line 1: N M S.
+Next M lines: from to delay.","1 <= N <= 200000
+0 <= M <= 300000
+delay: 0 to 10^9","1 0 1
+","0","1 0 1
+","0","2 1 1
+1 2 5","5","3 2 1
+1 2 1
+2 3 2","3","3 1 1
+1 2 1","-1","4 3 1
+1 2 5
+1 3 1
+3 4 1","5","3 2 2
+2 1 2
+2 3 2","2","4 4 1
+1 2 1
+2 3 1
+3 4 1
+1 4 10","3","3 2 1
+1 2 0
+2 3 0","0","1 2 1
+1 1 5
+1 1 2","0","2 4 2
+1 2 7
+1 1 8
+1 1 6
+2 2 5","-1","4 0 4","-1","6 1 2
+5 5 7","-1"
+"D-029-4","Network Broadcast Delay Tracker","Diamond","Dijkstra","A signal starts at one node and travels through directed edges with nonnegative delays. A node receives the signal at its shortest travel time.","Print the time until every node receives the signal, or -1 if any node is unreachable. Keep the input and output format exact.","Line 1: N M S.
+Next M lines: from to delay.","1 <= N <= 200000
+0 <= M <= 300000
+delay: 0 to 10^9","1 0 1
+","0","1 0 1
+","0","2 1 1
+1 2 5","5","3 2 1
+1 2 1
+2 3 2","3","3 1 1
+1 2 1","-1","4 3 1
+1 2 5
+1 3 1
+3 4 1","5","3 2 2
+2 1 2
+2 3 2","2","4 4 1
+1 2 1
+2 3 1
+3 4 1
+1 4 10","3","3 2 1
+1 2 0
+2 3 0","0","1 2 1
+1 1 0
+1 1 8","0","2 5 2
+2 2 8
+2 2 5
+2 1 4
+1 2 0
+2 1 2","2","4 1 2
+2 4 7","-1","6 4 4
+3 3 0
+3 5 1
+4 1 1
+6 2 6","-1"
+"D-029-5","Network Broadcast Delay Verifier","Diamond","Dijkstra","A signal starts at one node and travels through directed edges with nonnegative delays. A node receives the signal at its shortest travel time.","Print the time until every node receives the signal, or -1 if any node is unreachable. Use the same definition for all tests.","Line 1: N M S.
+Next M lines: from to delay.","1 <= N <= 200000
+0 <= M <= 300000
+delay: 0 to 10^9","1 0 1
+","0","1 0 1
+","0","2 1 1
+1 2 5","5","3 2 1
+1 2 1
+2 3 2","3","3 1 1
+1 2 1","-1","4 3 1
+1 2 5
+1 3 1
+3 4 1","5","3 2 2
+2 1 2
+2 3 2","2","4 4 1
+1 2 1
+2 3 1
+3 4 1
+1 4 10","3","3 2 1
+1 2 0
+2 3 0","0","2 2 1
+2 2 0
+2 1 2","-1","4 0 3","-1","6 4 1
+6 3 7
+5 4 9
+3 5 0
+6 2 9","-1","2 1 1
+2 2 1","-1"
+"D-030-1","Best Nonadjacent Tree Value","Diamond","Dynamic Programming","Choose tree nodes with weights, but never choose two nodes joined by an edge. The total value is the sum of chosen weights.","Print the maximum total selectable weight. Follow every stated tie rule.","Line 1: N.
+Line 2: N node weights.
+Next N-1 lines: tree edges.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit totals","1
+5
+","5","1
+5
+","5","2
+5 6
+1 2","6","3
+1 10 1
+1 2
+2 3","10","4
+10 5 5 5
+1 2
+1 3
+1 4","15","4
+4 5 4 5
+1 2
+2 3
+3 4","10","5
+1 5 4 10 2
+1 2
+2 3
+2 4
+4 5","15","3
+0 7 8
+1 2
+1 3","15","5
+3 2 10 1 1
+1 2
+1 3
+3 4
+3 5","12","2
+5 3
+1 2","5","4
+8 3 2 8
+1 2
+2 3
+3 4","16","6
+0 0 9 2 0 6
+1 2
+2 3
+1 4
+4 5
+5 6","17","1
+9","9"
+"D-030-2","Best Nonadjacent Tree Value Planner","Diamond","Dynamic Programming","Choose tree nodes with weights, but never choose two nodes joined by an edge. The total value is the sum of chosen weights.","Print the maximum total selectable weight. Print only the required result.","Line 1: N.
+Line 2: N node weights.
+Next N-1 lines: tree edges.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit totals","1
+5
+","5","1
+5
+","5","2
+5 6
+1 2","6","3
+1 10 1
+1 2
+2 3","10","4
+10 5 5 5
+1 2
+1 3
+1 4","15","4
+4 5 4 5
+1 2
+2 3
+3 4","10","5
+1 5 4 10 2
+1 2
+2 3
+2 4
+4 5","15","3
+0 7 8
+1 2
+1 3","15","5
+3 2 10 1 1
+1 2
+1 3
+3 4
+3 5","12","1
+6","6","2
+9 7
+1 2","9","4
+3 0 4 9
+1 2
+1 3
+3 4","12","6
+8 0 5 6 9 0
+1 2
+2 3
+1 4
+1 5
+2 6","20"
+"D-030-3","Best Nonadjacent Tree Value Checkpoint","Diamond","Dynamic Programming","Choose tree nodes with weights, but never choose two nodes joined by an edge. The total value is the sum of chosen weights.","Print the maximum total selectable weight. Treat each input as one independent scenario.","Line 1: N.
+Line 2: N node weights.
+Next N-1 lines: tree edges.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit totals","1
+5
+","5","1
+5
+","5","2
+5 6
+1 2","6","3
+1 10 1
+1 2
+2 3","10","4
+10 5 5 5
+1 2
+1 3
+1 4","15","4
+4 5 4 5
+1 2
+2 3
+3 4","10","5
+1 5 4 10 2
+1 2
+2 3
+2 4
+4 5","15","3
+0 7 8
+1 2
+1 3","15","5
+3 2 10 1 1
+1 2
+1 3
+3 4
+3 5","12","1
+7","7","2
+7 2
+1 2","7","4
+4 1 3 5
+1 2
+2 3
+3 4","9","6
+7 8 4 7 6 6
+1 2
+1 3
+1 4
+4 5
+2 6","19"
+"D-030-4","Best Nonadjacent Tree Value Tracker","Diamond","Dynamic Programming","Choose tree nodes with weights, but never choose two nodes joined by an edge. The total value is the sum of chosen weights.","Print the maximum total selectable weight. Keep the input and output format exact.","Line 1: N.
+Line 2: N node weights.
+Next N-1 lines: tree edges.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit totals","1
+5
+","5","1
+5
+","5","2
+5 6
+1 2","6","3
+1 10 1
+1 2
+2 3","10","4
+10 5 5 5
+1 2
+1 3
+1 4","15","4
+4 5 4 5
+1 2
+2 3
+3 4","10","5
+1 5 4 10 2
+1 2
+2 3
+2 4
+4 5","15","3
+0 7 8
+1 2
+1 3","15","5
+3 2 10 1 1
+1 2
+1 3
+3 4
+3 5","12","1
+2","2","2
+1 6
+1 2","6","4
+7 8 8 0
+1 2
+1 3
+3 4","16","6
+1 9 5 6 0 6
+1 2
+1 3
+2 4
+4 5
+2 6","17"
+"D-030-5","Best Nonadjacent Tree Value Verifier","Diamond","Dynamic Programming","Choose tree nodes with weights, but never choose two nodes joined by an edge. The total value is the sum of chosen weights.","Print the maximum total selectable weight. Use the same definition for all tests.","Line 1: N.
+Line 2: N node weights.
+Next N-1 lines: tree edges.","1 <= N <= 200000
+weights: 0 to 10^9
+use 64-bit totals","1
+5
+","5","1
+5
+","5","2
+5 6
+1 2","6","3
+1 10 1
+1 2
+2 3","10","4
+10 5 5 5
+1 2
+1 3
+1 4","15","4
+4 5 4 5
+1 2
+2 3
+3 4","10","5
+1 5 4 10 2
+1 2
+2 3
+2 4
+4 5","15","3
+0 7 8
+1 2
+1 3","15","5
+3 2 10 1 1
+1 2
+1 3
+3 4
+3 5","12","1
+6","6","2
+5 8
+1 2","8","4
+1 9 9 9
+1 2
+1 3
+3 4","18","6
+5 8 3 8 4 1
+1 2
+2 3
+2 4
+4 5
+4 6","16"

@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isMe(uid)  { return request.auth != null && request.auth.uid == uid; }
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    // Profiles are public: leaderboards, player search and puzzle boards are
+    // all readable without an account, which is what makes guest play and a
+    // signed-out visit worth anything. Nothing private is stored on the doc —
+    // no email, no auth material — and writes stay owner-only.
+    match /users/{uid} {
+      allow read:  if true;
+      allow write: if isMe(uid);
+    }
+
+    // ── Username reservations (uniqueness index) ─────────────────────────────
+    match /usernames/{name} {
+      allow read:   if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // ── Friend requests ──────────────────────────────────────────────────────
+    // The inbox copy lives under the recipient; a mirror under the sender lets
+    // the sender's UI show "Pending" without reading someone else's inbox.
+    match /friendRequests/{toUid}/from/{fromUid} {
+      allow read:   if isMe(toUid) || isMe(fromUid);
+      allow create: if isMe(fromUid);
+      allow delete: if isMe(toUid) || isMe(fromUid);
+    }
+
+    match /friendRequests/{fromUid}/sent/{toUid} {
+      allow read:   if isMe(fromUid);
+      allow create: if isMe(fromUid);
+      allow delete: if isMe(fromUid) || isMe(toUid);
+    }
+
+    // ── Friends list ─────────────────────────────────────────────────────────
+    match /friends/{uid}/list/{friendUid} {
+      allow read:  if signedIn();
+      allow write: if isMe(uid) || isMe(friendUid);
+    }
+
+    // ── Notifications ────────────────────────────────────────────────────────
+    match /notifications/{uid}/items/{notifId} {
+      allow read, update, delete: if isMe(uid);
+      allow create: if signedIn();
+    }
+
+    // ── Conversations ───────────────────────────────────────────────────────
+    match /conversations/{convId} {
+      // Allow a signed-in user to `get` a doc (needed to check existence before
+      // creating). Listing/querying conversations is allowed for signed-in users
+      // as well so clients can watch their conversation list.
+      allow get, list: if signedIn();
+
+      // Creating a conversation must include the creator as a participant.
+      allow create: if signedIn() && request.auth.uid in request.resource.data.participants;
+
+      // Updates and deletes are only allowed to participants.
+      allow update, delete: if signedIn() && request.auth.uid in resource.data.participants;
+    }
+
+    match /conversations/{convId}/messages/{msgId} {
+      // Reads and creates are allowed to participants of the owning conversation.
+      allow read, create: if signedIn() &&
+        exists(/databases/$(database)/documents/conversations/$(convId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+    }
+
+    // ── Matchmaking lobby ────────────────────────────────────────────────────
+    // Everyone signed in must be able to scan the lobby for an opponent.
+    // The initiator writes "matched" onto the opponent's doc in one batch,
+    // so update is open to any signed-in user.
+    match /matchmaking_lobby/{uid} {
+      allow read:   if signedIn();
+      allow create: if isMe(uid);
+      allow update: if signedIn();
+      allow delete: if isMe(uid);
+    }
+
+    // ── Duels ────────────────────────────────────────────────────────────────
+    match /duels/{duelId} {
+      allow read:   if signedIn();
+      allow create: if signedIn();
+      allow update, delete: if signedIn() &&
+        (request.auth.uid == resource.data.player1.uid ||
+         request.auth.uid == resource.data.player2.uid);
+    }
+
+    // ── Friend challenges ────────────────────────────────────────────────────
+    match /challenges/{challengeId} {
+      allow read:   if signedIn() &&
+        (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+      allow create: if signedIn() && request.auth.uid == request.resource.data.fromUid;
+      allow update, delete: if signedIn() &&
+        (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+    }
+
+    // ── Training Grounds puzzle times (one doc per user per puzzle) ──────────
+    // Doc id is "{archetypeId}__{uid}" so the owner check is cheap. Public read
+    // for the same reason as users: the per-puzzle boards are a public feature.
+    match /puzzleTimes/{recordId} {
+      allow read:   if true;
+      allow write:  if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Guests never reach Firestore at all — their unranked rating, best times
+    // and discovered puzzles live in localStorage (see public/js/local.js).
+  }
+}

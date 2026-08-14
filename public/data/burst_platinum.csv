@@ -1,0 +1,4998 @@
+"id","name","division","category","background","task","input_format","constraints","sample_input","sample_output","test1_input","test1_output","test2_input","test2_output","test3_input","test3_output","test4_input","test4_output","test5_input","test5_output","test6_input","test6_output","test7_input","test7_output","test8_input","test8_output","test9_input","test9_output","test10_input","test10_output","test11_input","test11_output","test12_input","test12_output"
+"P-001-1","Deep Sea Logistics","Platinum","Logistics Optimization","A shipping company needs to transport a sequence of containers across the ocean. The containers are loaded onto a ship one by one in the exact order they arrive at the dock. The ship makes a fixed number of trips, and on each trip, it can carry any number of containers as long as their total weight does not exceed the ship's capacity.","Given a list of container weights in arrival order and the maximum number of trips allowed, find the minimum possible weight capacity the ship must have to complete the job within the trip limit. The ship must carry at least one container per trip unless all containers are already delivered.","Line 1: Two integers N and D, representing the number of containers and the maximum number of trips. Line 2: N space-separated integers representing the weight of each container in order.","N is between 1 and 100,000. D is between 1 and N. Each weight is between 1 and 10,000.","5 2
+1 2 3 4 5","9","5 2
+1 2 3 4 5","9","1 1
+10","10","5 5
+1 2 3 4 5","5","5 1
+1 2 3 4 5","15","3 2
+10 10 10","20","4 2
+1 1 1 1","2","2 1
+5 5","10","6 3
+7 2 5 10 8 2","14","1 1
+3","3","3 3
+12 12 10","12","5 1
+10 5 10 10 2","37","7 3
+9 11 3 5 3 12 1","19"
+"P-001-2","The Master Binder","Platinum","Publishing","A publisher is binding a massive series of historical documents into a set of physical volumes. To maintain the narrative flow, the documents must remain in their original chronological order. Each volume has a maximum page limit, and the publisher wants to minimize this limit while ensuring the entire series fits into a specific number of volumes.","Given the page counts of N documents in order and the maximum number of volumes K, determine the smallest possible maximum page capacity per volume required to bind all documents.","Line 1: Two integers N and K. Line 2: N space-separated integers representing the page count of each document.","N is between 1 and 200,000. K is between 1 and N. Document pages are between 1 and 10^9. The total sum of pages will not exceed 2^63 - 1.","4 3
+100 200 300 400","400","4 3
+100 200 300 400","400","2 2
+50 50","50","3 1
+10 20 30","60","5 2
+1 1 1 1 10","10","6 3
+10 10 10 10 10 10","20","4 2
+5 1 1 5","6","3 2
+100 1 100","101","1 1
+999","999","1 1
+7","7","3 1
+4 2 11","17","5 1
+7 8 5 7 12","39","7 2
+9 5 10 3 7 1 10","24"
+"P-001-3","Stream Buffer Optimization","Platinum","Data Streaming","A video streaming service sends data in discrete segments. To prevent lagging, segments are grouped into 'bursts'. The hardware can process a limited number of bursts per second. Each burst has a maximum data size (capacity). To optimize network stability, the service wants to find the smallest possible burst capacity that still allows all segments to be sent within the burst count limit.","Given N segment sizes in their transmission order and a maximum number of bursts M, calculate the minimum burst capacity needed.","Line 1: Two integers N and M. Line 2: N space-separated integers representing the size of each segment.","N is between 1 and 100,000. M is between 1 and N. Segment sizes are between 1 and 10^6.","6 3
+4 8 2 5 1 6","12","6 3
+4 8 2 5 1 6","12","2 1
+5 5","10","3 3
+1 1 1","1","4 2
+10 20 30 40","60","5 3
+10 10 10 10 10","20","2 2
+100 1","100","4 2
+1 5 5 1","6","1 1
+5","5","1 1
+2","2","3 3
+2 6 8","8","5 1
+8 2 6 4 1","21","7 3
+3 6 10 11 4 5 3","19"
+"P-001-4","Precision Assembly","Platinum","Manufacturing","An automated factory processes items on a conveyor belt. Items arrive in a fixed sequence, and each takes a specific amount of time to process. The factory operates in shifts. During one shift, the assembly line processes a contiguous block of items. The total time taken in any single shift cannot exceed the line's time-capacity.","Given the processing times for N items and a limit of S shifts, find the minimum time-capacity required for the assembly line to complete all items within the shift limit.","Line 1: Two integers N and S. Line 2: N space-separated integers representing the processing time for each item.","N is between 1 and 150,000. S is between 1 and N. Processing times are between 0 and 10^5.","7 3
+1 2 1 2 1 2 1","4","7 3
+1 2 1 2 1 2 1","4","3 2
+5 5 5","10","5 5
+10 20 30 40 50","50","4 1
+1 1 1 1","4","6 2
+1 1 1 1 1 10","10","2 1
+0 0","0","3 2
+0 10 0","10","5 2
+7 7 7 7 7","21","1 1
+4","4","3 2
+12 5 8","13","5 1
+10 4 4 9 9","36","7 1
+1 8 3 11 9 10 7","49"
+"P-001-5","Server Batch Processing","Platinum","Cloud Computing","A cloud provider has a queue of jobs that must be processed in the order they were submitted. Each job requires a specific amount of memory. The provider allocates a set of servers, where each server handles a contiguous sequence of jobs from the queue. All servers are configured with the same memory capacity.","Given the memory requirements of J jobs and the available count of K servers, find the minimum memory capacity each server must have to ensure all jobs are processed.","Line 1: Two integers J and K. Line 2: J space-separated integers representing the memory requirement of each job.","J is between 1 and 200,000. K is between 1 and J. Memory requirements are between 0 and 10^9.","5 2
+8 2 4 10 1","14","5 2
+8 2 4 10 1","14","4 4
+1 2 3 4","4","3 1
+100 200 300","600","6 3
+5 5 5 5 5 5","10","2 2
+10 20","20","5 2
+1 1 1 1 1","3","4 2
+10 1 1 10","11","1 1
+0","0","1 1
+12","12","3 3
+4 1 2","4","5 5
+4 3 3 7 8","8","7 7
+10 5 3 10 12 12 1","12"
+"P-002-1","Router Range","Platinum","Networking","You have a list of possible one-dimensional positions (integers) where routers may be mounted along a line. You must place exactly k routers at those positions. The 'minimum separation' is the smallest difference between any two chosen router coordinates. We want to make that smallest gap as large as possible. If k > n (more routers than available positions) there is no solution.","Given n candidate integer coordinates and an integer k, choose exactly k of the coordinates to maximize the minimum pairwise distance between any two chosen coordinates. If k <= 1 the minimum separation is defined to be 0. If no solution exists (k > n) output -1. Otherwise output a single integer: the maximum achievable minimum separation.","Line 1: two integers n and k
+Line 2: n integers x1 x2 ... xn (space-separated positions, any order)","1 <= n <= 200000; positions xi are 32-bit signed integers (|xi| <= 1e9); 1 <= k <= 200000. Expected O(n log range) solutions.","5 3
+1 2 8 4 9
+","3","5 3
+1 2 8 4 9
+","3","1 1
+100
+","0","5 3
+0 0 0 0 0
+","0","4 2
+-10 -5 0 5
+","15","3 5
+1 2 3
+","-1","4 2
+1 1000000000 500000000 750000000
+","999999999","6 3
+1 2 4 7 8 12
+","5","7 4
+0 3 4 7 10 11 15
+","4","1 2
+18","-1","3 4
+-8 11 8","-1","5 1
+8 7 7 -3 4","0","7 4
+3 6 -3 -7 1 -9 20","6"
+"P-002-2","Checkpoint Arrangement","Platinum","Logistics","You are placing exactly k checkpoints at some of the given one-dimensional positions. The goal is to maximize the minimum distance between any two checkpoints. If several placements achieve the same optimum, return the placement produced by the left-to-right greedy choice: sort positions ascending and always pick the earliest available position that preserves the required gap when building the placement for the final optimal gap.","Given n candidate coordinates and an integer k, find the maximum possible minimum separation D between k chosen coordinates. If k <= 1 define D = 0. If k > n output a single line with -1. Otherwise output two lines: first line the integer D, second line the k chosen coordinates in ascending order produced by the specified greedy tie-breaking.","Line 1: two integers n and k
+Line 2: n integers x1 x2 ... xn (space-separated positions, any order)","1 <= n <= 200000; coordinates xi are integers with |xi| <= 1e9; 1 <= k <= 200000.","5 3
+1 2 8 4 9
+","3
+1 4 8","5 3
+1 2 8 4 9
+","3
+1 4 8","1 1
+100
+","0
+100","5 3
+0 0 0 0 0
+","0
+0 0 0","4 2
+-10 -5 0 5
+","15
+-10 5","3 5
+1 2 3
+","-1","6 3
+1 2 4 7 8 12
+","5
+1 7 12","4 4
+0 0 0 1
+","0
+0 0 0 1","7 4
+0 3 4 7 10 11 15
+","4
+0 4 10 15","1 2
+18","-1","3 1
+-4 18 13","0
+-4","5 6
+1 -1 1 1 10","-1","7 4
+0 10 -1 5 14 -9 -4","6
+-9 -1 5 14"
+"P-002-3","Stadium Seating Feasibility","Platinum","Scheduling","You are given candidate seat coordinates and must check whether it is possible to seat exactly k people so that every pair of seated people are at least D units apart. If k <= 1 this is always considered possible. Seats may share coordinates (duplicates).","Given n coordinates, integers k and D (D >= 0), output YES if it is possible to select exactly k of the given positions so that the minimum pairwise distance between chosen positions is at least D; otherwise output NO. If k > n output NO.","Line 1: three integers n, k and D
+Line 2: n integers x1 x2 ... xn (space-separated positions, any order). D is a non-negative integer.","1 <= n <= 200000; 0 <= D <= 2e9; coordinates xi are integers with |xi| <= 1e9; 1 <= k <= 200000.","5 3 3
+1 2 8 4 9
+","YES","5 3 3
+1 2 8 4 9
+","YES","1 1 1
+100
+","YES","5 3 1
+0 0 0 0 0
+","NO","4 2 15
+-10 -5 0 5
+","YES","3 5 0
+1 2 3
+","NO","4 4 0
+0 0 0 1
+","YES","4 2 2000000000
+1 500000000 1000000000 1500000000
+","NO","7 4 4
+0 3 4 7 10 11 15
+","YES","1 1 8
+4","YES","3 3 6
+15 19 8","NO","5 6 1
+10 -8 9 -1 3","NO","7 2 2
+11 1 5 13 7 3 0","YES"
+"P-002-4","Sensor Indices","Platinum","Monitoring","Sensors can be installed only at given discrete coordinates; each candidate has a fixed original input index. You must choose exactly k candidates to maximize the minimum distance between any two chosen sensors. When coordinates tie, treat candidates with the same coordinate but different original indices separately. To make output deterministic, sort candidates by (coordinate, original index) and run the standard left-to-right greedy. Finally report the indices (1-based original positions) of the selected candidates, listed in increasing numerical order.","Given n coordinates in the order they were provided and an integer k, if k > n output -1. Otherwise compute the maximum achievable minimum distance D (if k <= 1 then D = 0). Then, using the sorted tie-breaking described, pick k coordinates that realize D and output two lines: first line D, second line the k chosen original 1-based indices in ascending numeric order.","Line 1: two integers n and k
+Line 2: n integers x1 x2 ... xn (space-separated positions, in their original input order)","1 <= n <= 200000; |xi| <= 1e9; 1 <= k <= 200000.","5 3
+1 2 8 4 9
+","3
+1 3 4","5 3
+1 2 8 4 9
+","3
+1 3 4","1 1
+100
+","0
+1","5 3
+0 0 0 0 0
+","0
+1 2 3","4 2
+-10 -5 0 5
+","15
+1 4","3 5
+1 2 3
+","-1","6 3
+5 1 12 7 8 4
+","5
+2 3 4","4 4
+0 0 0 1
+","0
+1 2 3 4","7 4
+7 0 10 3 15 4 11
+","4
+2 3 5 6","1 2
+10","-1","3 1
+3 -5 5","0
+2","5 6
+19 10 -10 -3 5","-1","7 4
+18 2 10 10 8 18 -8","8
+1 2 3 7"
+"P-002-5","Lighthouse Placement","Platinum","Coastal Planning","Along a straight coast there are candidate integer mile markers where lighthouses can be built. You must build exactly k lighthouses at those markers. Maximize the minimum distance between any two lighthouses. If multiple placements achieve the same optimal minimum distance, the placement that starts furthest to the left (smallest first lighthouse coordinate) is preferred; return that first coordinate to break ties. If k > n there is no solution.","Given n mile-marker coordinates and integer k, if k > n output -1. Otherwise output two lines: first the maximum achievable minimum separation D (define D = 0 if k <= 1), second the coordinate of the first (leftmost) lighthouse for the leftmost-optimal placement described above.","Line 1: two integers n and k
+Line 2: n integers x1 x2 ... xn (space-separated positions, any order)","1 <= n <= 200000; |xi| <= 1e9; 1 <= k <= 200000.","5 3
+1 2 8 4 9
+","3
+1","5 3
+1 2 8 4 9
+","3
+1","1 1
+100
+","0
+100","5 3
+0 0 0 0 0
+","0
+0","4 2
+-10 -5 0 5
+","15
+-10","3 5
+1 2 3
+","-1","6 3
+1 2 4 7 8 12
+","5
+1","5 3
+2 3 8 14 20
+","6
+2","7 4
+7 0 10 3 15 4 11
+","4
+0","1 1
+11","0
+11","3 2
+19 8 5","14
+5","5 4
+-7 19 7 9 0","7
+-7","7 2
+5 16 -8 17 10 20 -8","28
+-8"
+"P-003-1","The Gluttonous Gourmet","Platinum","Logistics","A food critic is tasked with sampling several plates of snacks before a festival begins. The critic eats at a constant integer speed of 'K' snacks per hour. Once the critic starts a plate, they must finish it before moving to the next. If a plate has fewer snacks than the critic's hourly speed, they still spend the full hour finishing that plate and do not start the next one until the next hour begins.","Given a list of snack counts on each plate and a deadline in hours, find the minimum integer speed K (snacks per hour) such that the critic can finish all plates within the deadline.","Line 1: Two space-separated integers, N (number of plates) and H (deadline in hours).
+Line 2: N space-separated integers representing the number of snacks on each plate.","1 <= N <= 200,000; N <= H <= 1,000,000,000; Snack counts are between 1 and 1,000,000,000.","4 8
+3 6 7 11","4","4 8
+3 6 7 11","4","3 3
+5 10 15","15","3 100
+5 10 15","1","2 5
+1000000000 1000000000","500000000","1 1
+1","1","3 6
+10 10 10","5","2 3
+1 10","5","4 5
+4 4 4 4","4","1 5
+2","1","3 10
+6 20 27","6","4 13
+9 36 24 12","8","6 7
+30 35 37 9 20 25","35"
+"P-003-2","Server Bandwidth Allocation","Platinum","Networking","A server needs to download a series of files. The server can only download one file at a time. The download speed is fixed at an integer rate of R megabits per second (Mbps). For any file, the time taken is the file size divided by R, rounded up to the nearest second, because the server only initiates new transfers at the start of a second.","Determine the minimum integer rate R (Mbps) required to complete all downloads within T seconds.","Line 1: Two space-separated integers, N (number of files) and T (total time limit in seconds).
+Line 2: N space-separated integers representing the size of each file in megabits.","1 <= N <= 200,000; N <= T <= 1,000,000,000; File sizes are between 1 and 1,000,000,000.","5 6
+10 20 30 40 50","40","5 6
+10 20 30 40 50","40","1 10
+100","10","3 3
+10 10 10","10","4 10
+1 1 1 1","1","2 4
+10 20","10","2 3
+10 20","10","3 9
+10 10 10","4","2 2
+1000000000 1","1000000000","1 4
+29","8","3 11
+14 12 22","5","4 9
+12 12 25 2","7","6 11
+14 11 20 35 19 36","18"
+"P-003-3","Quality Control Quota","Platinum","Manufacturing","A quality control technician inspects batches of circuit boards. The technician works at a fixed integer rate of B boards per minute. Each batch must be completed before starting the next. If a batch is finished in the middle of a minute, the technician waits until the start of the next minute to begin the next batch.","Find the minimum integer rate B (boards per minute) to finish inspecting all batches within M minutes.","Line 1: Two space-separated integers, N (number of batches) and M (total time in minutes).
+Line 2: N space-separated integers representing the number of boards in each batch.","1 <= N <= 200,000; N <= M <= 1,000,000,000; Batch sizes are between 1 and 1,000,000,000.","3 7
+100 100 100","50","3 7
+100 100 100","50","3 3
+100 100 100","100","3 9
+100 100 100","34","2 10
+5 5","1","5 5
+1 2 3 4 5","5","4 6
+10 10 10 10","10","1 5
+50","10","2 3
+10 10","10","1 3
+14","5","3 12
+2 35 19","5","4 5
+6 4 28 30","28","6 9
+6 24 18 28 28 5","18"
+"P-003-4","Speed Reading Challenge","Platinum","Education","A student needs to read several chapters of a textbook. The student reads at a constant integer speed of P pages per hour. A chapter must be finished entirely before the student can start the next one. If a chapter ends partway through an hour, the student takes a break and starts the next chapter at the beginning of the next hour.","Calculate the minimum integer speed P (pages per hour) required to read all chapters within K hours.","Line 1: Two space-separated integers, N (number of chapters) and K (total hours available).
+Line 2: N space-separated integers representing the number of pages in each chapter.","1 <= N <= 200,000; N <= K <= 1,000,000,000; Page counts are between 1 and 1,000,000,000.","3 6
+10 10 10","5","3 6
+10 10 10","5","4 10
+1 1 1 1","1","2 3
+7 9","7","3 5
+10 10 10","10","2 2
+50 100","100","3 4
+10 10 10","10","5 10
+20 20 20 20 20","10","1 2
+15","8","1 12
+18","2","3 5
+23 33 19","19","4 7
+10 31 36 32","18","6 17
+3 7 9 2 28 37","7"
+"P-003-5","Electric Fleet Charging","Platinum","Energy","A fleet of electric vehicles is lined up at a charging station. The station charges one vehicle at a time at a constant integer rate of W kilowatts (kW). Charging time is calculated as the energy needed (kWh) divided by the rate W, rounded up to the nearest hour. The next vehicle cannot start charging until the current hour is finished.","Find the minimum integer charging rate W (kW) to ensure all vehicles are charged within H hours.","Line 1: Two space-separated integers, N (number of vehicles) and H (total hours available).
+Line 2: N space-separated integers representing the energy required by each vehicle in kWh.","1 <= N <= 200,000; N <= H <= 1,000,000,000; Energy requirements are between 1 and 1,000,000,000.","2 4
+7 9","5","2 4
+7 9","5","3 3
+10 20 30","30","3 6
+10 20 30","10","4 8
+1 1 1 1","1","2 5
+100 100","50","2 2
+1000 1000","1000","3 5
+15 15 15","15","2 3
+5 15","8","1 2
+10","5","3 6
+26 9 21","11","4 7
+29 38 20 17","19","6 6
+19 36 14 13 4 12","36"
+"P-004-1","Lecture Blocks","Platinum","partitioning","You have a sequence of lecture durations (nonnegative integers). You must cut the sequence into contiguous blocks (each block contains consecutive lectures) so that there are exactly k blocks. The objective is to minimize the largest total duration among the blocks. If it is impossible to make exactly k non-empty blocks, report -1.","Given n and k and an array of n nonnegative integers, partition the array into exactly k contiguous, non-empty groups. Output the minimum possible value of the largest group sum. If no partition into exactly k non-empty groups exists (i.e., k>n), output -1. Ties are resolved by the numeric minimum of the largest sum.","Line 1: two integers n k
+Line 2: n space-separated nonnegative integers a1 a2 ... an","1 ≤ n ≤ 200000, 1 ≤ k ≤ 200000, 0 ≤ ai ≤ 10^9, O(n log(sum ai)) expected.","5 3
+2 1 4 1 1","4","5 3
+2 1 4 1 1","4","4 2
+5 5 5 5","10","3 2
+0 0 0","0","3 5
+1 2 3","-1","6 3
+7 2 5 10 8 1","14","4 1
+100 0 0 0","100","1 1
+99999","99999","5 5
+3 1 4 1 5","5","1 3
+2","-1","3 2
+10 10 11","20","5 4
+2 6 0 11 12","12","7 1
+5 12 6 0 3 9 12","47"
+"P-004-2","Shard Logs At-Most","Platinum","sharding","You need to split a stream of log sizes (nonnegative integers) into at most k contiguous shards. You may use fewer than k shards. The objective is to minimize the maximum shard sum. When the same minimal maximum can be achieved by several shardings, choose the solution that uses the smallest possible number of shards (still ≤ k) and report that number along with the minimal maximum.","Given n and k and an array of n nonnegative integers, partition the array into at most k contiguous groups. First minimize the largest group sum; among all partitions achieving that minimal maximum, output that minimal maximum and the smallest number of groups used. Always produce two integers: the minimal possible largest group sum and the minimal number of groups achieving it.","Line 1: two integers n k
+Line 2: n space-separated nonnegative integers a1 a2 ... an","1 ≤ n ≤ 200000, 1 ≤ k ≤ 200000, 0 ≤ ai ≤ 10^9. Greedy feasibility / binary search solution fits time limits.","6 3
+2 1 4 1 1 3","5 3","6 3
+2 1 4 1 1 3","5 3","4 3
+5 5 5 5","10 2","3 5
+0 0 0","0 1","3 100
+1 2 3","3 2","5 2
+1 1 1 1 1","3 2","1 1
+100","100 1","6 2
+3 3 3 3 3 3","9 2","5 5
+3 1 4 1 5","5 3","1 1
+12","12 1","3 3
+12 2 0","12 2","5 1
+11 0 1 7 3","22 1","7 3
+10 12 2 1 11 6 10","22 3"
+"P-004-3","Divide Pages with Minimum Chapters","Platinum","book-binding","You have a sequence of page counts for sections (nonnegative integers). You must split the sequence into exactly k contiguous chapters, and each chapter must contain at least L sections (L≥1). The goal is to minimize the largest chapter page total. If the constraints on sizes make an exact k-partition impossible, report -1.","Input n, k, L and the array of n nonnegative integers. Partition into exactly k contiguous groups, each group containing at least L elements. Output the minimal possible largest group sum, or -1 if no valid partition exists. If multiple partitions tie, return the numeric minimal largest sum.","Line 1: three integers n k L
+Line 2: n space-separated nonnegative integers a1 a2 ... an","1 ≤ n ≤ 200000, 1 ≤ k ≤ 200000, 1 ≤ L ≤ n, 0 ≤ ai ≤ 10^9. If k*L > n then no solution.","7 3 2
+4 2 1 3 1 1 2","6","7 3 2
+4 2 1 3 1 1 2","6","5 2 3
+1 2 3 4 5","-1","4 2 1
+0 0 0 0","0","3 3 1
+5 5 5","5","6 3 2
+10 0 0 0 0 0","10","1 1 1
+7","7","6 2 2
+3 3 3 3 3 3","9","7 3 2
+1 1 1 1 1 1 1","3","1 1 1
+0","0","3 3 1
+6 4 1","6","5 5 3
+3 4 11 12 7","-1","7 5 1
+1 5 0 6 12 2 9","12"
+"P-004-4","Shard Files with Max-Count","Platinum","storage","You have files of nonnegative sizes in a given order. Each shard may contain at most M files (contiguous in the original order). You may use up to k shards in total (you may use fewer). The objective is to minimize the maximum shard size. If respecting the per-shard element limit makes it impossible to fit into k shards, report -1.","Given n, k, M and an array of n nonnegative integers, partition the array into at most k contiguous groups where each group contains at most M elements. Output the minimal possible largest group sum, or -1 if no valid partition exists (i.e., if ceil(n/M) > k).","Line 1: three integers n k M
+Line 2: n space-separated nonnegative integers a1 a2 ... an","1 ≤ n ≤ 200000, 1 ≤ k ≤ 200000, 1 ≤ M ≤ n, 0 ≤ ai ≤ 10^9.","7 3 3
+2 2 2 2 2 2 2","6","7 3 3
+2 2 2 2 2 2 2","6","4 4 1
+5 1 4 2","5","6 2 2
+1 1 1 1 1 1","-1","5 5 3
+0 0 0 0 0","0","5 3 2
+3 1 2 1 1","3","1 1 1
+100","100","6 2 5
+10 10 10 10 10 10","30","7 7 3
+1 2 3 4 5 6 7","7","1 1 1
+8","8","3 2 1
+5 6 9","-1","5 5 4
+4 0 12 10 6","12","7 5 2
+12 1 11 6 3 1 8","12"
+"P-004-5","Cargo Trucks Allow Empty","Platinum","logistics","You must load n cargo items (nonnegative weights) in the given order into exactly k trucks. Trucks are filled as contiguous blocks of items; however, trucks are allowed to be empty. The objective is to minimize the maximum total weight carried by any truck. Because empty trucks are allowed, it is always possible to have exactly k groups (k≥1).","Given n and k and an array of n nonnegative integers, partition the array into exactly k contiguous groups, where empty groups are permitted. Output the minimal possible largest group sum. Ties are resolved by numeric minimum of the largest sum.","Line 1: two integers n k
+Line 2: n space-separated nonnegative integers a1 a2 ... an","1 ≤ n ≤ 200000, 1 ≤ k ≤ 200000, 0 ≤ ai ≤ 10^9. Empty groups allowed (groups may have zero elements).","3 5
+4 1 2","4","3 5
+4 1 2","4","5 3
+2 2 2 2 2","4","2 4
+0 0","0","1 10
+100","100","6 6
+5 5 5 5 5 5","5","4 1
+7 1 2 1","11","4 3
+3 3 3 3","6","7 2
+1 1 1 1 1 1 1","4","1 2
+3","3","3 2
+10 10 10","20","5 7
+11 7 9 9 5","11","7 4
+6 9 10 2 12 6 8","15"
+"P-005-1","Wall-Break Shortest Route","Platinum","BFS","A grid cell marked 0 is open and 1 is blocked. You may turn one blocked cell into an open cell while walking, but may move only up, down, left, or right.","Print the fewest moves from the top-left cell to the bottom-right cell, using at most one wall break. Print -1 if unreachable. Use the stated rule exactly.","Line 1: R C.
+Lines 2 through R+1: C characters 0 or 1 per row.","1 <= R,C <= 1000
+start and target are open
+use at most one wall break","1 1
+0","0","1 1
+0","0","2 2
+00
+00","2","2 2
+01
+10","2","3 3
+010
+111
+000","4","3 3
+010
+010
+010","4","3 3
+000
+111
+000","4","3 3
+001
+101
+100","4","4 4
+0100
+1110
+0000
+0110","6","2 2
+01
+00","2","3 3
+001
+011
+100","4","4 4
+0111
+0101
+0100
+1010","6","3 3
+010
+110
+000","4"
+"P-005-2","Wall-Break Shortest Route Planner","Platinum","BFS","A grid cell marked 0 is open and 1 is blocked. You may turn one blocked cell into an open cell while walking, but may move only up, down, left, or right.","Print the fewest moves from the top-left cell to the bottom-right cell, using at most one wall break. Print -1 if unreachable. Treat all values as part of one ordered scenario.","Line 1: R C.
+Lines 2 through R+1: C characters 0 or 1 per row.","1 <= R,C <= 1000
+start and target are open
+use at most one wall break","1 1
+0","0","1 1
+0","0","2 2
+00
+00","2","2 2
+01
+10","2","3 3
+010
+111
+000","4","3 3
+010
+010
+010","4","3 3
+000
+111
+000","4","3 3
+001
+101
+100","4","4 4
+0100
+1110
+0000
+0110","6","3 3
+001
+101
+010","4","4 4
+0100
+1111
+1001
+1010","-1","3 3
+011
+010
+110","4","4 4
+0101
+1100
+1010
+1110","6"
+"P-005-3","Wall-Break Shortest Route Checkpoint","Platinum","BFS","A grid cell marked 0 is open and 1 is blocked. You may turn one blocked cell into an open cell while walking, but may move only up, down, left, or right.","Print the fewest moves from the top-left cell to the bottom-right cell, using at most one wall break. Print -1 if unreachable. Report the defined result without extra text.","Line 1: R C.
+Lines 2 through R+1: C characters 0 or 1 per row.","1 <= R,C <= 1000
+start and target are open
+use at most one wall break","1 1
+0","0","1 1
+0","0","2 2
+00
+00","2","2 2
+01
+10","2","3 3
+010
+111
+000","4","3 3
+010
+010
+010","4","3 3
+000
+111
+000","4","3 3
+001
+101
+100","4","4 4
+0100
+1110
+0000
+0110","6","2 2
+01
+00","2","3 3
+001
+000
+010","4","4 4
+0100
+0001
+1110
+0110","6","2 2
+00
+10","2"
+"P-005-4","Wall-Break Shortest Route Tracker","Platinum","BFS","A grid cell marked 0 is open and 1 is blocked. You may turn one blocked cell into an open cell while walking, but may move only up, down, left, or right.","Print the fewest moves from the top-left cell to the bottom-right cell, using at most one wall break. Print -1 if unreachable. Keep the required tie rule unchanged.","Line 1: R C.
+Lines 2 through R+1: C characters 0 or 1 per row.","1 <= R,C <= 1000
+start and target are open
+use at most one wall break","1 1
+0","0","1 1
+0","0","2 2
+00
+00","2","2 2
+01
+10","2","3 3
+010
+111
+000","4","3 3
+010
+010
+010","4","3 3
+000
+111
+000","4","3 3
+001
+101
+100","4","4 4
+0100
+1110
+0000
+0110","6","3 3
+000
+110
+010","4","4 4
+0111
+0110
+0010
+0010","6","2 2
+01
+00","2","3 3
+011
+111
+100","-1"
+"P-005-5","Wall-Break Shortest Route Verifier","Platinum","BFS","A grid cell marked 0 is open and 1 is blocked. You may turn one blocked cell into an open cell while walking, but may move only up, down, left, or right.","Print the fewest moves from the top-left cell to the bottom-right cell, using at most one wall break. Print -1 if unreachable. Use the same input and output rules.","Line 1: R C.
+Lines 2 through R+1: C characters 0 or 1 per row.","1 <= R,C <= 1000
+start and target are open
+use at most one wall break","1 1
+0","0","1 1
+0","0","2 2
+00
+00","2","2 2
+01
+10","2","3 3
+010
+111
+000","4","3 3
+010
+010
+010","4","3 3
+000
+111
+000","4","3 3
+001
+101
+100","4","4 4
+0100
+1110
+0000
+0110","6","3 3
+000
+010
+110","4","4 4
+0101
+0011
+1110
+1010","-1","3 3
+011
+011
+010","4","4 4
+0101
+0000
+1000
+1000","6"
+"P-006-1","Nearest Charger Grid","Platinum","Graphs / Grid BFS","You have a rectangular city grid. Cells are free '.' , chargers 'C', or impassable walls '#'. Time/distance is number of orthogonal steps. If a cell has a charger its distance is 0. Walls (and any cell that cannot be reached from any charger) are reported as -1.","For every cell output the minimum number of steps to reach any charger (0 for charger cells). Report -1 for walls or cells with no path from any charger. If multiple chargers reach a cell at the same distance, that distance is the answer.","Line 1: two integers R C (rows and columns)
+Next R lines: each a string of length C with characters in {'.','#','C'}","1 ≤ R,C; R*C ≤ 300000. Grid only contains characters '.', '#', 'C'. Output R lines with C space-separated integers.","3 4
+.C..
+.##C
+..C.
+","1 0 1 1
+2 -1 -1 0
+2 1 0 1","3 4
+.C..
+.##C
+..C.
+","1 0 1 1
+2 -1 -1 0
+2 1 0 1","2 2
+..
+..
+","-1 -1
+-1 -1","4 4
+C...
+....
+..#.
+...C
+","0 1 2 3
+1 2 3 2
+2 3 -1 1
+3 2 1 0","1 1
+C
+","0","1 3
+CC.
+","0 0 1","2 2
+##
+##
+","-1 -1
+-1 -1","3 3
+C#.
+###
+.#C
+","0 -1 -1
+-1 -1 -1
+-1 -1 0","3 3
+C.C
+...
+.C.
+","0 1 0
+1 1 1
+1 0 1","1 1
+#","-1","2 2
+.#
+C#","1 -1
+0 -1","3 3
+##.
+..C
+#C.","-1 -1 1
+2 1 0
+-1 0 1","3 4
+.#C#
+..#C
+.###","-1 -1 0 -1
+-1 -1 -1 0
+-1 -1 -1 -1"
+"P-006-2","Rotting Fruit Minutes","Platinum","Graphs / Spread BFS","Each cell holds an item: 0 = empty (no item), 1 = fresh fruit, 2 = rotten fruit. Every minute, rotten fruits rot any orthogonally adjacent fresh fruits (but do not pass through empty cells).","Return the minimum minutes until no fresh fruits remain. If there are no fresh fruits initially return 0. If some fresh fruits can never be rotten (no initial rotten can reach them) return -1.","Line 1: two integers R C
+Next R lines: C integers (0,1,2) separated by spaces","1 ≤ R,C; R*C ≤ 300000. Each grid value is 0,1,2. Output a single integer.","3 3
+2 1 1
+1 1 0
+0 1 1
+","4","3 3
+2 1 1
+1 1 0
+0 1 1
+","4","2 2
+1 1
+1 1
+","-1","2 2
+0 0
+0 2
+","0","1 4
+2 2 2 2
+","0","3 3
+2 1 0
+0 1 1
+1 0 1
+","-1","1 1
+1
+","-1","1 5
+1 1 1 1 2
+","4","2 3
+0 0 0
+0 0 0
+","0","1 1
+0","0","2 2
+1 0
+2 1","1","3 3
+2 2 1
+2 1 1
+1 0 1","3","2 4
+0 1 2 1
+2 2 2 0","1"
+"P-006-3","Fire Spread Times on a Graph","Platinum","Graphs / Multi-source BFS","An unweighted undirected graph of N nodes. Fire starts at several source nodes simultaneously. Every minute a burning node spreads fire to all its neighbors. If a node never receives fire it is considered SAFE.","For each node 1..N output the earliest minute it burns (0 for source nodes), or the word SAFE if unreachable from every source. If the source list contains duplicates treat them as a single start (time 0).","Line 1: two integers N M
+Next M lines: two integers u v (1-based edge endpoints)
+Next line: integer S (number of sources)
+Next line: S integers (source node indices)
+","1 ≤ N ≤ 300000, 0 ≤ M ≤ 300000. 1 ≤ u,v ≤ N. 0 ≤ S ≤ N. Graph edges are undirected, no weights. Output N lines each either an integer ≥0 or the exact token SAFE.","5 4
+1 2
+2 3
+3 4
+2 5
+2
+2 4
+","1
+0
+1
+0
+1","5 4
+1 2
+2 3
+3 4
+2 5
+2
+2 4
+","1
+0
+1
+0
+1","4 0
+
+1
+3
+","SAFE
+SAFE
+0
+SAFE","6 4
+1 2
+2 3
+4 5
+5 6
+3
+1 1 3
+","0
+1
+0
+SAFE
+SAFE
+SAFE","3 3
+1 2
+2 3
+3 1
+2
+1 2
+","0
+0
+1","1 0
+
+0
+
+","SAFE","7 6
+1 2
+2 3
+3 4
+4 5
+5 6
+6 7
+1
+4
+","3
+2
+1
+0
+1
+2
+3","5 3
+1 2
+2 3
+4 5
+2
+3 5
+","2
+1
+0
+1
+0","4 2
+1 2
+3 4
+1
+2
+","1
+0
+SAFE
+SAFE","1 0
+1
+1","0","3 0
+0","SAFE
+SAFE
+SAFE","4 2
+1 2
+2 4
+2
+2 3","1
+0
+0
+1","6 4
+4 6
+2 5
+4 4
+2 1
+0","SAFE
+SAFE
+SAFE
+SAFE
+SAFE
+SAFE"
+"P-006-4","Last Flooded Cells","Platinum","Grid BFS / Spread","Given a grid with water sources 'W', empty '.' and impassable obstacles 'X'. Each minute water spreads orthogonally to neighboring empty cells (not into obstacles). Water sources are already flooded at time 0.","If every empty cell is reachable from at least one water source, output two integers T K on the first line where T is the maximum minute any empty cell becomes flooded and K is the number of cells that achieve minute T. Then output K lines with 1-based row and column of each such cell, sorted lexicographically by row then column. If there are zero empty cells output ""0 0"" and no further lines. If some empty cell is not reachable from any water source print exactly the line IMPOSSIBLE.","Line 1: two integers R C
+Next R lines: each a string of length C using characters {'.','X','W'}","1 ≤ R,C; R*C ≤ 300000. Water spreads only into '.' cells. Output described above exactly.","3 3
+...
+.W.
+...
+","2 4
+1 1
+1 3
+3 1
+3 3","3 3
+...
+.W.
+...
+","2 4
+1 1
+1 3
+3 1
+3 3","3 3
+W X .
+X X .
+. . .
+","IMPOSSIBLE","2 2
+W W
+W W
+","0 0","5 1
+W
+.
+.
+.
+W
+","2 1
+3 1","3 3
+W..
+...
+..W
+","2 3
+1 3
+2 2
+3 1","3 4
+W..X
+..X.
+W..X
+","IMPOSSIBLE","1 3
+W.W
+","1 1
+1 2","3 3
+WXX
+XXX
+XXW
+","0 0","1 1
+X","0 0","2 2
+WX
+.X","1 1
+2 1","3 3
+WWW
+WW.
+XX.","2 1
+3 3","3 4
+WXX.
+X.XX
+XWXW","IMPOSSIBLE"
+"P-006-5","Nearest Hospital Queries","Platinum","Graphs / Multi-source BFS / Queries","An undirected unweighted city road graph. Some nodes host hospitals. For many query nodes you must report distance (number of edges) to the nearest hospital (0 if the node itself is a hospital). If no hospital is reachable report -1.","Given the graph, hospital set, and a list of query nodes, output one integer per query: minimum distance to any hospital, or -1 if unreachable. Sources (hospital nodes) are simultaneous multi-source starts.","Line 1: two integers N M
+Next M lines: u v edges (1-based)
+Next line: integer H
+Next line: H integers (hospital node indices)
+Next line: integer Q
+Next line: Q integers (query node indices)
+","1 ≤ N ≤ 300000, 0 ≤ M ≤ 300000. 0 ≤ H ≤ N. 1 ≤ Q ≤ 300000. Output Q lines each an integer ≥0 or -1.","5 4
+1 2
+2 3
+3 4
+2 5
+2
+2 4
+3
+1 5 4
+","1
+1
+0","5 4
+1 2
+2 3
+3 4
+2 5
+2
+2 4
+3
+1 5 4
+","1
+1
+0","4 2
+1 2
+3 4
+0
+
+3
+1 2 3
+","-1
+-1
+-1","3 2
+1 2
+2 3
+1
+2
+3
+2 3 1
+","0
+1
+1","6 5
+1 2
+2 3
+3 4
+4 5
+5 6
+2
+1 6
+4
+3 4 5 1
+","2
+2
+1
+0","4 2
+1 2
+2 3
+1
+2
+4
+1 2 3 4
+","1
+0
+1
+-1","1 0
+
+1
+1
+2
+1 1
+","0
+0","5 3
+1 2
+2 3
+4 5
+2
+3 4
+5
+5 4 3 2 1
+","1
+0
+0
+1
+2","7 6
+1 2
+2 3
+3 4
+4 5
+5 6
+6 7
+1
+4
+3
+1 4 7
+","3
+0
+3","1 1
+1 1
+0
+1
+1","-1","3 3
+1 2
+2 2
+2 1
+1
+2
+2
+2 1","0
+1","4 4
+1 1
+1 3
+4 3
+1 4
+2
+4 2
+2
+3 1","1
+1","6 2
+4 2
+2 4
+1
+5
+3
+3 4 1","-1
+-1
+-1"
+"P-007-1","The Chromatic Courier","Platinum","Navigation","In the city of Prismatica, roads are colored either Red (0) or Blue (1). To prevent driver fatigue, the city council mandates that every route must strictly alternate between Red and Blue roads.","Find the shortest path from intersection 1 to intersection N. The path must alternate colors, meaning if you just traversed a Red road, the next must be Blue, and vice versa. The first road taken can be either color. If multiple paths exist, output the minimum number of roads used. If no such path exists, output -1.","Line 1: Two integers N (number of intersections) and M (number of roads). Next M lines: Three integers u, v, and c, representing a road between u and v of color c (0 for Red, 1 for Blue). Roads are bidirectional.","2 <= N <= 100,000; 0 <= M <= 100,000; 1 <= u, v <= N; c is 0 or 1.","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 0
+2 3 0","-1","1 0","0","3 3
+1 2 0
+1 2 1
+2 3 0","2","3 3
+1 2 0
+2 1 1
+1 3 0","1","4 1
+1 2 0","-1","5 4
+1 2 0
+2 3 1
+3 4 0
+4 5 1","4","2 2
+1 2 0
+1 2 0","1","1 5
+1 1 0
+1 1 1
+1 1 1
+1 1 0
+1 1 1","0","2 3
+1 1 0
+1 1 0
+1 1 1","-1","4 4
+3 3 0
+1 2 1
+2 2 1
+1 2 0","-1","6 0","-1"
+"P-007-2","Portal Duality","Platinum","Exploration","A research facility contains rooms connected by two types of portals: Alpha (0) and Beta (1). To maintain molecular stability, a traveler must alternate between Alpha and Beta portals at every step.","Determine the minimum number of portals required to travel from room 1 to room N. The first portal used can be of either type, but every subsequent portal must be the opposite type of the one immediately preceding it. If room N is unreachable under these conditions, output -1.","Line 1: Two integers N (rooms) and M (portals). Next M lines: Three integers u, v, and t, representing a bidirectional portal between rooms u and v of type t (0 for Alpha, 1 for Beta).","2 <= N <= 100,000; 0 <= M <= 100,000; 1 <= u, v <= N; t is 0 or 1.","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 0
+2 3 1","2","4 3
+1 2 0
+2 3 0
+3 4 1","-1","2 1
+1 2 1","1","3 2
+1 2 1
+2 3 0","2","4 4
+1 2 0
+2 3 0
+3 4 1
+1 3 1","-1","5 4
+1 2 0
+2 3 1
+3 4 0
+4 5 1","4","2 2
+1 2 0
+1 2 1","1","6 5
+1 2 0
+2 3 1
+3 4 0
+4 5 1
+5 6 0","5","1 4
+1 1 0
+1 1 1
+1 1 1
+1 1 0","0","2 1
+2 2 0","-1","4 5
+4 4 1
+1 1 1
+2 4 1
+1 1 1
+3 2 0","-1","6 1
+4 1 0","-1"
+"P-007-3","Robot Protocol","Platinum","Robotics","A maintenance robot moves between stations using two different gear modes: Push (0) and Pull (1). The robot's internal logic requires it to switch modes after every single movement to prevent mechanical overheating.","Calculate the fewest number of moves for the robot to get from station 1 to station N. The robot can start with either a Push or a Pull move. If it is impossible to reach station N while strictly alternating modes, output -1.","Line 1: Two integers N (stations) and M (connections). Next M lines: Three integers u, v, and g, representing a bidirectional connection between stations u and v using gear mode g (0 for Push, 1 for Pull).","2 <= N <= 100,000; 0 <= M <= 100,000; 1 <= u, v <= N; g is 0 or 1.","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 1
+2 3 0","2","3 2
+1 2 1
+2 3 1","-1","4 3
+1 2 0
+2 3 1
+3 4 0","3","2 0","-1","5 5
+1 2 0
+2 1 1
+1 3 0
+3 4 1
+4 5 0","3","1 0","0","3 2
+1 2 1
+2 3 0","2","1 4
+1 1 1
+1 1 0
+1 1 1
+1 1 1","0","4 0","-1","6 1
+6 5 1","-1","1 4
+1 1 1
+1 1 1
+1 1 0
+1 1 1","0"
+"P-007-4","Luminous Labyrinth","Platinum","Puzzle","A cave system consists of chambers linked by passages that are either Light (0) or Dark (1). To keep your eyes adjusted, you must never walk through two passages of the same lighting condition in a row.","Find the shortest route from chamber 1 to chamber N such that the lighting condition of the passages alternates at every step. You may begin with either a Light or a Dark passage. If no such route exists, output -1.","Line 1: Two integers N (chambers) and M (passages). Next M lines: Three integers u, v, and L, representing a passage between chambers u and v with lighting L (0 for Light, 1 for Dark).","2 <= N <= 100,000; 0 <= M <= 100,000; 1 <= u, v <= N; L is 0 or 1.","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 0
+2 3 0","-1","4 4
+1 2 0
+2 3 1
+3 4 0
+1 4 1","1","2 1
+1 2 1","1","5 4
+1 2 1
+2 3 0
+3 4 1
+4 5 0","4","3 3
+1 2 0
+2 1 1
+1 3 0","1","4 2
+1 2 0
+3 4 1","-1","2 1
+1 2 1","1","1 0","0","2 2
+1 2 0
+1 2 0","1","4 0","-1","6 5
+4 4 1
+4 4 0
+5 6 1
+5 3 1
+4 6 0","-1"
+"P-007-5","Bipartisan Bridge","Platinum","Social Networks","In a social network, connections between users are labeled as either Formal (0) or Informal (1). A specific communication protocol requires that messages must alternate between Formal and Informal links to be verified.","Find the minimum number of links needed to send a message from user 1 to user N. The message must alternate link types at every hop, starting with either type. If user N cannot be reached via an alternating path, output -1.","Line 1: Two integers N (users) and M (links). Next M lines: Three integers u, v, and k, representing a bidirectional link between users u and v of type k (0 for Formal, 1 for Informal).","2 <= N <= 100,000; 0 <= M <= 100,000; 1 <= u, v <= N; k is 0 or 1.","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 0
+2 3 1","2","3 2
+1 2 0
+2 3 0","-1","4 3
+1 2 0
+2 3 1
+3 4 0","3","3 4
+1 2 0
+1 2 1
+2 3 0
+2 3 1","2","5 4
+1 2 1
+2 3 0
+3 4 1
+4 5 0","4","2 1
+1 2 0","1","6 5
+1 2 0
+2 3 0
+3 4 0
+4 5 0
+5 6 0","-1","3 4
+1 2 0
+1 2 1
+2 3 0
+2 3 1","2","1 1
+1 1 1","0","2 0","-1","4 5
+4 3 0
+3 4 1
+3 1 1
+2 4 0
+1 3 0","2","6 2
+5 3 1
+3 3 1","-1"
+"P-008-1","Perimeter of the Largest Island","Platinum","Grids","You have a rectangular grid of 0/1 cells. A component (island) is any group of 1-cells connected orthogonally (up/down/left/right). The perimeter of a component is the total number of cell edges that face outside the grid or face a 0-cell.","Find the island(s) with the largest area (number of 1-cells). If there are no 1-cells print 0. If multiple islands tie for largest area, choose the tied island that has the largest perimeter. Output that island's perimeter.","Line 1: H W
+Lines 2..H+1: each a string of W characters '0' or '1'","1 ≤ H, W, H*W ≤ 200000. Grid contains only '0' and '1'.","3 3
+111
+101
+111
+","16","3 3
+111
+101
+111
+","16","2 2
+00
+00
+","0","4 6
+100110
+100110
+100000
+100000
+","10","2 3
+111
+111
+","10","1 1
+1
+","4","4 4
+1110
+1110
+0001
+0001
+","10","3 6
+110011
+110011
+000000
+","8","3 3
+010
+111
+010
+","12","2 2
+11
+01","8","3 3
+100
+011
+111","10","3 4
+1110
+1001
+0111","10","2 2
+01
+00","4"
+"P-008-2","Perimeter at a Point","Platinum","Traversal","Given a grid of 0/1 cells, any connected group of 1-cells is a component. The perimeter of a component counts edges where a 1-cell meets the outside or a 0-cell. You are given a cell coordinate and must report the perimeter of the component that contains that cell.","If the query cell contains 1, output the perimeter of its component. If the query cell contains 0, output -1.","Line 1: H W
+Lines 2..H+1: each a string of W characters '0' or '1'
+Line H+2: r c (1-based row and column of the queried cell)","1 ≤ H, W, H*W ≤ 200000. 1 ≤ r ≤ H, 1 ≤ c ≤ W. Grid contains only '0' and '1'.","3 3
+111
+101
+111
+2 1
+","16","3 3
+111
+101
+111
+2 1
+","16","2 2
+00
+00
+1 1
+","-1","1 1
+1
+1 1
+","4","2 3
+111
+111
+1 2
+","10","3 3
+100
+000
+000
+1 1
+","4","4 6
+100110
+100110
+100000
+100000
+1 1
+","10","2 2
+11
+11
+2 2
+","8","3 3
+010
+111
+010
+2 2
+","12","1 1
+0
+1 1","-1","2 2
+11
+10
+1 2","8","3 3
+100
+011
+111
+1 1","4","3 4
+0100
+1000
+0010
+1 3","-1"
+"P-008-3","Count Components with Perimeter ≤ K","Platinum","Local edge count","Each connected group of 1-cells has a perimeter (edges adjacent to outside or 0). You are asked how many components have perimeter at most K.","Output the number of components whose perimeter is ≤ K. If K < 0, output 0.","Line 1: H W
+Lines 2..H+1: each a string of W characters '0' or '1'
+Line H+2: K (integer)","1 ≤ H, W, H*W ≤ 200000. Grid contains only '0' and '1'. K fits in 32-bit signed integer.","3 3
+111
+101
+111
+16
+","1","3 3
+111
+101
+111
+16
+","1","2 2
+00
+00
+0
+","0","4 6
+100110
+100110
+100000
+100000
+9
+","1","3 3
+111
+111
+111
+-5
+","0","2 3
+000
+000
+0
+","0","3 3
+100
+010
+001
+4
+","3","2 3
+111
+111
+100
+","1","3 6
+110011
+110011
+000000
+8
+","2","1 1
+0
+7","0","2 2
+10
+00
+11","1","3 3
+001
+100
+111
+1","0","3 4
+1111
+1110
+0001
+1","0"
+"P-008-4","Minimal Perimeter Among Border-Touching Components","Platinum","Connectivity","A component touches the border if any of its cells lies on the first/last row or first/last column. Perimeter counts edges adjacent to outside or to 0-cells.","Find the minimal perimeter among components that touch the grid border. If no component touches the border, print -1.","Line 1: H W
+Lines 2..H+1: each a string of W characters '0' or '1'","1 ≤ H, W, H*W ≤ 200000. Grid contains only '0' and '1'.","3 3
+111
+101
+111
+","16","3 3
+111
+101
+111
+","16","5 5
+00000
+01110
+01110
+01110
+00000
+","-1","4 6
+100110
+100110
+100000
+100000
+","8","2 2
+00
+00
+","-1","3 3
+100
+000
+000
+","4","3 3
+100
+001
+000
+","4","2 3
+111
+110
+","10","3 3
+111
+111
+111
+","12","1 1
+0","-1","2 2
+00
+11","6","3 3
+101
+000
+001","4","3 4
+0110
+1010
+1000","6"
+"P-008-5","Sum of Perimeters of Top M Components by Area","Platinum","Component traversal","Compute each component's area (number of 1-cells) and perimeter. Sort components by area descending; break ties by smaller perimeter first. Take the first M components in this order and sum their perimeters.","Given M, output the sum of perimeters of the selected components. If M ≤ 0 output 0. If there are fewer than M components, sum all components.","Line 1: H W
+Lines 2..H+1: each a string of W characters '0' or '1'
+Line H+2: M (integer)","1 ≤ H, W, H*W ≤ 200000. Grid contains only '0' and '1'. M fits in 32-bit signed integer.","3 3
+111
+101
+111
+1
+","16","3 3
+111
+101
+111
+1
+","16","3 3
+111
+101
+111
+0
+","0","3 3
+100
+010
+001
+5
+","12","4 6
+100110
+100110
+100000
+100000
+1
+","8","4 6
+100110
+100110
+100000
+100000
+2
+","18","3 3
+111
+111
+111
+-2
+","0","4 4
+1110
+1110
+0001
+0001
+2
+","16","2 2
+00
+00
+3
+","0","1 1
+0
+0","0","2 2
+10
+10
+-1","0","3 3
+100
+001
+111
+4","14","3 4
+1000
+1110
+0000
+4","10"
+"P-009-1","Can All Courses Be Finished?","Platinum","Graphs","You have N courses numbered 1..N. A prerequisite a b means course a must be completed before course b. A valid plan repeatedly takes any course that has no remaining prerequisites and completes it. Duplicate prerequisite lines in the input should be treated as a single prerequisite. A self-loop (a prereq from a course to itself) makes completion impossible.","Decide whether it is possible to finish all courses by repeatedly removing courses with zero outstanding prerequisites. If it is possible print YES; otherwise print NO. Duplicate edges in the input are ignored; self-loops count as a cycle and make completion impossible.","Line 1: two integers N M (number of courses and number of prerequisite pairs).
+Next M lines: two integers a b each meaning a must be done before b.","1 ≤ N ≤ 300000, 0 ≤ M ≤ 300000, 1 ≤ a,b ≤ N. Time limit: O(N+M).","4 3
+1 2
+1 3
+3 4
+","YES","4 3
+1 2
+1 3
+3 4
+","YES","3 3
+1 2
+2 3
+3 1
+","NO","4 2
+2 3
+4 3
+","YES","3 4
+1 2
+1 2
+2 3
+2 3
+","YES","5 0
+","YES","1 0
+","YES","2 2
+1 1
+1 2
+","NO","6 6
+1 2
+1 3
+3 4
+2 4
+4 5
+5 6
+","YES","1 4
+1 1
+1 1
+1 1
+1 1","NO","3 4
+3 2
+1 1
+1 2
+2 2","NO","4 3
+2 1
+2 2
+4 4","NO","6 3
+6 5
+2 1
+1 6","YES"
+"P-009-2","One Valid Course Order (smallest-first)","Platinum","Topological Order","Courses are numbered 1..N and a pair a b means a must be completed before b. You must output one valid order of all courses or report impossibility. When multiple courses have no outstanding prerequisites at the same time, always choose the smallest-numbered course next. Ignore duplicate prerequisite lines (they do not add extra requirements). A self-loop makes completion impossible.","If a full ordering exists, print N integers on one line: a valid course completion order following the smallest-first tie rule. If impossible, print IMPOSSIBLE exactly. Duplicate edges are ignored; self-loops make it impossible.","Line 1: two integers N M.
+Next M lines: a b meaning a before b.","1 ≤ N ≤ 300000, 0 ≤ M ≤ 300000, 1 ≤ a,b ≤ N. Time: O(N+M).","4 3
+1 2
+1 3
+3 4
+","1 2 3 4","4 3
+1 2
+1 3
+3 4
+","1 2 3 4","3 3
+1 2
+2 3
+3 1
+","IMPOSSIBLE","3 4
+1 2
+1 2
+1 3
+2 3
+","1 2 3","3 1
+2 3
+","1 2 3","4 0
+","1 2 3 4","2 1
+2 2
+","IMPOSSIBLE","6 5
+1 4
+2 4
+3 5
+4 6
+5 6
+","1 2 3 4 5 6","4 5
+1 2
+1 2
+2 3
+3 4
+1 3
+","1 2 3 4","1 3
+1 1
+1 1
+1 1","IMPOSSIBLE","3 3
+3 2
+2 3
+2 2","IMPOSSIBLE","4 2
+1 1
+2 4","IMPOSSIBLE","6 1
+3 5","1 2 3 4 5 6"
+"P-009-3","Recipe Preparation Sequence (one per line)","Platinum","Dependencies","You are preparing a recipe of N steps numbered 1..N. Each line a b means step a must be completed before step b. Produce one valid sequence of steps, printing one step per line. When several steps are available simultaneously, always take the smallest-numbered step next. Treat repeated identical prerequisite lines as a single requirement. Self-dependencies are invalid and make a full sequence impossible.","Print N lines with a valid ordering of steps (one integer per line) following the smallest-first rule, or print IMPOSSIBLE if no full ordering exists. Duplicate edges are ignored; self-loops cause impossibility.","Line 1: N M
+Next M lines: a b meaning a before b.","1 ≤ N ≤ 300000, 0 ≤ M ≤ 300000, 1 ≤ a,b ≤ N. Expected O(N+M).","3 2
+1 2
+2 3
+","1
+2
+3","3 2
+1 2
+2 3
+","1
+2
+3","2 2
+1 2
+2 1
+","IMPOSSIBLE","4 5
+1 2
+1 2
+2 3
+1 3
+3 4
+","1
+2
+3
+4","4 2
+2 3
+4 3
+","1
+2
+4
+3","5 4
+1 2
+2 3
+3 4
+4 5
+","1
+2
+3
+4
+5","1 0
+","1","3 3
+1 1
+1 2
+2 3
+","IMPOSSIBLE","5 0
+","1
+2
+3
+4
+5","1 5
+1 1
+1 1
+1 1
+1 1
+1 1","IMPOSSIBLE","3 4
+2 2
+3 1
+2 3
+2 3","IMPOSSIBLE","4 3
+4 4
+1 2
+2 3","IMPOSSIBLE","6 0","1
+2
+3
+4
+5
+6"
+"P-009-4","Build Order for Modules (comma-separated)","Platinum","Build Systems","You have N modules numbered 1..N. Dependency a b means module a must be built before b. Output one valid comma-separated build order that builds all modules, or report a cycle. When multiple modules are buildable simultaneously pick the smallest-numbered module next. Treat duplicate dependency lines as a single dependency; any self-dependency indicates a cycle.","If possible print the build order as numbers separated by commas with no spaces (e.g. 1,2,3). If impossible print CYCLE exactly. Duplicate edges are ignored; self-loops cause CYCLE.","Line 1: N M
+Then M lines: a b (a before b).","1 ≤ N ≤ 300000, 0 ≤ M ≤ 300000, 1 ≤ a,b ≤ N. Expected O(N+M) solution.","4 3
+1 2
+1 3
+3 4
+","1,2,3,4","4 3
+1 2
+1 3
+3 4
+","1,2,3,4","3 3
+1 2
+2 3
+3 1
+","CYCLE","3 4
+1 2
+1 2
+1 3
+2 3
+","1,2,3","3 1
+2 3
+","1,2,3","4 0
+","1,2,3,4","2 1
+2 2
+","CYCLE","6 6
+1 2
+1 3
+2 4
+3 4
+4 5
+5 6
+","1,2,3,4,5,6","4 4
+1 2
+2 3
+3 4
+1 3
+","1,2,3,4","1 2
+1 1
+1 1","CYCLE","3 2
+1 2
+2 3","1,2,3","4 3
+2 2
+3 4
+4 3","CYCLE","6 0","1,2,3,4,5,6"
+"P-009-5","Task Unlock List — Report order or IMPOSSIBLE","Platinum","Scheduling","There are N tasks (1..N). A line a b means task a unlocks task b (a must be done before b). Decide whether all tasks can be unlocked. If yes, print the unique deterministic order defined by always picking the smallest-numbered currently unlocked task. Ignore duplicate unlock lines; any self-unlock (a -> a) prevents completion.","If all tasks can be completed print their numbers in order separated by single spaces following the smallest-first tie rule. If not, print IMPOSSIBLE. Duplicate edges are ignored; self-loops make completion impossible.","Line 1: N M
+Next M lines: a b each meaning a before b.","1 ≤ N ≤ 300000, 0 ≤ M ≤ 300000, 1 ≤ a,b ≤ N. Should run in O(N+M).","5 4
+1 2
+1 3
+3 4
+2 5
+","1 2 3 4 5","5 4
+1 2
+1 3
+3 4
+2 5
+","1 2 3 4 5","3 3
+1 2
+2 3
+3 1
+","IMPOSSIBLE","4 5
+1 2
+1 2
+2 3
+1 3
+3 4
+","1 2 3 4","3 1
+2 3
+","1 2 3","4 0
+","1 2 3 4","1 0
+","1","3 3
+1 1
+1 2
+2 3
+","IMPOSSIBLE","6 6
+1 2
+2 4
+1 3
+3 5
+4 6
+5 6
+","1 2 3 4 5 6","1 4
+1 1
+1 1
+1 1
+1 1","IMPOSSIBLE","3 2
+2 1
+3 1","2 3 1","4 1
+2 1","2 1 3 4","6 5
+2 2
+3 2
+4 5
+4 1
+3 6","IMPOSSIBLE"
+"P-010-1","Rival Teams","Platinum","Graphs","You have N people and some pairs are rivals. Every rivalry means the two people must be on opposing teams. A valid assignment gives each person either Team A or Team B. If a person has no rivals they may be on either team.","Decide whether a valid A/B assignment exists. If impossible print NO. If possible, produce one valid assignment using this deterministic rule: iterate vertices 1..N; when you find an unassigned vertex, start a BFS/DFS from that vertex (visit neighbours in increasing index order) and assign that starting vertex to Team A, propagating the opposite label along edges. Output NO or, if possible, first line YES and second line N tokens 'A' or 'B' (space-separated) giving the team for persons 1..N.","Line 1: two integers N M. Next M lines: two integers u v representing an undirected rivalry edge between u and v.","1 ≤ N ≤ 200000, 0 ≤ M ≤ 200000, N+M ≤ 300000. Vertex indices 1..N. No more than two-team constraints; self-loop (u=u) means impossible because a vertex cannot be opposite itself.","4 2
+1 2
+3 4
+","YES
+A B A B","4 2
+1 2
+3 4
+","YES
+A B A B","1 0
+","YES
+A","3 3
+1 2
+2 1
+2 3
+","YES
+A B A","3 1
+2 2
+","NO","5 4
+1 2
+2 3
+3 1
+4 5
+","NO","4 0
+","YES
+A A A A","6 5
+1 2
+2 3
+3 4
+4 1
+5 6
+","YES
+A B A B A B","5 4
+3 4
+1 2
+2 3
+4 5
+","YES
+A B A B A","1 1
+1 1","NO","3 3
+3 2
+2 3
+3 2","YES
+A A B","4 3
+2 1
+2 1
+4 1","YES
+A B A B","6 0","YES
+A A A A A A"
+"P-010-2","Same or Different Statements","Platinum","Logic","You hear statements that two people are the same or different type. Each statement compares two people and claims either SAME or DIFFERENT. You must assign binary labels 0/1 to each person so all statements hold.","Decide if the statements are consistent. If inconsistent print CONTRADICTION. Otherwise print a single line with N integers (0 or 1) for persons 1..N. Use this deterministic tie-breaker: scan vertices 1..N, when encountering an unlabelled vertex assign it label 0 and propagate constraints, visiting neighbors in increasing index order.","Line 1: two integers N M. Next M lines: three integers u v t where t=0 means u and v must have the same label, and t=1 means they must have different labels.","1 ≤ N ≤ 200000, 0 ≤ M ≤ 200000, N+M ≤ 300000. Vertex indices 1..N. Self-loop with t=1 is a contradiction; t=0 self-loop is allowed and means that vertex equals itself.","4 3
+1 2 0
+2 3 1
+4 4 0
+","0 0 1 0","4 3
+1 2 0
+2 3 1
+4 4 0
+","0 0 1 0","1 1
+1 1 1
+","CONTRADICTION","5 0
+","0 0 0 0 0","3 3
+1 2 0
+2 3 0
+1 3 1
+","CONTRADICTION","4 2
+3 4 1
+1 2 1
+","0 1 0 1","2 2
+1 2 0
+1 2 1
+","CONTRADICTION","6 5
+1 2 1
+2 3 1
+3 4 0
+4 5 1
+5 6 1
+","0 1 0 0 1 0","3 2
+2 2 0
+2 3 1
+","0 0 1","1 4
+1 1 0
+1 1 0
+1 1 0
+1 1 0","0","3 3
+1 3 1
+1 3 0
+1 1 0","CONTRADICTION","4 0","0 0 0 0","6 4
+4 3 1
+5 2 0
+3 3 0
+2 5 1","CONTRADICTION"
+"P-010-3","Two-Shift Schedule","Platinum","Scheduling","Employees must be assigned to Day or Night shift. Some pairs cannot work the same shift and therefore must be assigned to opposite shifts. Employees without restrictions can be on either shift.","If a valid Day/Night assignment exists, output the number K of employees assigned to Day on the first line and on the second line the K indices in ascending order. If no valid assignment exists print NO. Tie-breaker: iterate vertices 1..N, when a vertex is unassigned start a BFS from it (visit neighbors in increasing index order) assigning that vertex to Day and propagating Night/Day on edges.","Line 1: two integers N M. Next M lines: two integers u v meaning u and v must be on opposite shifts.","1 ≤ N ≤ 200000, 0 ≤ M ≤ 200000, N+M ≤ 300000. Vertex indices 1..N. Self-loop (u=u) disallows a valid assignment.","4 2
+1 2
+3 4
+","2
+1 3","4 2
+1 2
+3 4
+","2
+1 3","1 0
+","1
+1","3 3
+1 2
+2 3
+3 1
+","NO","5 1
+2 1
+","4
+1 3 4 5","4 0
+","4
+1 2 3 4","2 1
+2 2
+","NO","4 4
+1 2
+2 3
+3 4
+4 1
+","2
+1 3","6 5
+4 1
+1 2
+2 3
+4 3
+5 6
+","3
+1 3 5","1 3
+1 1
+1 1
+1 1","NO","3 4
+2 2
+3 2
+1 3
+1 2","NO","6 0","6
+1 2 3 4 5 6","1 1
+1 1","NO"
+"P-010-4","Alternating Components","Platinum","Components","Given an undirected graph where every edge insists the endpoints have opposite parity, each connected component can be split into two color classes. For each component we want the counts of the two classes.","If the graph is not bipartite (an edge forces a node to be opposite itself), print Not bipartite. Otherwise output the number C of connected components on the first line, then C lines each containing two integers a b: the count of vertices labeled 0 then 1 for that component. Use this deterministic tie-breaker: process vertices in increasing index order, when starting a component assign its smallest vertex label 0 and visit neighbours in increasing index order. List components in the output in order of their smallest vertex (increasing).","Line 1: two integers N M. Next M lines: two integers u v representing an undirected edge that requires opposite labels.","1 ≤ N ≤ 200000, 0 ≤ M ≤ 200000, N+M ≤ 300000. Vertex indices 1..N. Self-loop implies Not bipartite.","5 3
+1 2
+2 3
+4 5
+","2
+2 1
+1 1","5 3
+1 2
+2 3
+4 5
+","2
+2 1
+1 1","1 0
+","1
+1 0","3 3
+1 2
+2 3
+3 1
+","Not bipartite","4 2
+2 1
+1 2
+","3
+1 1
+1 0
+1 0","4 0
+","4
+1 0
+1 0
+1 0
+1 0","3 1
+2 2
+","Not bipartite","6 5
+1 2
+2 3
+3 4
+4 1
+5 6
+","2
+2 2
+1 1","5 4
+3 4
+1 2
+2 3
+4 5
+","1
+3 2","1 3
+1 1
+1 1
+1 1","Not bipartite","3 4
+2 1
+3 2
+3 3
+1 1","Not bipartite","4 2
+3 4
+1 3","2
+2 1
+1 0","6 3
+5 1
+1 3
+2 6","3
+1 2
+1 1
+1 0"
+"P-010-5","Relationship Queries","Platinum","Queries","You are given same/different constraints between people. First check consistency; if consistent, produce a deterministic 0/1 labeling (scan vertices 1..N, start each unlabelled vertex with 0, traverse neighbours in increasing order). Then answer queries asking if two people ended up the same or different.","Input N, M, Q. Next M lines: u v t (t=0 same, t=1 different). Next Q lines: u v queries. If constraints are inconsistent print INCONSISTENT and nothing else. Otherwise, after assigning labels by the deterministic rule, print Q lines each either SAME or DIFFERENT indicating whether the queried pair have equal labels.","Line 1: three integers N M Q. Next M lines: u v t as described. Next Q lines: u v queries.","1 ≤ N ≤ 200000, 0 ≤ M,Q ≤ 200000, N+M+Q ≤ 300000. Vertex indices 1..N. Self-loop with t=1 is inconsistent; t=0 self-loop is allowed.","4 2 3
+1 2 1
+2 3 0
+1 3
+1 2
+4 4
+","DIFFERENT
+DIFFERENT
+SAME","4 2 3
+1 2 1
+2 3 0
+1 3
+1 2
+4 4
+","DIFFERENT
+DIFFERENT
+SAME","1 1 1
+1 1 1
+1 1
+","INCONSISTENT","3 0 2
+1 2
+2 3
+","SAME
+SAME","3 3 3
+1 2 1
+2 1 1
+2 3 0
+1 3
+2 3
+1 2
+","DIFFERENT
+SAME
+DIFFERENT","3 3 1
+1 2 1
+2 3 1
+1 3 1
+1 2
+","INCONSISTENT","6 4 3
+4 1 1
+1 2 0
+2 3 1
+5 6 1
+4 3
+1 4
+5 6
+","SAME
+DIFFERENT
+DIFFERENT","5 2 3
+1 2 1
+3 4 0
+1 3
+2 4
+5 5
+","SAME
+DIFFERENT
+SAME","3 2 2
+2 2 0
+2 3 1
+1 3
+2 2
+","DIFFERENT
+SAME","1 3 2
+1 1 1
+1 1 0
+1 1 0
+1 1
+1 1","INCONSISTENT","3 3 2
+1 3 1
+3 1 1
+3 3 0
+2 2
+1 2","SAME
+SAME","4 2 2
+1 3 0
+2 4 0
+2 2
+2 2","SAME
+SAME","6 0 2
+4 3
+4 6","SAME
+SAME"
+"P-011-1","Teleport, Step, or Double","Platinum","Number BFS","You stand on an integer position on a number line between 0 and 300000. From a value x you may move to x-1, x+1, or teleport to x*2 (staying inside the 0..300000 interval). Each move costs 1. The state-space (values) is implicit: you generate neighbours by those three rules.","Given start N and target K (0 ≤ N,K ≤ 300000), find the minimum number of moves to reach K from N. If N == K output 0. (There is always a path under these rules.)","Line 1: two integers N K","0 ≤ N,K ≤ 300000. Allowed moves: x-1, x+1, x*2 (result must remain within 0..300000). Time limit expects O(range) BFS.","5 17
+","4","5 17
+","4","0 0
+","0","300000 0
+","300000","10 11
+","1","7 7
+","0","2 3
+","1","4 6
+","2","9 1
+","8","34 56","7","25 21","4","44 49","5","48 60","12"
+"P-011-2","Reverse-and-Step Relay","Platinum","Number BFS","You have integers between 0 and 300000. From x you may go to x-1, x+1, or to rev(x) where rev(x) is the decimal reversal of x (leading zeros are dropped, e.g. rev(120)=21). Each move costs 1.","Given start N and target K (0 ≤ N,K ≤ 300000), compute the minimum number of moves to reach K from N. If N==K output 0. (If multiple ways exist, just output the distance.)","Line 1: two integers N K","0 ≤ N,K ≤ 300000. Moves: x-1, x+1, rev(x) (results must be within 0..300000). Use BFS over the implicit graph.","12 21
+","1","12 21
+","1","0 1
+","1","100000 1
+","1","10 1
+","1","120 21
+","1","1 0
+","1","2 202
+","23","199 991
+","1","126 18","8","181 334","45","167 27","6","257 369","14"
+"P-011-3","Add, Subtract, or Double (parameterized)","Platinum","Parameterized BFS","You manipulate integers in 0..300000. From x you can: add A (x+A), subtract B (x-B, allowed only if result ≥ 0), or double (x*2). Each operation costs 1. A and B are nonnegative integers provided in the input; subtraction by 0 is allowed (it produces the same state).","Given N, K, A, B find the minimum moves to reach K from N using those operations inside the 0..300000 interval. If K is unreachable output -1. If N==K output 0.","Line 1: four integers N K A B","0 ≤ N,K ≤ 300000. 0 ≤ A,B ≤ 300000. Allowed moves: x+A, x-B (only if ≥0), x*2 (only if ≤300000). Answer must be the minimum number of unit-cost moves or -1 if unreachable.","4 7 3 1
+","1","4 7 3 1
+","1","5 5 4 2
+","0","2 3 4 2
+","-1","2 6 2 2
+","2","10 11 1 0
+","1","1 16 3 5
+","3","20 5 7 5
+","3","3 12 4 1
+","2","20 12 4 3","5","26 13 3 1","13","29 23 4 6","1","27 19 6 6","-1"
+"P-011-4","Tripling with Path Output (lexicographic tiebreak)","Platinum","Path reconstruction","You have values in 0..300000. From x you may move to x-1, x+1, or x*3 (result must stay within bounds). All moves cost 1. Besides the minimal moves count, we also want an actual shortest sequence of states starting with N and ending with K.","Given N and K (0 ≤ N,K ≤ 300000) output two lines: Line 1 is the minimum number of moves to go from N to K. Line 2 is one sequence of states (space-separated integers) of that minimum length, starting at N and ending at K. If multiple shortest sequences exist, output the lexicographically smallest sequence (compare sequences element-by-element). If N==K, output 0 and a single-number line with N.","Line 1: two integers N K","0 ≤ N,K ≤ 300000. Moves: x-1, x+1, x*3 (results must be within 0..300000). Use BFS to find distances and reconstruct a path; among all shortest paths choose the lexicographically smallest sequence.","2 7
+","2
+2 6 7","2 7
+","2
+2 6 7","5 5
+","0
+5","2 8
+","3
+2 3 9 8","100000 100000
+","0
+100000","0 1
+","1
+0 1","6 2
+","4
+6 5 4 3 2","3 10
+","2
+3 9 10","2 6
+","1
+2 6","0 9","3
+0 1 3 9","22 30","8
+22 23 24 25 26 27 28 29 30","17 14","3
+17 16 15 14","1 19","4
+1 2 6 18 19"
+"P-011-5","Parity Machine","Platinum","Deterministic transitions","You work on integers 0..300000 with a deterministic, parity-dependent rule: if x is even, you must replace x with x/2; if x is odd, you must replace x with x+5. There is exactly one possible move from any x (it must stay in bounds). Each move costs 1. Because every state has one successor inside 0..300000, the state evolution is a deterministic sequence (it may enter a cycle).","Given N and K (0 ≤ N,K ≤ 300000) find the minimum number of moves to reach K from N following the deterministic rule. If K is never reached (sequence enters a cycle without hitting K) output -1. If N==K output 0.","Line 1: two integers N K","0 ≤ N,K ≤ 300000. Transition: if x is even -> x/2; else -> x+5 (result must be within 0..300000; if a step would go outside, it is not allowed and the process stops — treat as unreachable). Because the rule is deterministic there is at most one path; detect cycles or out-of-bounds and report -1 if K is not reached.","3 1
+","4","3 1
+","4","0 0
+","0","0 1
+","-1","1 1
+","0","7 1
+","7","100 1
+","-1","2 1
+","1","9 3
+","5","36 26","-1","23 16","-1","27 14","-1","34 36","-1"
+"P-012-1","Midnight Heist","Platinum","Robbery","You are a thief in a straight street of houses. Each house has an integer amount of loot (can be positive, zero, or negative meaning a cost). You may rob any subset of houses but never two adjacent ones (robbing neighboring houses alerts the police). You may also choose to rob none.","Compute the maximum total loot you can obtain. If every choice would reduce your loot, you may choose to rob nobody and get 0. Output a single integer: the maximum achievable total.","Line 1: n (number of houses)
+Line 2: n space-separated integers a1..an (loot values)","1 ≤ n ≤ 300000. Each ai is an integer with |ai| ≤ 10^9. Required time O(n), memory O(1) extra preferred.","5
+2 7 9 3 1
+","12","5
+2 7 9 3 1
+","12","1
+5
+","5","4
+-1 -2 -3 -4
+","0","5
+0 -1 0 -2 0
+","0","6
+5 5 5 5 5 5
+","15","7
+4 -1 5 -2 3 0 6
+","18","8
+100 -100 100 -100 100 -100 100 -100
+","400","3
+-5 0 -2
+","0","1
+9","9","3
+-3 0 0","0","5
+-7 2 4 5 9","13","7
+8 -6 -2 3 7 7 5","20"
+"P-012-2","Sunflower Harvest","Platinum","Farming","A row of sunflower plots each yields an integer amount of seeds (can be negative meaning tending cost). You can harvest any nonadjacent plots. Unlike skipping completely, you must harvest at least one plot (the farm contract requires some output). If all plots reduce profit, you still must choose the single plot with the highest value (least loss).","Compute the maximum total seeds obtainable by selecting a nonadjacent subset of plots with the constraint you must select at least one plot. Output the maximum total as a single integer.","Line 1: n (number of plots)
+Line 2: n space-separated integers v1..vn (yield values)","1 ≤ n ≤ 300000. Each vi is an integer with |vi| ≤ 10^9. Expected O(n) time and O(1) extra memory.","5
+3 2 5 10 7
+","15","5
+3 2 5 10 7
+","15","1
+-3
+","-3","4
+0 0 0 0
+","0","4
+5 5 5 5
+","10","6
+-1 6 0 6 -2 6
+","18","5
+-2 -3 -1 -4 -5
+","-1","7
+2 1 4 9 2 5 1
+","16","3
+-1 0 -2
+","0","1
+8","8","3
+6 9 -1","9","5
+6 4 6 -3 0","12","7
+-7 4 0 -5 2 -7 7","13"
+"P-012-3","Prize Stalls","Platinum","Casino","Along a row of stalls are prizes with integer values (can be negative). You can claim prizes from nonadjacent stalls. You are allowed to claim none (yield 0). Among all ways that achieve the maximum total prize value, you want the fewest stalls claimed (smaller teams are cheaper).","Output two integers: the maximum total prize, and the minimal number of stalls required to achieve that maximum. If the best choice is to claim none, the output should be ""0 0"".","Line 1: n (number of stalls)
+Line 2: n space-separated integers p1..pn (prize values)","1 ≤ n ≤ 300000. Each pi is integer with |pi| ≤ 10^9. Expected O(n) time and O(1) extra memory.","5
+2 7 9 3 1
+","12 3","5
+2 7 9 3 1
+","12 3","1
+10
+","10 1","4
+5 5 5 5
+","10 2","6
+5 0 5 0 5 0
+","15 3","3
+-1 -2 -3
+","0 0","5
+4 4 4 0 8
+","16 3","5
+0 0 0 0 0
+","0 0","7
+1 2 3 4 5 6 7
+","16 4","1
+-4","0 0","3
+-7 -6 2","2 1","5
+9 8 -4 2 5","14 2","7
+-6 7 -7 7 -5 -7 8","22 3"
+"P-012-4","Buffer Allocation","Platinum","Systems","A line of memory slots each has an integer benefit if allocated (negative means it costs more than it helps). You may allocate slots but never two adjacent ones. Additionally, you are only allowed to allocate slots with nonnegative benefit (zeros or positives). If there are no nonnegative slots at all, allocation is impossible.","If at least one slot is nonnegative, compute the maximum total benefit achievable by selecting nonadjacent slots among only nonnegative slots, and print that integer. If no slot is nonnegative, print IMPOSSIBLE (all caps).","Line 1: n (number of slots)
+Line 2: n space-separated integers b1..bn (benefits)","1 ≤ n ≤ 300000. Each bi is integer with |bi| ≤ 10^9. Expect O(n) time and O(1) extra memory.","5
+1 2 3 4 5
+","9","5
+1 2 3 4 5
+","9","1
+-1
+","IMPOSSIBLE","4
+0 0 0 0
+","0","6
+-1 7 -2 8 -3 9
+","24","3
+-5 0 -2
+","0","7
+10 -1 -1 10 -1 10 -1
+","30","6
+5 -1 5 -1 5 -1
+","15","5
+-2 -3 -4 0 -5
+","0","1
+9","9","3
+-1 2 -6","2","5
+7 -7 8 -4 -5","15","7
+8 -8 4 -5 -7 9 9","21"
+"P-012-5","Festival Seating","Platinum","Events","VIPs are seated along a single row: each seat has an integer enjoyment value (may be negative). You must seat at least one VIP. No two seated VIPs can sit in adjacent seats. Among all seating choices that reach the maximum total enjoyment, output the lexicographically smallest list of chosen seat indices (1-based). Lexicographic comparison treats the lists as sequences compared elementwise; shorter prefixes win if identical to that point.","First print the maximum total enjoyment (single integer). On the next line, print the chosen seat indices in increasing order separated by single spaces (1-based). You must choose at least one seat; if multiple selections tie on sum, output the lexicographically smallest index list.","Line 1: n (number of seats)
+Line 2: n space-separated integers s1..sn (enjoyment values)","1 ≤ n ≤ 300000. Each si is integer with |si| ≤ 10^9. Expected O(n) time; reconstruction of one optimal set should be O(n).","5
+2 7 9 3 1
+","12
+1 3 5","5
+2 7 9 3 1
+","12
+1 3 5","1
+5
+","5
+1","6
+5 5 5 5 5 5
+","15
+1 3 5","4
+6 0 6 0
+","12
+1 3","3
+-1 -2 -3
+","-1
+1","5
+4 1 4 1 4
+","12
+1 3 5","4
+0 0 0 0
+","0
+1","7
+1 2 3 4 5 6 7
+","16
+1 3 5 7","1
+-7","-7
+1","3
+4 6 7","11
+1 3","5
+2 9 0 -9 4","13
+2 5","7
+-5 4 1 -6 -5 7 -7","11
+2 6"
+"P-013-1","Staircase Toll","Platinum","Dynamic Programming","You climb a staircase of n steps. Each step i (1..n) has a toll cost. You start before step 1 (position 0) with cost 0. From any position you may move forward by 1 or 2 steps. Some steps may be blocked (cost -1) and cannot be landed on.","Compute the minimum total toll to land exactly on step n. If step n cannot be reached under the rules, output -1. Tie-breaking is irrelevant — just report the minimum cost.","Line 1: n
+Line 2: n integers cost[1] ... cost[n] (use -1 for blocked steps)","1 ≤ n ≤ 300000. Each cost[i] is either -1 or 0 ≤ cost[i] ≤ 10^9. Time: O(n) expected.","5
+1 2 3 4 5
+","9","5
+1 2 3 4 5
+","9","1
+7
+","7","3
+-1 -1 5
+","-1","4
+1 1 1 1
+","2","6
+0 0 0 0 0 0
+","0","5
+10 100 10 100 10
+","30","4
+-1 5 -1 2
+","7","2
+-1 3
+","3","1
+5","5","3
+1 5 0","1","5
+1 9 0 5 0","1","7
+0 9 9 0 5 9 1","15"
+"P-013-2","Frog Heights","Platinum","Dynamic Programming","A frog stands on stone 1 of n stones in a line. Each stone i has height h[i]. The frog can jump from stone i to i+1 or i+2. The energy cost of a jump i→j is |h[i]−h[j]|. The frog starts on stone 1 and wants to reach stone n.","Output the minimum total energy required to reach stone n. If n=1 output 0.","Line 1: n
+Line 2: n integers h[1] ... h[n]
+","1 ≤ n ≤ 300000. Each h[i] is an integer with |h[i]| ≤ 10^9. Time: O(n).","4
+10 30 40 20
+","30","4
+10 30 40 20
+","30","1
+5
+","0","3
+-5 0 5
+","10","2
+100 100
+","0","6
+1 100 1 100 1 100
+","99","5
+0 10 20 30 40
+","40","2
+-100 100
+","200","5
+0 0 0 0 0
+","0","1
+40","0","2
+-3 -13","10","4
+24 34 -6 38","14","6
+-1 -3 0 -3 -17 -7","6"
+"P-013-3","Required Checkpoints","Platinum","Dynamic Programming","Steps 1..n have costs; you start at position 0 (cost 0). You can jump forward by 1 or 2 steps and may not land on blocked steps (cost -1). You are given a list of checkpoints (positions). You must visit them in the exact order given. The journey ends at the last checkpoint; if the list is empty, you must end at step n.","Find the minimum total cost to perform a sequence of moves that visits the given checkpoints in order and finishes at the final required position. If any required visit is impossible, output -1. Visiting the same checkpoint twice in a row (repeated position in input) requires no movement and adds no cost.","Line 1: n k
+Line 2: n integers cost[1] ... cost[n] (-1 for blocked)
+Line 3: k integers p[1] ... p[k] (positions to visit in the given order). If k=0 the third line is omitted.","1 ≤ n ≤ 300000. 0 ≤ k ≤ n. Each cost[i] is -1 or 0 ≤ cost[i] ≤ 10^9. All 1 ≤ p[j] ≤ n. Time: O(n).","5 2
+1 2 3 4 5
+2 5
+","10","5 2
+1 2 3 4 5
+2 5
+","10","1 0
+7
+","7","4 2
+1 1 1 1
+4 2
+","-1","4 2
+1 -1 1 1
+3 4
+","3","3 2
+2 3 4
+2 2
+","3","5 1
+0 0 0 0 0
+5
+","0","3 1
+-1 -1 1
+3
+","-1","6 3
+1 2 3 4 5 6
+2 4 6
+","12","1 2
+9
+1 1","9","3 0
+1 1 0","1","5 0
+-1 0 5 -1 0","5","7 1
+5 5 -1 1 5 5 0
+6","11"
+"P-013-4","Choose Start Step","Platinum","Dynamic Programming","You must land exactly on step n. Each step i has cost[i] (−1 means blocked). Before moving you may choose to start already standing on step 1 or on step 2 (if that position exists and is not blocked). When you start on a step you immediately pay that step's cost. From any landed position you may move forward by 1 or 2 steps. If both starting choices are possible, pick the one that yields smaller total cost; if costs tie, prefer starting at step 1.","Output two values: the minimum total cost and the chosen starting step (1 or 2). If no valid plan exists (neither start leads to step n), output -1 on a single line.","Line 1: n
+Line 2: n integers cost[1] ... cost[n] (-1 for blocked)
+","1 ≤ n ≤ 300000. Each cost[i] is -1 or 0 ≤ cost[i] ≤ 10^9. Time: O(n).","5
+1 2 3 4 5
+","9 1","5
+1 2 3 4 5
+","9 1","1
+7
+","7 1","3
+5 5 5
+","10 1","4
+100 1 1 1
+","2 2","3
+-1 2 3
+","5 2","2
+-1 -1
+","-1","4
+0 0 0 0
+","0 1","3
+1 2 -1
+","-1","1
+0","0 1","3
+0 1 -1","-1","5
+5 1 5 5 1","7 2","7
+9 -1 5 -1 5 0 1","20 1"
+"P-013-5","Two-step Penalty Frog","Platinum","Dynamic Programming","A frog stands on stone 1 and needs to reach stone n. Stone i has height h[i]. The frog can jump from i to i+1 or i+2. The cost of a jump i→j is |h[i]−h[j]| plus an extra penalty P whenever the jump length is 2 (the penalty applies for each such jump).","Output the minimum total cost to reach stone n. If n=1 output 0.","Line 1: n P
+Line 2: n integers h[1] ... h[n]
+","1 ≤ n ≤ 300000. 0 ≤ P ≤ 10^9. Each h[i] is integer with |h[i]| ≤ 10^9. Time: O(n).","4 5
+10 30 40 20
+","35","4 5
+10 30 40 20
+","35","4 0
+10 30 40 20
+","30","1 7
+100
+","0","5 100
+1 100 1 100 1
+","200","3 5
+-5 0 5
+","10","3 5
+0 5 10
+","10","6 2
+0 0 0 0 0 0
+","0","5 1
+1 3 2 5 4
+","5","1 100
+-9","0","2 1
+35 22","13","4 1
+3 27 16 1","29","6 5
+-13 -2 -12 35 3 16","39"
+"P-014-1","Classic Alphabet Decode","Platinum","strings","You have a string of decimal digits representing a sequence of tokens. A single-digit token is any digit '1'..'9' (the digit '0' is not a valid single token). A two-digit token is any two-digit number between 10 and 26 inclusive (its first digit cannot be '0'). You must count how many different ways the input string can be partitioned into valid tokens (each token is either one digit or two adjacent digits). Return the count modulo a given modulus.","Given a digit string s and an integer modulus m, compute the number of valid partitions of s into single- or two-digit tokens under the rules above. If there are no valid partitions output 0. Always reduce the final count modulo m (0 <= answer < m).","Line 1: a non-empty digit string s (length up to 100000)
+Line 2: integer m (1 <= m <= 10^9+7)","1 <= |s| <= 100000. s contains only characters '0'..'9'. Single digit tokens allowed only for '1'..'9'. Two-digit tokens allowed only if the two-digit integer is between 10 and 26 inclusive. Time O(n).","12
+100
+","2","12
+100
+","2","0
+1000
+","0","226
+1000
+","3","1111
+100
+","5","10
+1000
+","1","100
+1000000007
+","0","27
+10
+","1","121212
+1000000007
+","13","2
+1000000007","1","11
+1000000007","2","502
+1000","0","0050
+1000000007","0"
+"P-014-2","Packet Size Segments","Platinum","parsing","Interpret the digit string as adjacent packet descriptors. A single-digit packet is any digit '1'..'9' (not '0'). A two-digit packet is any two-digit number between 10 and 34 inclusive (first digit cannot be '0'). Count how many segmentations of the string into such packets exist, modulo m.","Given digit string s and modulus m, output the count of valid segmentations into single-digit packets (1..9) or two-digit packets (10..34). If no segmentation is valid output 0. Return answer modulo m (0 <= answer < m).","Line 1: digit string s
+Line 2: integer m","1 <= |s| <= 100000. s only '0'..'9'. Single-digit packets allowed only for '1'..'9'. Two-digit packets allowed only for integers between 10 and 34 inclusive. Time O(n).","34
+100
+","2","34
+100
+","2","0
+1000
+","0","101
+1000
+","1","109
+1000
+","1","35
+100
+","1","111
+1000
+","3","100
+1000000007
+","0","1010
+1000000007
+","1","2
+100","1","05
+1000000007","0","025
+100","0","5151
+1000000007","2"
+"P-014-3","Zero-Permissive 50-75 Codes","Platinum","variants","Here single-digit tokens may be any digit '0'..'9' (so '0' is allowed alone). Two-digit tokens are allowed only when the two-digit number is between 50 and 75 inclusive (so the first digit must be '5','6', or '7'). Count how many ways the string can be split into tokens (single-digit or allowed two-digit), modulo m.","Given digit string s and modulus m, compute the number of valid tokenizations where single digits '0'..'9' are always valid single tokens and two-digit tokens are valid only if their numeric value is between 50 and 75 inclusive. Output 0 if no tokenization exists. Return answer modulo m.","Line 1: digit string s
+Line 2: integer m","1 <= |s| <= 100000. s only contains '0'..'9'. Single-digit tokens allowed for any digit 0..9. Two-digit tokens allowed only for integers 50..75 inclusive. Time O(n).","50
+100
+","2","50
+100
+","2","0
+1000
+","1","49
+100
+","1","5050
+1000000007
+","4","75
+1000
+","2","7550
+1000000007
+","5","76
+100
+","1","5051
+1000000007
+","4","1
+100","1","05
+100","1","021
+1000000007","1","0552
+100","3"
+"P-014-4","Exactly-k Two-Digits","Platinum","counting","Tokens follow the classic rule: single-digit tokens are '1'..'9' (no single '0'), two-digit tokens are integers 10..26 (first digit not '0'). In addition, you must use exactly k two-digit tokens in the partition.","Given digit string s, integer k, and modulus m, count partitions of s into valid tokens (single or two-digit as above) that use exactly k two-digit tokens. If none exist output 0. Return the count modulo m (0 <= answer < m).","Line 1: digit string s
+Line 2: integers k m (0 <= k <= |s|)","1 <= |s| <= 100000. s is digits '0'..'9'. Single-digit tokens allowed only for '1'..'9'. Two-digit tokens allowed only for integers 10..26 inclusive. 0 <= k <= |s|. Time O(n*k) expected (k up to n).","12
+1 100
+","1","12
+1 100
+","1","10
+0 1000
+","0","111
+1 1000
+","2","1111
+2 100
+","1","123
+2 1000
+","0","1010
+2 1000000007
+","1","226
+1 1000000007
+","2","1212
+2 1000000007
+","1","2
+1 1000","0","00
+2 100","0","222
+1 1000","2","0115
+0 1000","0"
+"P-014-5","No Adjacent Two-Digits","Platinum","constraints","Standard tokens: single-digit tokens are '1'..'9' (no single '0'), two-digit tokens are integers 10..26 inclusive. Additionally, two two-digit tokens may not be adjacent in the partition — after a two-digit token there must be at least one single-digit token before another two-digit token.","Given digit string s and modulus m, count partitions into valid tokens that never place two two-digit tokens back-to-back. If no valid partitions exist output 0. Return the count modulo m.","Line 1: digit string s
+Line 2: integer m","1 <= |s| <= 100000. s only '0'..'9'. Single-digit tokens allowed only for '1'..'9'. Two-digit tokens allowed only for integers 10..26 inclusive. Two-digit tokens are not allowed to appear consecutively in the chosen partition. Time O(n).","1212
+100
+","4","1212
+100
+","4","10
+1000
+","1","1010
+1000000007
+","0","100
+100
+","0","1111
+1000
+","4","1210
+100
+","1","26
+100
+","2","2610
+1000000007
+","1","1
+1000000007","1","52
+1000","1","155
+1000","2","0520
+100","0"
+"P-015-1","Exact Coupon Target","Platinum","Subset Sum","You have a collection of nonnegative coupons (each can be used at most once). A subset sum is the total value when you pick some coupons. Empty subset (picking none) yields sum 0. Determine whether you can pick a subset whose total equals a specified target.","Decide if some subset of the given n values sums exactly to target T. If yes print YES; otherwise print NO.","Line 1: n T
+Line 2: n space-separated integers a1 a2 ... an","1 ≤ n ≤ 200; 0 ≤ ai ≤ 20000; 0 ≤ T ≤ 20000. Each ai may be zero; no negative values.","4 9
+3 1 7 5","YES","4 9
+3 1 7 5","YES","1 0
+0","YES","6 10
+5 5 5 5 0 0","YES","3 2
+3 7 11","NO","4 100
+20 30 10 39","NO","5 6
+0 0 3 3 9","YES","10 23
+1 2 3 4 5 6 7 8 9 10","YES","5 17
+4 4 4 4 1","YES","1 7
+12","NO","3 10
+6 6 1","NO","4 10
+7 11 1 1","NO","6 12
+3 9 10 11 5 8","YES"
+"P-015-2","Cap-Max Subset","Platinum","Optimization","Given nonnegative item values (each usable at most once) and a capacity cap C, we want the largest achievable total that does not exceed C. The empty selection yields 0.","Output a single integer: the maximum subset sum ≤ C that can be formed. The empty subset (sum 0) is always allowed.","Line 1: n C
+Line 2: n space-separated integers a1 a2 ... an","1 ≤ n ≤ 200; 0 ≤ ai ≤ 20000; 0 ≤ C ≤ 20000.","4 15
+7 8 3 1","15","4 15
+7 8 3 1","15","1 5
+10","0","5 20
+5 5 5 5 5","20","3 0
+0 0 0","0","6 100
+10 15 20 5 5 8","63","7 50
+25 25 25 10 5 5 2","50","10 37
+1 2 3 4 5 6 7 8 9 10","37","5 14
+6 6 6 1 1","14","1 18
+6","6","3 0
+8 3 3","0","4 11
+7 10 10 12","10","6 14
+11 2 0 10 2 12","14"
+"P-015-3","Top-Up to Target","Platinum","Augmentation","You have nonnegative one-time-use values. Given a target T, you may need to increase T to a reachable total by adding some nonnegative extra x. If total of all values is less than T, it's impossible.","Find the minimal nonnegative integer x such that T+x equals some subset sum. If some subset already sums to T, answer 0. If the sum of all ai < T print -1.","Line 1: n T
+Line 2: n space-separated integers a1 a2 ... an","1 ≤ n ≤ 200; 0 ≤ ai ≤ 20000; 0 ≤ T ≤ 20000.","5 11
+3 1 7 5 9","0","5 11
+3 1 7 5 9","0","3 50
+10 20 19","-1","3 5
+2 2 2","1","3 0
+0 0 1","0","2 5
+4 6","1","6 23
+8 1 7 3 4 2","0","5 30
+10 10 5 1 3","-1","1 1
+0","-1","1 12
+12","0","3 10
+11 11 0","1","4 7
+8 9 5 2","0","6 3
+6 1 2 1 5 12","0"
+"P-015-4","Minimize Partition Gap","Platinum","Partition","Split the multiset of nonnegative values into two groups (each value used at most once) to make the absolute difference of the two group sums as small as possible.","Output the minimal attainable absolute difference (a nonnegative integer).","Line 1: n
+Line 2: n space-separated integers a1 a2 ... an","1 ≤ n ≤ 200; 0 ≤ ai ≤ 20000.","4
+1 6 11 5","1","4
+1 6 11 5","1","3
+0 0 0","0","5
+5 5 5 5 5","5","1
+7","7","4
+2 2 2 2","0","6
+8 7 6 5 4 3","1","9
+1 1 1 1 1 1 1 1 1","1","5
+0 1 2 3 4","0","1
+11","11","3
+11 11 6","6","4
+11 1 11 9","8","6
+5 7 11 5 4 4","0"
+"P-015-5","Within Deviation Finder","Platinum","Approximate Reach","Given nonnegative values (each used at most once), a target T and allowed deviation D, we want a subset sum s whose distance to T is ≤ D. If multiple s satisfy the allowed deviation, choose the one with smallest |s−T|; if still tied choose the smaller s.","If a valid subset sum exists print: FOUND s  (with that chosen s). Otherwise print: NOT FOUND","Line 1: n T D
+Line 2: n space-separated integers a1 a2 ... an","1 ≤ n ≤ 200; 0 ≤ ai ≤ 20000; 0 ≤ T ≤ 20000; 0 ≤ D ≤ 20000.","5 15 2
+8 7 5 3 2","FOUND 15","5 15 2
+8 7 5 3 2","FOUND 15","3 10 1
+9 2 11","FOUND 9","3 50 2
+10 20 15","NOT FOUND","3 0 0
+0 0 0","FOUND 0","5 12 1
+7 5 6 1 1","FOUND 12","6 23 3
+10 9 5 4 1 2","FOUND 23","1 7 0
+7","FOUND 7","4 10 2
+6 4 8 2","FOUND 10","1 6 2
+2","NOT FOUND","3 11 0
+6 1 12","NOT FOUND","4 20 0
+1 3 6 10","FOUND 20","6 5 3
+10 11 2 8 3 2","FOUND 5"
+"P-016-1","Increasing Signal Length","Platinum","Dynamic Programming","An increasing subsequence keeps the original left-to-right order but may skip values. Each next chosen value must be strictly larger.","Print the maximum length of a strictly increasing subsequence. Use the stated rule exactly.","Line 1: N.
+Line 2: N space-separated integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","1","1
+1","1","3
+3 1 2","2","8
+10 9 2 5 3 7 101 18","4","3
+2 2 2","1","5
+5 4 3 2 1","1","8
+-1 3 4 5 2 2 2 2","4","10
+0 8 4 12 2 10 6 14 1 9","4","6
+1 3 2 4 3 5","4","1
+-6","1","3
+5 -5 5","2","5
+-2 -4 -3 -2 2","4","8
+0 -6 -3 0 3 3 -6 -1","4"
+"P-016-2","Increasing Signal Length Planner","Platinum","Dynamic Programming","An increasing subsequence keeps the original left-to-right order but may skip values. Each next chosen value must be strictly larger.","Print the maximum length of a strictly increasing subsequence. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N space-separated integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","1","1
+1","1","3
+3 1 2","2","8
+10 9 2 5 3 7 101 18","4","3
+2 2 2","1","5
+5 4 3 2 1","1","8
+-1 3 4 5 2 2 2 2","4","10
+0 8 4 12 2 10 6 14 1 9","4","6
+1 3 2 4 3 5","4","3
+0 5 -3","2","5
+-1 5 -5 0 -5","2","8
+-3 -6 6 1 -4 -6 2 4","4","1
+0","1"
+"P-016-3","Increasing Signal Length Checkpoint","Platinum","Dynamic Programming","An increasing subsequence keeps the original left-to-right order but may skip values. Each next chosen value must be strictly larger.","Print the maximum length of a strictly increasing subsequence. Report the defined result without extra text.","Line 1: N.
+Line 2: N space-separated integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","1","1
+1","1","3
+3 1 2","2","8
+10 9 2 5 3 7 101 18","4","3
+2 2 2","1","5
+5 4 3 2 1","1","8
+-1 3 4 5 2 2 2 2","4","10
+0 8 4 12 2 10 6 14 1 9","4","6
+1 3 2 4 3 5","4","1
+2","1","3
+-5 3 -2","2","5
+2 3 1 1 0","2","8
+0 1 4 6 0 1 -5 0","4"
+"P-016-4","Increasing Signal Length Tracker","Platinum","Dynamic Programming","An increasing subsequence keeps the original left-to-right order but may skip values. Each next chosen value must be strictly larger.","Print the maximum length of a strictly increasing subsequence. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N space-separated integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","1","1
+1","1","3
+3 1 2","2","8
+10 9 2 5 3 7 101 18","4","3
+2 2 2","1","5
+5 4 3 2 1","1","8
+-1 3 4 5 2 2 2 2","4","10
+0 8 4 12 2 10 6 14 1 9","4","6
+1 3 2 4 3 5","4","1
+-3","1","3
+1 -5 -2","2","5
+5 3 -5 -6 -2","2","8
+-4 1 -2 -6 -6 -4 -1 6","4"
+"P-016-5","Increasing Signal Length Verifier","Platinum","Dynamic Programming","An increasing subsequence keeps the original left-to-right order but may skip values. Each next chosen value must be strictly larger.","Print the maximum length of a strictly increasing subsequence. Use the same input and output rules.","Line 1: N.
+Line 2: N space-separated integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","1","1
+1","1","3
+3 1 2","2","8
+10 9 2 5 3 7 101 18","4","3
+2 2 2","1","5
+5 4 3 2 1","1","8
+-1 3 4 5 2 2 2 2","4","10
+0 8 4 12 2 10 6 14 1 9","4","6
+1 3 2 4 3 5","4","1
+4","1","3
+3 -1 -5","1","5
+3 -1 -4 -5 3","2","8
+4 -5 -1 0 -6 1 -4 1","4"
+"P-017-1","Message Edit Distance","Platinum","Dynamic Programming","One edit may insert, delete, or replace one character. The edit distance is the fewest edits needed to change one text into another.","Print the minimum edit distance between strings A and B. Use the stated rule exactly.","Line 1: string A (possibly empty).
+Line 2: string B (possibly empty).","length of each string: 0-500
+characters are lowercase English letters","a
+a","0","a
+a","0","a
+b","1","ab
+a","1","kitten
+sitting","3","abc
+","3","
+abc","3","intention
+execution","5","abcd
+abdc","2","
+a","1","aa
+bc","2","bca
+baaa","2","cbabc
+cacc","2"
+"P-017-2","Message Edit Distance Planner","Platinum","Dynamic Programming","One edit may insert, delete, or replace one character. The edit distance is the fewest edits needed to change one text into another.","Print the minimum edit distance between strings A and B. Treat all values as part of one ordered scenario.","Line 1: string A (possibly empty).
+Line 2: string B (possibly empty).","length of each string: 0-500
+characters are lowercase English letters","a
+a","0","a
+a","0","a
+b","1","ab
+a","1","kitten
+sitting","3","abc
+","3","
+abc","3","intention
+execution","5","abcd
+abdc","2","
+b","1","aa
+ca","1","abb
+cbaa","3","acbab
+baaa","4"
+"P-017-3","Message Edit Distance Checkpoint","Platinum","Dynamic Programming","One edit may insert, delete, or replace one character. The edit distance is the fewest edits needed to change one text into another.","Print the minimum edit distance between strings A and B. Report the defined result without extra text.","Line 1: string A (possibly empty).
+Line 2: string B (possibly empty).","length of each string: 0-500
+characters are lowercase English letters","a
+a","0","a
+a","0","a
+b","1","ab
+a","1","kitten
+sitting","3","abc
+","3","
+abc","3","intention
+execution","5","abcd
+abdc","2","
+c","1","cb
+ba","2","bbc
+acaa","4","bbacb
+baaa","3"
+"P-017-4","Message Edit Distance Tracker","Platinum","Dynamic Programming","One edit may insert, delete, or replace one character. The edit distance is the fewest edits needed to change one text into another.","Print the minimum edit distance between strings A and B. Keep the required tie rule unchanged.","Line 1: string A (possibly empty).
+Line 2: string B (possibly empty).","length of each string: 0-500
+characters are lowercase English letters","a
+a","0","a
+a","0","a
+b","1","ab
+a","1","kitten
+sitting","3","abc
+","3","
+abc","3","intention
+execution","5","abcd
+abdc","2","
+b","1","cc
+cc","0","cab
+abcc","3","cabac
+cbca","3"
+"P-017-5","Message Edit Distance Verifier","Platinum","Dynamic Programming","One edit may insert, delete, or replace one character. The edit distance is the fewest edits needed to change one text into another.","Print the minimum edit distance between strings A and B. Use the same input and output rules.","Line 1: string A (possibly empty).
+Line 2: string B (possibly empty).","length of each string: 0-500
+characters are lowercase English letters","a
+a","0","a
+a","0","a
+b","1","ab
+a","1","kitten
+sitting","3","abc
+","3","
+abc","3","intention
+execution","5","abcd
+abdc","2","
+a","1","aa
+cc","2","cbb
+acbc","2","cabca
+aaba","2"
+"P-018-1","Closest Two-Team Split","Platinum","Dynamic Programming","Split every item into one of two teams. The difference is the absolute difference between the two team totals.","Print the smallest possible difference between the two team sums. Use the stated rule exactly.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200
+values: 1-1000","1
+1","1","1
+1","1","2
+1 2","1","4
+1 6 11 5","1","5
+3 3 3 4 5","0","3
+8 6 5","3","4
+1 2 3 9","3","4
+10 10 10 10","0","6
+2 7 4 1 8 1","1","1
+3","3","3
+5 1 4","0","4
+12 6 1 4","1","6
+4 8 4 2 11 9","0"
+"P-018-2","Closest Two-Team Split Planner","Platinum","Dynamic Programming","Split every item into one of two teams. The difference is the absolute difference between the two team totals.","Print the smallest possible difference between the two team sums. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200
+values: 1-1000","1
+1","1","1
+1","1","2
+1 2","1","4
+1 6 11 5","1","5
+3 3 3 4 5","0","3
+8 6 5","3","4
+1 2 3 9","3","4
+10 10 10 10","0","6
+2 7 4 1 8 1","1","1
+9","9","3
+2 10 11","1","4
+3 7 12 7","1","6
+5 12 3 2 2 4","0"
+"P-018-3","Closest Two-Team Split Checkpoint","Platinum","Dynamic Programming","Split every item into one of two teams. The difference is the absolute difference between the two team totals.","Print the smallest possible difference between the two team sums. Report the defined result without extra text.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200
+values: 1-1000","1
+1","1","1
+1","1","2
+1 2","1","4
+1 6 11 5","1","5
+3 3 3 4 5","0","3
+8 6 5","3","4
+1 2 3 9","3","4
+10 10 10 10","0","6
+2 7 4 1 8 1","1","1
+10","10","3
+5 10 5","0","4
+10 7 8 6","1","6
+10 3 9 1 11 11","1"
+"P-018-4","Closest Two-Team Split Tracker","Platinum","Dynamic Programming","Split every item into one of two teams. The difference is the absolute difference between the two team totals.","Print the smallest possible difference between the two team sums. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200
+values: 1-1000","1
+1","1","1
+1","1","2
+1 2","1","4
+1 6 11 5","1","5
+3 3 3 4 5","0","3
+8 6 5","3","4
+1 2 3 9","3","4
+10 10 10 10","0","6
+2 7 4 1 8 1","1","1
+5","5","3
+12 2 12","2","4
+9 4 9 12","2","6
+9 1 9 2 2 10","3"
+"P-018-5","Closest Two-Team Split Verifier","Platinum","Dynamic Programming","Split every item into one of two teams. The difference is the absolute difference between the two team totals.","Print the smallest possible difference between the two team sums. Use the same input and output rules.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200
+values: 1-1000","1
+1","1","1
+1","1","2
+1 2","1","4
+1 6 11 5","1","5
+3 3 3 4 5","0","3
+8 6 5","3","4
+1 2 3 9","3","4
+10 10 10 10","0","6
+2 7 4 1 8 1","1","1
+6","6","3
+3 12 2","7","4
+4 9 6 5","2","6
+1 11 8 1 11 9","1"
+"P-019-1","Minimum Refuel Stops","Platinum","Heaps","Each station is at a distance from the start and offers fuel. You may stop only at stations you can reach, and fuel is added to what remains in your tank.","Print the minimum number of refueling stops needed to reach the target, or -1 if impossible. Use the stated rule exactly.","Line 1: target startFuel N.
+Next N lines: station distance and fuel, in increasing distance order.","1 <= target <= 10^9
+0 <= startFuel <= 10^9
+0 <= N <= 200000","10 10 0
+","0","10 10 0
+","0","100 10 4
+10 60
+20 30
+30 30
+60 40","2","100 1 1
+10 100","-1","50 25 1
+25 25","1","100 50 2
+25 25
+50 50","1","30 5 3
+5 10
+10 10
+15 10","3","100 25 3
+25 25
+50 25
+75 25","3","120 20 4
+10 20
+30 40
+60 20
+90 50","4","34 27 0","-1","12 16 1
+7 11","0","27 14 2
+12 29
+13 22","1","41 30 4
+14 14
+18 11
+32 23
+37 28","1"
+"P-019-2","Minimum Refuel Stops Planner","Platinum","Heaps","Each station is at a distance from the start and offers fuel. You may stop only at stations you can reach, and fuel is added to what remains in your tank.","Print the minimum number of refueling stops needed to reach the target, or -1 if impossible. Treat all values as part of one ordered scenario.","Line 1: target startFuel N.
+Next N lines: station distance and fuel, in increasing distance order.","1 <= target <= 10^9
+0 <= startFuel <= 10^9
+0 <= N <= 200000","10 10 0
+","0","10 10 0
+","0","100 10 4
+10 60
+20 30
+30 30
+60 40","2","100 1 1
+10 100","-1","50 25 1
+25 25","1","100 50 2
+25 25
+50 50","1","30 5 3
+5 10
+10 10
+15 10","3","100 25 3
+25 25
+50 25
+75 25","3","120 20 4
+10 20
+30 40
+60 20
+90 50","4","30 10 0","-1","42 3 1
+23 11","-1","30 15 2
+7 24
+11 15","1","44 28 4
+11 27
+15 27
+25 22
+36 20","1"
+"P-019-3","Minimum Refuel Stops Checkpoint","Platinum","Heaps","Each station is at a distance from the start and offers fuel. You may stop only at stations you can reach, and fuel is added to what remains in your tank.","Print the minimum number of refueling stops needed to reach the target, or -1 if impossible. Report the defined result without extra text.","Line 1: target startFuel N.
+Next N lines: station distance and fuel, in increasing distance order.","1 <= target <= 10^9
+0 <= startFuel <= 10^9
+0 <= N <= 200000","10 10 0
+","0","10 10 0
+","0","100 10 4
+10 60
+20 30
+30 30
+60 40","2","100 1 1
+10 100","-1","50 25 1
+25 25","1","100 50 2
+25 25
+50 50","1","30 5 3
+5 10
+10 10
+15 10","3","100 25 3
+25 25
+50 25
+75 25","3","120 20 4
+10 20
+30 40
+60 20
+90 50","4","29 27 0","-1","52 28 1
+8 11","-1","24 13 2
+7 22
+19 26","1","12 21 4
+1 15
+6 29
+7 16
+8 8","0"
+"P-019-4","Minimum Refuel Stops Tracker","Platinum","Heaps","Each station is at a distance from the start and offers fuel. You may stop only at stations you can reach, and fuel is added to what remains in your tank.","Print the minimum number of refueling stops needed to reach the target, or -1 if impossible. Keep the required tie rule unchanged.","Line 1: target startFuel N.
+Next N lines: station distance and fuel, in increasing distance order.","1 <= target <= 10^9
+0 <= startFuel <= 10^9
+0 <= N <= 200000","10 10 0
+","0","10 10 0
+","0","100 10 4
+10 60
+20 30
+30 30
+60 40","2","100 1 1
+10 100","-1","50 25 1
+25 25","1","100 50 2
+25 25
+50 50","1","30 5 3
+5 10
+10 10
+15 10","3","100 25 3
+25 25
+50 25
+75 25","3","120 20 4
+10 20
+30 40
+60 20
+90 50","4","59 8 0","-1","24 13 1
+4 21","1","50 17 2
+9 21
+34 28","2","40 2 3
+13 26
+24 29
+34 18","-1"
+"P-019-5","Minimum Refuel Stops Verifier","Platinum","Heaps","Each station is at a distance from the start and offers fuel. You may stop only at stations you can reach, and fuel is added to what remains in your tank.","Print the minimum number of refueling stops needed to reach the target, or -1 if impossible. Use the same input and output rules.","Line 1: target startFuel N.
+Next N lines: station distance and fuel, in increasing distance order.","1 <= target <= 10^9
+0 <= startFuel <= 10^9
+0 <= N <= 200000","10 10 0
+","0","10 10 0
+","0","100 10 4
+10 60
+20 30
+30 30
+60 40","2","100 1 1
+10 100","-1","50 25 1
+25 25","1","100 50 2
+25 25
+50 50","1","30 5 3
+5 10
+10 10
+15 10","3","100 25 3
+25 25
+50 25
+75 25","3","120 20 4
+10 20
+30 40
+60 20
+90 50","4","59 13 0","-1","23 14 1
+22 5","-1","20 27 2
+9 15
+15 26","0","52 5 4
+21 9
+25 18
+31 3
+44 15","-1"
+"P-020-1","Running Median Stream","Platinum","Heaps","The median is the middle value after sorting. With an even number of values, it is the average of the two middle values.","After each incoming integer, print the current median. Put all answers on one line separated by spaces. Use the stated rule exactly.","Line 1: N.
+Line 2: N space-separated integers in arrival order.","1 <= N <= 200000
+values: -10^9 to 10^9
+print halves with .5 when needed","1
+1","1","1
+1","1","2
+1 2","1 1.5","2
+2 1","2 1.5","4
+5 15 1 3","5 10 5 4","3
+0 0 0","0 0 0","3
+-1 -2 -3","-1 -1.5 -2","4
+-5 10 0 8","-5 2.5 0 4","6
+1 9 2 8 3 7","1 5 2 5 3 5","1
+-6","-6","2
+-3 5","-3 1","4
+-1 9 -1 -4","-1 4 -1 -1","6
+0 7 -7 3 3 5","0 3.5 0 1.5 3 3"
+"P-020-2","Running Median Stream Planner","Platinum","Heaps","The median is the middle value after sorting. With an even number of values, it is the average of the two middle values.","After each incoming integer, print the current median. Put all answers on one line separated by spaces. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N space-separated integers in arrival order.","1 <= N <= 200000
+values: -10^9 to 10^9
+print halves with .5 when needed","1
+1","1","1
+1","1","2
+1 2","1 1.5","2
+2 1","2 1.5","4
+5 15 1 3","5 10 5 4","3
+0 0 0","0 0 0","3
+-1 -2 -3","-1 -1.5 -2","4
+-5 10 0 8","-5 2.5 0 4","6
+1 9 2 8 3 7","1 5 2 5 3 5","1
+7","7","2
+7 -4","7 1.5","4
+-9 5 4 8","-9 -2 4 4.5","6
+-1 -8 3 6 -8 5","-1 -4.5 -1 1 -1 1"
+"P-020-3","Running Median Stream Checkpoint","Platinum","Heaps","The median is the middle value after sorting. With an even number of values, it is the average of the two middle values.","After each incoming integer, print the current median. Put all answers on one line separated by spaces. Report the defined result without extra text.","Line 1: N.
+Line 2: N space-separated integers in arrival order.","1 <= N <= 200000
+values: -10^9 to 10^9
+print halves with .5 when needed","1
+1","1","1
+1","1","2
+1 2","1 1.5","2
+2 1","2 1.5","4
+5 15 1 3","5 10 5 4","3
+0 0 0","0 0 0","3
+-1 -2 -3","-1 -1.5 -2","4
+-5 10 0 8","-5 2.5 0 4","6
+1 9 2 8 3 7","1 5 2 5 3 5","1
+-4","-4","2
+7 8","7 7.5","4
+-2 7 -5 6","-2 2.5 -2 2","6
+-6 8 -4 -7 -4 -1","-6 1 -4 -5 -4 -4"
+"P-020-4","Running Median Stream Tracker","Platinum","Heaps","The median is the middle value after sorting. With an even number of values, it is the average of the two middle values.","After each incoming integer, print the current median. Put all answers on one line separated by spaces. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N space-separated integers in arrival order.","1 <= N <= 200000
+values: -10^9 to 10^9
+print halves with .5 when needed","1
+1","1","1
+1","1","2
+1 2","1 1.5","2
+2 1","2 1.5","4
+5 15 1 3","5 10 5 4","3
+0 0 0","0 0 0","3
+-1 -2 -3","-1 -1.5 -2","4
+-5 10 0 8","-5 2.5 0 4","6
+1 9 2 8 3 7","1 5 2 5 3 5","1
+-1","-1","2
+2 6","2 4","4
+-5 2 4 -8","-5 -1.5 2 -1.5","6
+-7 1 -2 -6 0 0","-7 -3 -2 -4 -2 -1"
+"P-020-5","Running Median Stream Verifier","Platinum","Heaps","The median is the middle value after sorting. With an even number of values, it is the average of the two middle values.","After each incoming integer, print the current median. Put all answers on one line separated by spaces. Use the same input and output rules.","Line 1: N.
+Line 2: N space-separated integers in arrival order.","1 <= N <= 200000
+values: -10^9 to 10^9
+print halves with .5 when needed","1
+1","1","1
+1","1","2
+1 2","1 1.5","2
+2 1","2 1.5","4
+5 15 1 3","5 10 5 4","3
+0 0 0","0 0 0","3
+-1 -2 -3","-1 -1.5 -2","4
+-5 10 0 8","-5 2.5 0 4","6
+1 9 2 8 3 7","1 5 2 5 3 5","1
+7","7","2
+0 3","0 1.5","4
+0 2 -9 9","0 1 0 1","6
+7 -7 1 -9 1 -3","7 0 1 -3 1 -1"
+"P-021-1","Closest Value Selection","Platinum","Heaps","Distance from a target is the absolute difference. When values tie in distance, the smaller value is preferred.","Print the K values closest to X in increasing order. Use the stated rule exactly.","Line 1: N K X.
+Line 2: N space-separated integers.","1 <= K <= N <= 200000
+values and X: -10^9 to 10^9","1 1 0
+1","1","1 1 0
+1","1","4 2 3
+1 2 3 4","2 3","4 3 2
+1 2 2 3","1 2 2","4 2 1
+-5 -1 0 4","-1 0","3 1 25
+10 20 30","20","5 4 6
+1 3 5 7 9","3 5 7 9","4 3 -1
+-10 -3 2 8","-10 -3 2","4 2 0
+0 0 0 1","0 0","1 1 -5
+-4","-4","2 1 -1
+-4 4","-4","4 1 8
+8 5 5 -1","8","6 5 3
+-8 4 -4 3 -2 9","-4 -2 3 4 9"
+"P-021-2","Closest Value Selection Planner","Platinum","Heaps","Distance from a target is the absolute difference. When values tie in distance, the smaller value is preferred.","Print the K values closest to X in increasing order. Treat all values as part of one ordered scenario.","Line 1: N K X.
+Line 2: N space-separated integers.","1 <= K <= N <= 200000
+values and X: -10^9 to 10^9","1 1 0
+1","1","1 1 0
+1","1","4 2 3
+1 2 3 4","2 3","4 3 2
+1 2 2 3","1 2 2","4 2 1
+-5 -1 0 4","-1 0","3 1 25
+10 20 30","20","5 4 6
+1 3 5 7 9","3 5 7 9","4 3 -1
+-10 -3 2 8","-10 -3 2","4 2 0
+0 0 0 1","0 0","1 1 9
+5","5","2 2 2
+3 -7","-7 3","4 1 3
+3 3 5 -5","3","6 2 -3
+0 -2 -5 9 4 1","-5 -2"
+"P-021-3","Closest Value Selection Checkpoint","Platinum","Heaps","Distance from a target is the absolute difference. When values tie in distance, the smaller value is preferred.","Print the K values closest to X in increasing order. Report the defined result without extra text.","Line 1: N K X.
+Line 2: N space-separated integers.","1 <= K <= N <= 200000
+values and X: -10^9 to 10^9","1 1 0
+1","1","1 1 0
+1","1","4 2 3
+1 2 3 4","2 3","4 3 2
+1 2 2 3","1 2 2","4 2 1
+-5 -1 0 4","-1 0","3 1 25
+10 20 30","20","5 4 6
+1 3 5 7 9","3 5 7 9","4 3 -1
+-10 -3 2 8","-10 -3 2","4 2 0
+0 0 0 1","0 0","1 1 -2
+9","9","2 1 -4
+8 5","5","4 2 5
+8 -6 -5 3","3 8","6 4 -3
+2 0 5 -3 4 4","-3 0 2 4"
+"P-021-4","Closest Value Selection Tracker","Platinum","Heaps","Distance from a target is the absolute difference. When values tie in distance, the smaller value is preferred.","Print the K values closest to X in increasing order. Keep the required tie rule unchanged.","Line 1: N K X.
+Line 2: N space-separated integers.","1 <= K <= N <= 200000
+values and X: -10^9 to 10^9","1 1 0
+1","1","1 1 0
+1","1","4 2 3
+1 2 3 4","2 3","4 3 2
+1 2 2 3","1 2 2","4 2 1
+-5 -1 0 4","-1 0","3 1 25
+10 20 30","20","5 4 6
+1 3 5 7 9","3 5 7 9","4 3 -1
+-10 -3 2 8","-10 -3 2","4 2 0
+0 0 0 1","0 0","1 1 -6
+-8","-8","2 2 -6
+-6 4","-6 4","4 2 8
+4 -5 -3 5","4 5","6 5 5
+5 -6 4 5 9 -4","-4 4 5 5 9"
+"P-021-5","Closest Value Selection Verifier","Platinum","Heaps","Distance from a target is the absolute difference. When values tie in distance, the smaller value is preferred.","Print the K values closest to X in increasing order. Use the same input and output rules.","Line 1: N K X.
+Line 2: N space-separated integers.","1 <= K <= N <= 200000
+values and X: -10^9 to 10^9","1 1 0
+1","1","1 1 0
+1","1","4 2 3
+1 2 3 4","2 3","4 3 2
+1 2 2 3","1 2 2","4 2 1
+-5 -1 0 4","-1 0","3 1 25
+10 20 30","20","5 4 6
+1 3 5 7 9","3 5 7 9","4 3 -1
+-10 -3 2 8","-10 -3 2","4 2 0
+0 0 0 1","0 0","1 1 9
+-1","-1","2 2 5
+4 -1","-1 4","4 3 7
+3 3 -2 9","3 3 9","6 4 9
+3 -6 1 8 -7 0","0 1 3 8"
+"P-022-1","Maximum Interval Coverage","Platinum","Sweep Line","An interval covers its start but not its end, written [start, end). Intervals that only touch at an endpoint do not overlap.","Print the largest number of intervals covering the same point. Use the stated rule exactly.","Line 1: N.
+Next N lines: start end.","1 <= N <= 200000
+start < end
+coordinates: -10^9 to 10^9","1
+1 2","1","1
+1 2","1","2
+1 3
+2 4","2","3
+1 5
+2 3
+4 6","2","2
+1 2
+2 3","1","3
+0 10
+1 9
+2 8","3","3
+5 7
+1 6
+4 5","2","3
+1 4
+1 4
+1 4","3","5
+1 10
+2 3
+3 4
+4 5
+5 6","2","2
+0 3
+3 4","1","3
+8 11
+2 3
+6 10","2","5
+1 4
+0 3
+7 11
+4 6
+3 4","2","1
+6 10","1"
+"P-022-2","Maximum Interval Coverage Planner","Platinum","Sweep Line","An interval covers its start but not its end, written [start, end). Intervals that only touch at an endpoint do not overlap.","Print the largest number of intervals covering the same point. Treat all values as part of one ordered scenario.","Line 1: N.
+Next N lines: start end.","1 <= N <= 200000
+start < end
+coordinates: -10^9 to 10^9","1
+1 2","1","1
+1 2","1","2
+1 3
+2 4","2","3
+1 5
+2 3
+4 6","2","2
+1 2
+2 3","1","3
+0 10
+1 9
+2 8","3","3
+5 7
+1 6
+4 5","2","3
+1 4
+1 4
+1 4","3","5
+1 10
+2 3
+3 4
+4 5
+5 6","2","1
+7 8","1","2
+6 10
+5 7","2","3
+8 10
+7 9
+1 2","2","5
+1 3
+0 1
+7 8
+1 5
+0 1","2"
+"P-022-3","Maximum Interval Coverage Checkpoint","Platinum","Sweep Line","An interval covers its start but not its end, written [start, end). Intervals that only touch at an endpoint do not overlap.","Print the largest number of intervals covering the same point. Report the defined result without extra text.","Line 1: N.
+Next N lines: start end.","1 <= N <= 200000
+start < end
+coordinates: -10^9 to 10^9","1
+1 2","1","1
+1 2","1","2
+1 3
+2 4","2","3
+1 5
+2 3
+4 6","2","2
+1 2
+2 3","1","3
+0 10
+1 9
+2 8","3","3
+5 7
+1 6
+4 5","2","3
+1 4
+1 4
+1 4","3","5
+1 10
+2 3
+3 4
+4 5
+5 6","2","1
+4 8","1","2
+7 9
+3 6","1","3
+4 5
+1 3
+4 6","2","5
+3 4
+2 5
+7 10
+5 8
+2 5","3"
+"P-022-4","Maximum Interval Coverage Tracker","Platinum","Sweep Line","An interval covers its start but not its end, written [start, end). Intervals that only touch at an endpoint do not overlap.","Print the largest number of intervals covering the same point. Keep the required tie rule unchanged.","Line 1: N.
+Next N lines: start end.","1 <= N <= 200000
+start < end
+coordinates: -10^9 to 10^9","1
+1 2","1","1
+1 2","1","2
+1 3
+2 4","2","3
+1 5
+2 3
+4 6","2","2
+1 2
+2 3","1","3
+0 10
+1 9
+2 8","3","3
+5 7
+1 6
+4 5","2","3
+1 4
+1 4
+1 4","3","5
+1 10
+2 3
+3 4
+4 5
+5 6","2","1
+2 3","1","2
+0 1
+1 5","1","3
+2 4
+4 6
+0 4","2","5
+8 9
+2 4
+2 3
+2 3
+0 3","4"
+"P-022-5","Maximum Interval Coverage Verifier","Platinum","Sweep Line","An interval covers its start but not its end, written [start, end). Intervals that only touch at an endpoint do not overlap.","Print the largest number of intervals covering the same point. Use the same input and output rules.","Line 1: N.
+Next N lines: start end.","1 <= N <= 200000
+start < end
+coordinates: -10^9 to 10^9","1
+1 2","1","1
+1 2","1","2
+1 3
+2 4","2","3
+1 5
+2 3
+4 6","2","2
+1 2
+2 3","1","3
+0 10
+1 9
+2 8","3","3
+5 7
+1 6
+4 5","2","3
+1 4
+1 4
+1 4","3","5
+1 10
+2 3
+3 4
+4 5
+5 6","2","1
+0 3","1","2
+6 10
+2 4","1","3
+1 2
+0 3
+5 6","2","5
+2 5
+6 8
+2 3
+5 9
+4 6","2"
+"P-023-1","Minimum Merge Cost","Platinum","Heaps","Merging two files costs the sum of their sizes, and the merged file may be merged again. The total is the sum of all merge costs.","Print the minimum possible total cost to merge all files into one. Use the stated rule exactly.","Line 1: N.
+Line 2: N non-negative file sizes.","1 <= N <= 200000
+sizes: 0 to 10^9
+use 64-bit totals","1
+5","0","1
+5","0","2
+1 2","3","4
+1 2 3 4","19","3
+10 10 10","50","3
+1 100 1000","1202","5
+5 4 3 2 1","33","3
+0 0 1","1","5
+8 3 7 2 6","57","1
+26","0","2
+23 0","23","4
+14 25 11 7","107","6
+14 22 19 8 22 20","271"
+"P-023-2","Minimum Merge Cost Planner","Platinum","Heaps","Merging two files costs the sum of their sizes, and the merged file may be merged again. The total is the sum of all merge costs.","Print the minimum possible total cost to merge all files into one. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N non-negative file sizes.","1 <= N <= 200000
+sizes: 0 to 10^9
+use 64-bit totals","1
+5","0","1
+5","0","2
+1 2","3","4
+1 2 3 4","19","3
+10 10 10","50","3
+1 100 1000","1202","5
+5 4 3 2 1","33","3
+0 0 1","1","5
+8 3 7 2 6","57","1
+11","0","2
+13 0","13","4
+16 0 14 8","68","6
+7 16 10 5 26 20","202"
+"P-023-3","Minimum Merge Cost Checkpoint","Platinum","Heaps","Merging two files costs the sum of their sizes, and the merged file may be merged again. The total is the sum of all merge costs.","Print the minimum possible total cost to merge all files into one. Report the defined result without extra text.","Line 1: N.
+Line 2: N non-negative file sizes.","1 <= N <= 200000
+sizes: 0 to 10^9
+use 64-bit totals","1
+5","0","1
+5","0","2
+1 2","3","4
+1 2 3 4","19","3
+10 10 10","50","3
+1 100 1000","1202","5
+5 4 3 2 1","33","3
+0 0 1","1","5
+8 3 7 2 6","57","1
+26","0","2
+0 2","2","4
+25 7 15 19","129","6
+20 12 2 17 12 3","154"
+"P-023-4","Minimum Merge Cost Tracker","Platinum","Heaps","Merging two files costs the sum of their sizes, and the merged file may be merged again. The total is the sum of all merge costs.","Print the minimum possible total cost to merge all files into one. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N non-negative file sizes.","1 <= N <= 200000
+sizes: 0 to 10^9
+use 64-bit totals","1
+5","0","1
+5","0","2
+1 2","3","4
+1 2 3 4","19","3
+10 10 10","50","3
+1 100 1000","1202","5
+5 4 3 2 1","33","3
+0 0 1","1","5
+8 3 7 2 6","57","1
+29","0","2
+14 2","16","4
+15 29 15 11","137","6
+30 30 18 10 27 28","369"
+"P-023-5","Minimum Merge Cost Verifier","Platinum","Heaps","Merging two files costs the sum of their sizes, and the merged file may be merged again. The total is the sum of all merge costs.","Print the minimum possible total cost to merge all files into one. Use the same input and output rules.","Line 1: N.
+Line 2: N non-negative file sizes.","1 <= N <= 200000
+sizes: 0 to 10^9
+use 64-bit totals","1
+5","0","1
+5","0","2
+1 2","3","4
+1 2 3 4","19","3
+10 10 10","50","3
+1 100 1000","1202","5
+5 4 3 2 1","33","3
+0 0 1","1","5
+8 3 7 2 6","57","1
+12","0","2
+20 1","21","4
+1 11 18 29","101","6
+15 8 22 9 27 15","239"
+"P-024-1","Strict Envelope Chain","Platinum","Dynamic Programming","An item can follow another only when both its width and height are strictly larger. Equal sizes do not fit inside one another.","Print the largest number of items that can form a strict increasing chain. Use the stated rule exactly.","Line 1: N.
+Next N lines: width height.","1 <= N <= 200000
+width and height: 1 to 10^9","1
+1 1","1","1
+1 1","1","2
+1 1
+2 2","2","4
+5 4
+6 4
+6 7
+2 3","3","3
+1 2
+1 3
+2 2","1","5
+4 5
+4 6
+6 7
+2 3
+1 1","4","5
+2 100
+3 200
+4 300
+5 500
+5 400","4","3
+1 1
+2 1
+3 1","1","4
+3 3
+2 2
+1 1
+4 4","4","1
+3 4","1","2
+5 1
+6 6","2","4
+4 4
+2 1
+6 1
+6 2","2","6
+3 5
+4 4
+6 6
+5 3
+1 3
+4 3","3"
+"P-024-2","Strict Envelope Chain Planner","Platinum","Dynamic Programming","An item can follow another only when both its width and height are strictly larger. Equal sizes do not fit inside one another.","Print the largest number of items that can form a strict increasing chain. Treat all values as part of one ordered scenario.","Line 1: N.
+Next N lines: width height.","1 <= N <= 200000
+width and height: 1 to 10^9","1
+1 1","1","1
+1 1","1","2
+1 1
+2 2","2","4
+5 4
+6 4
+6 7
+2 3","3","3
+1 2
+1 3
+2 2","1","5
+4 5
+4 6
+6 7
+2 3
+1 1","4","5
+2 100
+3 200
+4 300
+5 500
+5 400","4","3
+1 1
+2 1
+3 1","1","4
+3 3
+2 2
+1 1
+4 4","4","1
+6 5","1","2
+3 2
+5 2","1","4
+3 3
+6 2
+6 5
+4 3","2","6
+4 3
+1 4
+2 6
+3 4
+3 6
+3 2","2"
+"P-024-3","Strict Envelope Chain Checkpoint","Platinum","Dynamic Programming","An item can follow another only when both its width and height are strictly larger. Equal sizes do not fit inside one another.","Print the largest number of items that can form a strict increasing chain. Report the defined result without extra text.","Line 1: N.
+Next N lines: width height.","1 <= N <= 200000
+width and height: 1 to 10^9","1
+1 1","1","1
+1 1","1","2
+1 1
+2 2","2","4
+5 4
+6 4
+6 7
+2 3","3","3
+1 2
+1 3
+2 2","1","5
+4 5
+4 6
+6 7
+2 3
+1 1","4","5
+2 100
+3 200
+4 300
+5 500
+5 400","4","3
+1 1
+2 1
+3 1","1","4
+3 3
+2 2
+1 1
+4 4","4","1
+1 4","1","2
+5 4
+6 2","1","4
+1 3
+2 4
+4 2
+2 1","2","6
+5 5
+5 1
+3 3
+1 3
+6 2
+3 5","2"
+"P-024-4","Strict Envelope Chain Tracker","Platinum","Dynamic Programming","An item can follow another only when both its width and height are strictly larger. Equal sizes do not fit inside one another.","Print the largest number of items that can form a strict increasing chain. Keep the required tie rule unchanged.","Line 1: N.
+Next N lines: width height.","1 <= N <= 200000
+width and height: 1 to 10^9","1
+1 1","1","1
+1 1","1","2
+1 1
+2 2","2","4
+5 4
+6 4
+6 7
+2 3","3","3
+1 2
+1 3
+2 2","1","5
+4 5
+4 6
+6 7
+2 3
+1 1","4","5
+2 100
+3 200
+4 300
+5 500
+5 400","4","3
+1 1
+2 1
+3 1","1","4
+3 3
+2 2
+1 1
+4 4","4","1
+4 4","1","2
+2 4
+3 1","1","4
+6 4
+4 4
+1 5
+4 4","1","6
+3 1
+1 4
+4 4
+4 3
+1 3
+3 3","2"
+"P-024-5","Strict Envelope Chain Verifier","Platinum","Dynamic Programming","An item can follow another only when both its width and height are strictly larger. Equal sizes do not fit inside one another.","Print the largest number of items that can form a strict increasing chain. Use the same input and output rules.","Line 1: N.
+Next N lines: width height.","1 <= N <= 200000
+width and height: 1 to 10^9","1
+1 1","1","1
+1 1","1","2
+1 1
+2 2","2","4
+5 4
+6 4
+6 7
+2 3","3","3
+1 2
+1 3
+2 2","1","5
+4 5
+4 6
+6 7
+2 3
+1 1","4","5
+2 100
+3 200
+4 300
+5 500
+5 400","4","3
+1 1
+2 1
+3 1","1","4
+3 3
+2 2
+1 1
+4 4","4","1
+6 5","1","2
+5 2
+2 2","1","4
+3 6
+4 1
+5 6
+2 4","2","6
+5 4
+3 3
+4 5
+5 2
+2 6
+2 4","2"
+"P-025-1","Group All Ones","Platinum","Sliding Window","A swap exchanges any two positions. To group all 1 values together, choose a block as long as the number of 1 values and count how many 0 values are inside it.","Print the minimum swaps needed to make all 1 values consecutive. Use the stated rule exactly.","Line 1: N.
+Line 2: N binary integers.","1 <= N <= 200000
+values are 0 or 1","1
+1","0","1
+1","0","1
+0","0","3
+1 0 1","1","5
+1 0 1 0 1","1","3
+1 1 1","0","3
+0 0 0","0","6
+1 0 0 1 0 1","1","7
+0 1 0 1 1 0 1","1","5
+0 0 1 1 0","0","7
+1 1 1 0 1 1 0","1","3
+1 0 0","0","5
+1 1 1 1 1","0"
+"P-025-2","Group All Ones Planner","Platinum","Sliding Window","A swap exchanges any two positions. To group all 1 values together, choose a block as long as the number of 1 values and count how many 0 values are inside it.","Print the minimum swaps needed to make all 1 values consecutive. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N binary integers.","1 <= N <= 200000
+values are 0 or 1","1
+1","0","1
+1","0","1
+0","0","3
+1 0 1","1","5
+1 0 1 0 1","1","3
+1 1 1","0","3
+0 0 0","0","6
+1 0 0 1 0 1","1","7
+0 1 0 1 1 0 1","1","3
+0 1 1","0","5
+1 0 0 1 1","1","7
+1 0 1 0 1 1 1","1","5
+1 0 1 1 1","1"
+"P-025-3","Group All Ones Checkpoint","Platinum","Sliding Window","A swap exchanges any two positions. To group all 1 values together, choose a block as long as the number of 1 values and count how many 0 values are inside it.","Print the minimum swaps needed to make all 1 values consecutive. Report the defined result without extra text.","Line 1: N.
+Line 2: N binary integers.","1 <= N <= 200000
+values are 0 or 1","1
+1","0","1
+1","0","1
+0","0","3
+1 0 1","1","5
+1 0 1 0 1","1","3
+1 1 1","0","3
+0 0 0","0","6
+1 0 0 1 0 1","1","7
+0 1 0 1 1 0 1","1","3
+0 1 0","0","5
+1 1 1 0 1","1","7
+1 0 1 1 1 1 0","1","3
+0 1 1","0"
+"P-025-4","Group All Ones Tracker","Platinum","Sliding Window","A swap exchanges any two positions. To group all 1 values together, choose a block as long as the number of 1 values and count how many 0 values are inside it.","Print the minimum swaps needed to make all 1 values consecutive. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N binary integers.","1 <= N <= 200000
+values are 0 or 1","1
+1","0","1
+1","0","1
+0","0","3
+1 0 1","1","5
+1 0 1 0 1","1","3
+1 1 1","0","3
+0 0 0","0","6
+1 0 0 1 0 1","1","7
+0 1 0 1 1 0 1","1","3
+0 0 1","0","7
+1 0 0 0 1 0 1","1","3
+0 1 1","0","5
+1 1 0 0 1","1"
+"P-025-5","Group All Ones Verifier","Platinum","Sliding Window","A swap exchanges any two positions. To group all 1 values together, choose a block as long as the number of 1 values and count how many 0 values are inside it.","Print the minimum swaps needed to make all 1 values consecutive. Use the same input and output rules.","Line 1: N.
+Line 2: N binary integers.","1 <= N <= 200000
+values are 0 or 1","1
+1","0","1
+1","0","1
+0","0","3
+1 0 1","1","5
+1 0 1 0 1","1","3
+1 1 1","0","3
+0 0 0","0","6
+1 0 0 1 0 1","1","7
+0 1 0 1 1 0 1","1","3
+0 1 0","0","5
+0 1 0 0 1","1","7
+0 0 0 1 0 0 0","0","5
+0 0 1 0 1","1"
+"P-026-1","Rain Between Bars","Platinum","Two Pointers","Each bar has a non-negative height. Water can sit above a bar only when taller boundaries exist on both sides.","Print the total units of water trapped after rain. Use the stated rule exactly.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit total","1
+0","0","1
+0","0","3
+1 0 1","1","12
+0 1 0 2 1 0 1 3 2 1 2 1","6","6
+4 2 0 3 2 5","9","5
+3 0 2 0 4","7","3
+1 2 3","0","3
+3 2 1","0","3
+2 0 2","2","1
+2","0","3
+5 0 1","1","5
+3 6 1 4 2","3","8
+3 4 4 3 0 4 4 1","5"
+"P-026-2","Rain Between Bars Planner","Platinum","Two Pointers","Each bar has a non-negative height. Water can sit above a bar only when taller boundaries exist on both sides.","Print the total units of water trapped after rain. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit total","1
+0","0","1
+0","0","3
+1 0 1","1","12
+0 1 0 2 1 0 1 3 2 1 2 1","6","6
+4 2 0 3 2 5","9","5
+3 0 2 0 4","7","3
+1 2 3","0","3
+3 2 1","0","3
+2 0 2","2","1
+6","0","3
+2 2 4","0","5
+4 5 5 0 3","3","8
+2 6 2 1 5 5 5 6","12"
+"P-026-3","Rain Between Bars Checkpoint","Platinum","Two Pointers","Each bar has a non-negative height. Water can sit above a bar only when taller boundaries exist on both sides.","Print the total units of water trapped after rain. Report the defined result without extra text.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit total","1
+0","0","1
+0","0","3
+1 0 1","1","12
+0 1 0 2 1 0 1 3 2 1 2 1","6","6
+4 2 0 3 2 5","9","5
+3 0 2 0 4","7","3
+1 2 3","0","3
+3 2 1","0","3
+2 0 2","2","1
+5","0","3
+5 1 1","0","5
+3 2 3 6 0","1","8
+2 5 6 0 3 6 1 6","14"
+"P-026-4","Rain Between Bars Tracker","Platinum","Two Pointers","Each bar has a non-negative height. Water can sit above a bar only when taller boundaries exist on both sides.","Print the total units of water trapped after rain. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit total","1
+0","0","1
+0","0","3
+1 0 1","1","12
+0 1 0 2 1 0 1 3 2 1 2 1","6","6
+4 2 0 3 2 5","9","5
+3 0 2 0 4","7","3
+1 2 3","0","3
+3 2 1","0","3
+2 0 2","2","1
+5","0","3
+6 1 4","3","5
+3 2 0 3 4","4","8
+1 6 0 0 1 5 6 0","18"
+"P-026-5","Rain Between Bars Verifier","Platinum","Two Pointers","Each bar has a non-negative height. Water can sit above a bar only when taller boundaries exist on both sides.","Print the total units of water trapped after rain. Use the same input and output rules.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit total","1
+0","0","1
+0","0","3
+1 0 1","1","12
+0 1 0 2 1 0 1 3 2 1 2 1","6","6
+4 2 0 3 2 5","9","5
+3 0 2 0 4","7","3
+1 2 3","0","3
+3 2 1","0","3
+2 0 2","2","1
+3","0","3
+5 6 5","0","5
+0 1 2 2 2","0","8
+4 6 6 1 6 0 6 1","11"
+"P-027-1","Largest Histogram Rectangle","Platinum","Stacks","A rectangle under a histogram uses consecutive bars and cannot be taller than the shortest bar it covers. Its area is height times number of bars.","Print the largest rectangle area under the histogram. Use the stated rule exactly.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit area","1
+1","1","1
+1","1","3
+2 1 2","3","6
+2 1 5 6 2 3","10","2
+2 4","4","7
+6 2 5 4 5 1 6","12","4
+1 1 1 1","4","4
+4 3 2 1","6","4
+0 2 0 2","2","1
+7","7","3
+8 1 7","8","5
+2 9 1 1 0","9","8
+9 2 6 5 1 9 9 9","27"
+"P-027-2","Largest Histogram Rectangle Planner","Platinum","Stacks","A rectangle under a histogram uses consecutive bars and cannot be taller than the shortest bar it covers. Its area is height times number of bars.","Print the largest rectangle area under the histogram. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit area","1
+1","1","1
+1","1","3
+2 1 2","3","6
+2 1 5 6 2 3","10","2
+2 4","4","7
+6 2 5 4 5 1 6","12","4
+1 1 1 1","4","4
+4 3 2 1","6","4
+0 2 0 2","2","1
+7","7","3
+7 9 8","21","5
+1 3 9 8 9","24","8
+9 2 7 2 3 2 2 3","16"
+"P-027-3","Largest Histogram Rectangle Checkpoint","Platinum","Stacks","A rectangle under a histogram uses consecutive bars and cannot be taller than the shortest bar it covers. Its area is height times number of bars.","Print the largest rectangle area under the histogram. Report the defined result without extra text.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit area","1
+1","1","1
+1","1","3
+2 1 2","3","6
+2 1 5 6 2 3","10","2
+2 4","4","7
+6 2 5 4 5 1 6","12","4
+1 1 1 1","4","4
+4 3 2 1","6","4
+0 2 0 2","2","1
+0","0","3
+6 7 4","12","5
+4 9 5 7 3","16","8
+5 0 7 0 6 9 7 1","18"
+"P-027-4","Largest Histogram Rectangle Tracker","Platinum","Stacks","A rectangle under a histogram uses consecutive bars and cannot be taller than the shortest bar it covers. Its area is height times number of bars.","Print the largest rectangle area under the histogram. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit area","1
+1","1","1
+1","1","3
+2 1 2","3","6
+2 1 5 6 2 3","10","2
+2 4","4","7
+6 2 5 4 5 1 6","12","4
+1 1 1 1","4","4
+4 3 2 1","6","4
+0 2 0 2","2","1
+3","3","3
+8 1 8","8","5
+1 1 5 7 5","15","8
+4 2 0 8 8 9 6 8","30"
+"P-027-5","Largest Histogram Rectangle Verifier","Platinum","Stacks","A rectangle under a histogram uses consecutive bars and cannot be taller than the shortest bar it covers. Its area is height times number of bars.","Print the largest rectangle area under the histogram. Use the same input and output rules.","Line 1: N.
+Line 2: N non-negative bar heights.","1 <= N <= 200000
+heights: 0 to 10^9
+use 64-bit area","1
+1","1","1
+1","1","3
+2 1 2","3","6
+2 1 5 6 2 3","10","2
+2 4","4","7
+6 2 5 4 5 1 6","12","4
+1 1 1 1","4","4
+4 3 2 1","6","4
+0 2 0 2","2","1
+7","7","3
+4 9 8","16","5
+3 9 8 9 0","24","8
+3 3 5 7 0 1 7 7","14"
+"P-028-1","Sparse Coordinate Range Marks","Platinum","Coordinate Compression","Only listed coordinates are queried. A range mark adds a value to every listed coordinate lying inside its inclusive endpoints.","After all range marks, print the final values for the listed coordinates in their original order. Use the stated rule exactly.","Line 1: N Q.
+Line 2: N distinct coordinates.
+Next Q lines: L R D inclusive range mark.","1 <= N,Q <= 200000
+coordinates and endpoints: -10^9 to 10^9
+D: -10^9 to 10^9","1 1
+5
+5 5 1","1","1 1
+5
+5 5 1","1","2 1
+1 10
+1 10 2","2 2","3 2
+1 4 9
+1 4 1
+4 9 2","1 3 2","4 1
+2 3 5 8
+3 8 1","0 1 1 1","2 2
+0 100
+0 0 7
+100 100 4","7 4","3 2
+1 2 3
+1 3 1
+2 2 5","1 6 1","3 2
+-5 0 5
+-5 5 2
+0 0 -1","2 1 2","4 2
+1 7 20 50
+1 20 3
+7 50 1","3 4 4 1","1 1
+13
+-12 -4 0","0","2 2
+14 18
+1 5 -1
+15 18 0","0 0","3 2
+2 5 8
+10 19 -2
+-10 -10 -4","0 0 0","4 3
+-11 2 5 9
+-10 -9 3
+19 26 2
+10 13 0","0 0 0 0"
+"P-028-2","Sparse Coordinate Range Marks Planner","Platinum","Coordinate Compression","Only listed coordinates are queried. A range mark adds a value to every listed coordinate lying inside its inclusive endpoints.","After all range marks, print the final values for the listed coordinates in their original order. Treat all values as part of one ordered scenario.","Line 1: N Q.
+Line 2: N distinct coordinates.
+Next Q lines: L R D inclusive range mark.","1 <= N,Q <= 200000
+coordinates and endpoints: -10^9 to 10^9
+D: -10^9 to 10^9","1 1
+5
+5 5 1","1","1 1
+5
+5 5 1","1","2 1
+1 10
+1 10 2","2 2","3 2
+1 4 9
+1 4 1
+4 9 2","1 3 2","4 1
+2 3 5 8
+3 8 1","0 1 1 1","2 2
+0 100
+0 0 7
+100 100 4","7 4","3 2
+1 2 3
+1 3 1
+2 2 5","1 6 1","3 2
+-5 0 5
+-5 5 2
+0 0 -1","2 1 2","4 2
+1 7 20 50
+1 20 3
+7 50 1","3 4 4 1","1 1
+12
+-12 -7 -2","0","2 2
+-6 4
+11 13 4
+-5 4 5","0 5","3 2
+1 12 19
+15 23 -3
+19 28 3","0 0 0","4 3
+-9 -1 0 9
+-1 6 -4
+-11 -4 -2
+10 13 1","-2 -4 -4 0"
+"P-028-3","Sparse Coordinate Range Marks Checkpoint","Platinum","Coordinate Compression","Only listed coordinates are queried. A range mark adds a value to every listed coordinate lying inside its inclusive endpoints.","After all range marks, print the final values for the listed coordinates in their original order. Report the defined result without extra text.","Line 1: N Q.
+Line 2: N distinct coordinates.
+Next Q lines: L R D inclusive range mark.","1 <= N,Q <= 200000
+coordinates and endpoints: -10^9 to 10^9
+D: -10^9 to 10^9","1 1
+5
+5 5 1","1","1 1
+5
+5 5 1","1","2 1
+1 10
+1 10 2","2 2","3 2
+1 4 9
+1 4 1
+4 9 2","1 3 2","4 1
+2 3 5 8
+3 8 1","0 1 1 1","2 2
+0 100
+0 0 7
+100 100 4","7 4","3 2
+1 2 3
+1 3 1
+2 2 5","1 6 1","3 2
+-5 0 5
+-5 5 2
+0 0 -1","2 1 2","4 2
+1 7 20 50
+1 20 3
+7 50 1","3 4 4 1","1 1
+0
+20 26 0","0","2 2
+10 14
+-10 -4 -2
+12 16 -2","0 -2","3 2
+-10 8 9
+-8 -2 -5
+16 20 1","0 0 0","4 3
+6 8 17 19
+1 2 4
+6 13 -1
+-7 -5 -4","-1 -1 0 0"
+"P-028-4","Sparse Coordinate Range Marks Tracker","Platinum","Coordinate Compression","Only listed coordinates are queried. A range mark adds a value to every listed coordinate lying inside its inclusive endpoints.","After all range marks, print the final values for the listed coordinates in their original order. Keep the required tie rule unchanged.","Line 1: N Q.
+Line 2: N distinct coordinates.
+Next Q lines: L R D inclusive range mark.","1 <= N,Q <= 200000
+coordinates and endpoints: -10^9 to 10^9
+D: -10^9 to 10^9","1 1
+5
+5 5 1","1","1 1
+5
+5 5 1","1","2 1
+1 10
+1 10 2","2 2","3 2
+1 4 9
+1 4 1
+4 9 2","1 3 2","4 1
+2 3 5 8
+3 8 1","0 1 1 1","2 2
+0 100
+0 0 7
+100 100 4","7 4","3 2
+1 2 3
+1 3 1
+2 2 5","1 6 1","3 2
+-5 0 5
+-5 5 2
+0 0 -1","2 1 2","4 2
+1 7 20 50
+1 20 3
+7 50 1","3 4 4 1","1 1
+-5
+18 26 -4","0","2 2
+3 11
+-10 -9 -4
+3 9 -4","-4 0","3 2
+-1 8 13
+-6 -6 0
+3 3 -4","0 0 0","4 3
+-4 7 8 14
+10 10 -5
+-3 -3 3
+-2 7 -5","0 -5 0 0"
+"P-028-5","Sparse Coordinate Range Marks Verifier","Platinum","Coordinate Compression","Only listed coordinates are queried. A range mark adds a value to every listed coordinate lying inside its inclusive endpoints.","After all range marks, print the final values for the listed coordinates in their original order. Use the same input and output rules.","Line 1: N Q.
+Line 2: N distinct coordinates.
+Next Q lines: L R D inclusive range mark.","1 <= N,Q <= 200000
+coordinates and endpoints: -10^9 to 10^9
+D: -10^9 to 10^9","1 1
+5
+5 5 1","1","1 1
+5
+5 5 1","1","2 1
+1 10
+1 10 2","2 2","3 2
+1 4 9
+1 4 1
+4 9 2","1 3 2","4 1
+2 3 5 8
+3 8 1","0 1 1 1","2 2
+0 100
+0 0 7
+100 100 4","7 4","3 2
+1 2 3
+1 3 1
+2 2 5","1 6 1","3 2
+-5 0 5
+-5 5 2
+0 0 -1","2 1 2","4 2
+1 7 20 50
+1 20 3
+7 50 1","3 4 4 1","1 1
+1
+11 12 5","0","2 2
+-8 6
+15 18 3
+12 13 -3","0 0","3 2
+-9 6 12
+10 19 -3
+18 27 -2","0 0 -3","4 3
+-9 -6 -3 5
+-11 -1 1
+10 20 -2
+11 18 3","1 1 1 0"
+"P-029-1","Compatible Feature Subsets","Platinum","Bit Manipulation","A subset chooses any collection of numbered features. An incompatible pair cannot be chosen together, but either feature may be chosen by itself.","Count the subsets containing no incompatible pair. Use the stated rule exactly.","Line 1: M Q.
+Next Q lines: two incompatible feature indices.","1 <= M <= 20
+0 <= Q <= 100
+feature indices: 0 to M-1","1 0
+","2","1 0
+","2","2 1
+0 1","3","3 1
+0 1","6","3 2
+0 1
+1 2","5","4 2
+0 1
+2 3","9","4 0
+","16","3 3
+0 1
+0 2
+1 2","4","5 3
+0 1
+1 2
+3 4","15","1 1
+0 0","2","2 3
+1 0
+1 0
+1 1","3","1 3
+0 0
+0 0
+0 0","2","2 0","4"
+"P-029-2","Compatible Feature Subsets Planner","Platinum","Bit Manipulation","A subset chooses any collection of numbered features. An incompatible pair cannot be chosen together, but either feature may be chosen by itself.","Count the subsets containing no incompatible pair. Treat all values as part of one ordered scenario.","Line 1: M Q.
+Next Q lines: two incompatible feature indices.","1 <= M <= 20
+0 <= Q <= 100
+feature indices: 0 to M-1","1 0
+","2","1 0
+","2","2 1
+0 1","3","3 1
+0 1","6","3 2
+0 1
+1 2","5","4 2
+0 1
+2 3","9","4 0
+","16","3 3
+0 1
+0 2
+1 2","4","5 3
+0 1
+1 2
+3 4","15","2 1
+1 0","3","3 3
+2 0
+1 2
+2 1","5","4 1
+2 0","12","1 1
+0 0","2"
+"P-029-3","Compatible Feature Subsets Checkpoint","Platinum","Bit Manipulation","A subset chooses any collection of numbered features. An incompatible pair cannot be chosen together, but either feature may be chosen by itself.","Count the subsets containing no incompatible pair. Report the defined result without extra text.","Line 1: M Q.
+Next Q lines: two incompatible feature indices.","1 <= M <= 20
+0 <= Q <= 100
+feature indices: 0 to M-1","1 0
+","2","1 0
+","2","2 1
+0 1","3","3 1
+0 1","6","3 2
+0 1
+1 2","5","4 2
+0 1
+2 3","9","4 0
+","16","3 3
+0 1
+0 2
+1 2","4","5 3
+0 1
+1 2
+3 4","15","1 1
+0 0","2","2 2
+1 1
+1 0","3","3 2
+2 2
+2 1","6","4 2
+3 0
+2 3","10"
+"P-029-4","Compatible Feature Subsets Tracker","Platinum","Bit Manipulation","A subset chooses any collection of numbered features. An incompatible pair cannot be chosen together, but either feature may be chosen by itself.","Count the subsets containing no incompatible pair. Keep the required tie rule unchanged.","Line 1: M Q.
+Next Q lines: two incompatible feature indices.","1 <= M <= 20
+0 <= Q <= 100
+feature indices: 0 to M-1","1 0
+","2","1 0
+","2","2 1
+0 1","3","3 1
+0 1","6","3 2
+0 1
+1 2","5","4 2
+0 1
+2 3","9","4 0
+","16","3 3
+0 1
+0 2
+1 2","4","5 3
+0 1
+1 2
+3 4","15","1 3
+0 0
+0 0
+0 0","2","2 2
+0 1
+0 1","3","3 0","8","4 1
+1 1","16"
+"P-029-5","Compatible Feature Subsets Verifier","Platinum","Bit Manipulation","A subset chooses any collection of numbered features. An incompatible pair cannot be chosen together, but either feature may be chosen by itself.","Count the subsets containing no incompatible pair. Use the same input and output rules.","Line 1: M Q.
+Next Q lines: two incompatible feature indices.","1 <= M <= 20
+0 <= Q <= 100
+feature indices: 0 to M-1","1 0
+","2","1 0
+","2","2 1
+0 1","3","3 1
+0 1","6","3 2
+0 1
+1 2","5","4 2
+0 1
+2 3","9","4 0
+","16","3 3
+0 1
+0 2
+1 2","4","5 3
+0 1
+1 2
+3 4","15","1 1
+0 0","2","2 3
+0 1
+1 1
+0 1","3","3 0","8","2 3
+1 0
+1 1
+1 0","3"
+"P-030-1","Target XOR Subarray Count","Platinum","Hash Maps","XOR combines bits and cancels equal values: x XOR x is 0. A subarray is a consecutive non-empty part of the array.","Count subarrays whose XOR is exactly K. Use the stated rule exactly.","Line 1: N K.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and K: 0 to 2^30 - 1
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 0
+1 2 3","1","5 6
+4 2 2 6 4","4","3 0
+0 0 0","6","3 5
+5 5 5","4","4 0
+1 1 1 1","4","5 6
+3 8 2 6 4","1","4 7
+7 7 7 7","6","1 5
+9","0","3 4
+2 7 0","0","5 1
+4 1 5 6 8","1","7 7
+4 3 5 0 9 6 8","3"
+"P-030-2","Target XOR Subarray Count Planner","Platinum","Hash Maps","XOR combines bits and cancels equal values: x XOR x is 0. A subarray is a consecutive non-empty part of the array.","Count subarrays whose XOR is exactly K. Treat all values as part of one ordered scenario.","Line 1: N K.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and K: 0 to 2^30 - 1
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 0
+1 2 3","1","5 6
+4 2 2 6 4","4","3 0
+0 0 0","6","3 5
+5 5 5","4","4 0
+1 1 1 1","4","5 6
+3 8 2 6 4","1","4 7
+7 7 7 7","6","1 2
+8","0","3 4
+9 8 6","0","5 5
+1 1 4 8 9","3","7 0
+5 9 9 2 3 9 0","2"
+"P-030-3","Target XOR Subarray Count Checkpoint","Platinum","Hash Maps","XOR combines bits and cancels equal values: x XOR x is 0. A subarray is a consecutive non-empty part of the array.","Count subarrays whose XOR is exactly K. Report the defined result without extra text.","Line 1: N K.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and K: 0 to 2^30 - 1
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 0
+1 2 3","1","5 6
+4 2 2 6 4","4","3 0
+0 0 0","6","3 5
+5 5 5","4","4 0
+1 1 1 1","4","5 6
+3 8 2 6 4","1","4 7
+7 7 7 7","6","1 8
+9","0","3 7
+6 5 7","1","5 7
+2 0 4 8 5","0","7 3
+3 8 7 3 2 6 6","2"
+"P-030-4","Target XOR Subarray Count Tracker","Platinum","Hash Maps","XOR combines bits and cancels equal values: x XOR x is 0. A subarray is a consecutive non-empty part of the array.","Count subarrays whose XOR is exactly K. Keep the required tie rule unchanged.","Line 1: N K.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and K: 0 to 2^30 - 1
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 0
+1 2 3","1","5 6
+4 2 2 6 4","4","3 0
+0 0 0","6","3 5
+5 5 5","4","4 0
+1 1 1 1","4","5 6
+3 8 2 6 4","1","4 7
+7 7 7 7","6","1 1
+8","0","3 9
+5 3 7","0","5 2
+5 4 2 7 4","1","7 4
+3 3 3 3 7 4 3","3"
+"P-030-5","Target XOR Subarray Count Verifier","Platinum","Hash Maps","XOR combines bits and cancels equal values: x XOR x is 0. A subarray is a consecutive non-empty part of the array.","Count subarrays whose XOR is exactly K. Use the same input and output rules.","Line 1: N K.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and K: 0 to 2^30 - 1
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 0
+1 2 3","1","5 6
+4 2 2 6 4","4","3 0
+0 0 0","6","3 5
+5 5 5","4","4 0
+1 1 1 1","4","5 6
+3 8 2 6 4","1","4 7
+7 7 7 7","6","1 0
+0","1","3 9
+4 7 3","0","5 1
+3 4 0 9 9","0","7 6
+0 7 2 4 3 1 0","3"
+"P-031-1","Range Bitwise AND","Platinum","Bit Manipulation","Bitwise AND keeps a bit as 1 only when that bit is 1 in every number. A range includes both endpoints.","Print the bitwise AND of every integer from L through R inclusive. Use the stated rule exactly.","Line 1: L R.","0 <= L <= R <= 2^31 - 1","0 0","0","0 0","0","5 7","4","12 15","12","10 11","10","1 2147483647","0","8 8","8","17 23","16","100 127","96","128 168","128","130 130","130","47 47","47","151 156","144"
+"P-031-2","Range Bitwise AND Planner","Platinum","Bit Manipulation","Bitwise AND keeps a bit as 1 only when that bit is 1 in every number. A range includes both endpoints.","Print the bitwise AND of every integer from L through R inclusive. Treat all values as part of one ordered scenario.","Line 1: L R.","0 <= L <= R <= 2^31 - 1","0 0","0","0 0","0","5 7","4","12 15","12","10 11","10","1 2147483647","0","8 8","8","17 23","16","100 127","96","104 104","104","187 187","187","173 174","172","72 77","72"
+"P-031-3","Range Bitwise AND Checkpoint","Platinum","Bit Manipulation","Bitwise AND keeps a bit as 1 only when that bit is 1 in every number. A range includes both endpoints.","Print the bitwise AND of every integer from L through R inclusive. Report the defined result without extra text.","Line 1: L R.","0 <= L <= R <= 2^31 - 1","0 0","0","0 0","0","5 7","4","12 15","12","10 11","10","1 2147483647","0","8 8","8","17 23","16","100 127","96","199 204","192","83 123","64","191 196","128","134 134","134"
+"P-031-4","Range Bitwise AND Tracker","Platinum","Bit Manipulation","Bitwise AND keeps a bit as 1 only when that bit is 1 in every number. A range includes both endpoints.","Print the bitwise AND of every integer from L through R inclusive. Keep the required tie rule unchanged.","Line 1: L R.","0 <= L <= R <= 2^31 - 1","0 0","0","0 0","0","5 7","4","12 15","12","10 11","10","1 2147483647","0","8 8","8","17 23","16","100 127","96","23 63","0","139 140","136","147 148","144","55 56","48"
+"P-031-5","Range Bitwise AND Verifier","Platinum","Bit Manipulation","Bitwise AND keeps a bit as 1 only when that bit is 1 in every number. A range includes both endpoints.","Print the bitwise AND of every integer from L through R inclusive. Use the same input and output rules.","Line 1: L R.","0 <= L <= R <= 2^31 - 1","0 0","0","0 0","0","5 7","4","12 15","12","10 11","10","1 2147483647","0","8 8","8","17 23","16","100 127","96","9 14","8","125 165","0","187 227","128","165 170","160"
+"P-032-1","Minimum Maximum Pair Gap","Platinum","Binary Search","Choose the stated number of disjoint pairs, so one value cannot belong to two pairs. A pair gap is the absolute difference of its two values.","Print the smallest possible value of the largest chosen pair gap. Use the stated rule exactly.","Line 1: N P.
+Line 2: N integers.","1 <= 2P <= N <= 200000
+values: -10^9 to 10^9","2 1
+1 2","1","2 1
+1 2","1","5 2
+1 3 6 19 20","2","6 2
+10 1 2 7 1 3","1","4 2
+1 1 1 1","0","3 1
+1 5 9","4","4 2
+4 2 1 2","2","6 3
+1 2 3 4 5 6","1","4 2
+100 1 50 51","49","2 1
+9 -7","16","4 1
+2 2 -6 -5","0","6 2
+7 -7 8 -1 0 -9","1","8 4
+-7 5 2 -4 -1 -9 5 -2","3"
+"P-032-2","Minimum Maximum Pair Gap Planner","Platinum","Binary Search","Choose the stated number of disjoint pairs, so one value cannot belong to two pairs. A pair gap is the absolute difference of its two values.","Print the smallest possible value of the largest chosen pair gap. Treat all values as part of one ordered scenario.","Line 1: N P.
+Line 2: N integers.","1 <= 2P <= N <= 200000
+values: -10^9 to 10^9","2 1
+1 2","1","2 1
+1 2","1","5 2
+1 3 6 19 20","2","6 2
+10 1 2 7 1 3","1","4 2
+1 1 1 1","0","3 1
+1 5 9","4","4 2
+4 2 1 2","2","6 3
+1 2 3 4 5 6","1","4 2
+100 1 50 51","49","2 1
+-3 4","7","4 2
+3 6 7 -6","9","6 2
+9 -1 -1 5 0 7","2","8 1
+4 -8 8 9 1 -4 4 1","0"
+"P-032-3","Minimum Maximum Pair Gap Checkpoint","Platinum","Binary Search","Choose the stated number of disjoint pairs, so one value cannot belong to two pairs. A pair gap is the absolute difference of its two values.","Print the smallest possible value of the largest chosen pair gap. Report the defined result without extra text.","Line 1: N P.
+Line 2: N integers.","1 <= 2P <= N <= 200000
+values: -10^9 to 10^9","2 1
+1 2","1","2 1
+1 2","1","5 2
+1 3 6 19 20","2","6 2
+10 1 2 7 1 3","1","4 2
+1 1 1 1","0","3 1
+1 5 9","4","4 2
+4 2 1 2","2","6 3
+1 2 3 4 5 6","1","4 2
+100 1 50 51","49","2 1
+-1 -8","7","4 2
+9 7 -7 -4","3","6 2
+-5 0 1 2 1 4","1","8 1
+1 -2 4 -7 1 6 -7 -6","0"
+"P-032-4","Minimum Maximum Pair Gap Tracker","Platinum","Binary Search","Choose the stated number of disjoint pairs, so one value cannot belong to two pairs. A pair gap is the absolute difference of its two values.","Print the smallest possible value of the largest chosen pair gap. Keep the required tie rule unchanged.","Line 1: N P.
+Line 2: N integers.","1 <= 2P <= N <= 200000
+values: -10^9 to 10^9","2 1
+1 2","1","2 1
+1 2","1","5 2
+1 3 6 19 20","2","6 2
+10 1 2 7 1 3","1","4 2
+1 1 1 1","0","3 1
+1 5 9","4","4 2
+4 2 1 2","2","6 3
+1 2 3 4 5 6","1","4 2
+100 1 50 51","49","2 1
+8 7","1","4 2
+2 8 -3 9","5","6 1
+9 -4 7 2 -5 -9","1","8 4
+-2 3 -8 -3 -2 9 8 7","5"
+"P-032-5","Minimum Maximum Pair Gap Verifier","Platinum","Binary Search","Choose the stated number of disjoint pairs, so one value cannot belong to two pairs. A pair gap is the absolute difference of its two values.","Print the smallest possible value of the largest chosen pair gap. Use the same input and output rules.","Line 1: N P.
+Line 2: N integers.","1 <= 2P <= N <= 200000
+values: -10^9 to 10^9","2 1
+1 2","1","2 1
+1 2","1","5 2
+1 3 6 19 20","2","6 2
+10 1 2 7 1 3","1","4 2
+1 1 1 1","0","3 1
+1 5 9","4","4 2
+4 2 1 2","2","6 3
+1 2 3 4 5 6","1","4 2
+100 1 50 51","49","2 1
+0 3","3","4 2
+0 -8 -6 -2","2","6 3
+-3 4 5 8 9 -5","2","8 2
+-2 -9 -9 -4 3 -4 -7 -2","0"
+"P-033-1","Smallest Stack Output","Platinum","Stacks","Read letters left to right. You may push each read letter onto a stack and may pop only from the top. The output is built from popped letters.","Print the lexicographically smallest string obtainable through one stack. Use the stated rule exactly.","Line 1: a lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","a","a","a","ba","ab","cba","abc","zza","azz","baca","aacb","leetcode","cdeoteel","abcabc","aabcbc","dcba","abcd","cbc","bcc","aabcc","aabcc","aaabbbcc","aaabbbcc","cab","abc"
+"P-033-2","Smallest Stack Output Planner","Platinum","Stacks","Read letters left to right. You may push each read letter onto a stack and may pop only from the top. The output is built from popped letters.","Print the lexicographically smallest string obtainable through one stack. Treat all values as part of one ordered scenario.","Line 1: a lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","a","a","a","ba","ab","cba","abc","zza","azz","baca","aacb","leetcode","cdeoteel","abcabc","aabcbc","dcba","abcd","c","c","cbc","bcc","abcbc","abbcc","bcbaccbc","abbcccbc"
+"P-033-3","Smallest Stack Output Checkpoint","Platinum","Stacks","Read letters left to right. You may push each read letter onto a stack and may pop only from the top. The output is built from popped letters.","Print the lexicographically smallest string obtainable through one stack. Report the defined result without extra text.","Line 1: a lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","a","a","a","ba","ab","cba","abc","zza","azz","baca","aacb","leetcode","cdeoteel","abcabc","aabcbc","dcba","abcd","c","c","aaa","aaa","abbca","aacbb","acaabbaa","aaaaabbc"
+"P-033-4","Smallest Stack Output Tracker","Platinum","Stacks","Read letters left to right. You may push each read letter onto a stack and may pop only from the top. The output is built from popped letters.","Print the lexicographically smallest string obtainable through one stack. Keep the required tie rule unchanged.","Line 1: a lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","a","a","a","ba","ab","cba","abc","zza","azz","baca","aacb","leetcode","cdeoteel","abcabc","aabcbc","dcba","abcd","c","c","bab","abb","accca","aaccc","babaabab","aaaabbbb"
+"P-033-5","Smallest Stack Output Verifier","Platinum","Stacks","Read letters left to right. You may push each read letter onto a stack and may pop only from the top. The output is built from popped letters.","Print the lexicographically smallest string obtainable through one stack. Use the same input and output rules.","Line 1: a lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","a","a","a","ba","ab","cba","abc","zza","azz","baca","aacb","leetcode","cdeoteel","abcabc","aabcbc","dcba","abcd","c","c","aac","aac","cabaa","aaabc","bccacccc","accbcccc"
+"P-034-1","Shortest Sortedness Removal","Platinum","Two Pointers","Removing one contiguous subarray joins the values before it to the values after it. The remaining sequence must be nondecreasing, allowing equal neighbors.","Print the shortest length of one contiguous subarray to remove so the remaining values are nondecreasing. Use the stated rule exactly.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","3
+1 2 3","0","8
+1 2 3 10 4 2 3 5","3","5
+5 4 3 2 1","4","5
+1 2 3 4 0","1","5
+1 2 5 3 4","1","5
+1 2 2 2 1","1","10
+6 3 10 11 15 20 13 3 18 12","8","1
+5","0","3
+-3 -3 -3","0","5
+-2 -1 -4 2 -5","3","8
+-3 1 -1 0 -4 -5 -5 3","5"
+"P-034-2","Shortest Sortedness Removal Planner","Platinum","Two Pointers","Removing one contiguous subarray joins the values before it to the values after it. The remaining sequence must be nondecreasing, allowing equal neighbors.","Print the shortest length of one contiguous subarray to remove so the remaining values are nondecreasing. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","3
+1 2 3","0","8
+1 2 3 10 4 2 3 5","3","5
+5 4 3 2 1","4","5
+1 2 3 4 0","1","5
+1 2 5 3 4","1","5
+1 2 2 2 1","1","10
+6 3 10 11 15 20 13 3 18 12","8","1
+5","0","3
+0 2 2","0","5
+1 4 5 -2 -2","2","8
+2 5 1 -2 0 -4 2 -2","6"
+"P-034-3","Shortest Sortedness Removal Checkpoint","Platinum","Two Pointers","Removing one contiguous subarray joins the values before it to the values after it. The remaining sequence must be nondecreasing, allowing equal neighbors.","Print the shortest length of one contiguous subarray to remove so the remaining values are nondecreasing. Report the defined result without extra text.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","3
+1 2 3","0","8
+1 2 3 10 4 2 3 5","3","5
+5 4 3 2 1","4","5
+1 2 3 4 0","1","5
+1 2 5 3 4","1","5
+1 2 2 2 1","1","10
+6 3 10 11 15 20 13 3 18 12","8","1
+0","0","3
+-3 -1 -4","1","5
+-3 5 3 1 -3","3","8
+5 -3 4 5 -5 -3 3 -4","7"
+"P-034-4","Shortest Sortedness Removal Tracker","Platinum","Two Pointers","Removing one contiguous subarray joins the values before it to the values after it. The remaining sequence must be nondecreasing, allowing equal neighbors.","Print the shortest length of one contiguous subarray to remove so the remaining values are nondecreasing. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","3
+1 2 3","0","8
+1 2 3 10 4 2 3 5","3","5
+5 4 3 2 1","4","5
+1 2 3 4 0","1","5
+1 2 5 3 4","1","5
+1 2 2 2 1","1","10
+6 3 10 11 15 20 13 3 18 12","8","1
+5","0","3
+-5 1 1","0","5
+3 -1 1 2 3","1","8
+5 -1 -5 1 -5 -5 5 4","7"
+"P-034-5","Shortest Sortedness Removal Verifier","Platinum","Two Pointers","Removing one contiguous subarray joins the values before it to the values after it. The remaining sequence must be nondecreasing, allowing equal neighbors.","Print the shortest length of one contiguous subarray to remove so the remaining values are nondecreasing. Use the same input and output rules.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9","1
+1","0","1
+1","0","3
+1 2 3","0","8
+1 2 3 10 4 2 3 5","3","5
+5 4 3 2 1","4","5
+1 2 3 4 0","1","5
+1 2 5 3 4","1","5
+1 2 2 2 1","1","10
+6 3 10 11 15 20 13 3 18 12","8","1
+-2","0","3
+-3 0 -2","1","5
+-3 -1 4 -2 0","2","8
+0 -1 4 -3 1 5 4 3","6"
+"P-035-1","Subarrays With Exact Odd Count","Platinum","Sliding Window","A subarray is a consecutive non-empty segment. An odd number leaves remainder 1 when divided by 2.","Count subarrays containing exactly K odd values. Use the stated rule exactly.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+0 <= K <= N
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 1
+2 4 6","0","5 3
+1 1 2 1 1","2","3 0
+2 2 2","6","5 2
+1 2 1 2 1","4","3 2
+3 5 7","2","4 1
+0 1 0 1","6","5 2
+1 2 3 4 5","4","1 2
+3","0","3 2
+-9 5 1","2","5 0
+7 -9 -5 -6 -4","3","7 2
+-5 4 -1 -1 -1 -2 0","6"
+"P-035-2","Subarrays With Exact Odd Count Planner","Platinum","Sliding Window","A subarray is a consecutive non-empty segment. An odd number leaves remainder 1 when divided by 2.","Count subarrays containing exactly K odd values. Treat all values as part of one ordered scenario.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+0 <= K <= N
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 1
+2 4 6","0","5 3
+1 1 2 1 1","2","3 0
+2 2 2","6","5 2
+1 2 1 2 1","4","3 2
+3 5 7","2","4 1
+0 1 0 1","6","5 2
+1 2 3 4 5","4","1 2
+-6","0","3 0
+-6 7 1","1","5 0
+-9 8 -8 -4 6","10","7 0
+6 2 -1 -6 4 0 5","9"
+"P-035-3","Subarrays With Exact Odd Count Checkpoint","Platinum","Sliding Window","A subarray is a consecutive non-empty segment. An odd number leaves remainder 1 when divided by 2.","Count subarrays containing exactly K odd values. Report the defined result without extra text.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+0 <= K <= N
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 1
+2 4 6","0","5 3
+1 1 2 1 1","2","3 0
+2 2 2","6","5 2
+1 2 1 2 1","4","3 2
+3 5 7","2","4 1
+0 1 0 1","6","5 2
+1 2 3 4 5","4","3 1
+7 6 7","4","5 1
+-3 -8 8 -2 5","8","7 0
+2 6 -7 8 -4 1 6","7","1 2
+-5","0"
+"P-035-4","Subarrays With Exact Odd Count Tracker","Platinum","Sliding Window","A subarray is a consecutive non-empty segment. An odd number leaves remainder 1 when divided by 2.","Count subarrays containing exactly K odd values. Keep the required tie rule unchanged.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+0 <= K <= N
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 1
+2 4 6","0","5 3
+1 1 2 1 1","2","3 0
+2 2 2","6","5 2
+1 2 1 2 1","4","3 2
+3 5 7","2","4 1
+0 1 0 1","6","5 2
+1 2 3 4 5","4","1 2
+-5","0","3 2
+-4 4 -5","0","5 0
+-4 0 -4 -2 -5","10","7 0
+-8 -3 -2 0 7 6 9","5"
+"P-035-5","Subarrays With Exact Odd Count Verifier","Platinum","Sliding Window","A subarray is a consecutive non-empty segment. An odd number leaves remainder 1 when divided by 2.","Count subarrays containing exactly K odd values. Use the same input and output rules.","Line 1: N K.
+Line 2: N integers.","1 <= N <= 200000
+0 <= K <= N
+values: -10^9 to 10^9
+count may require 64-bit","1 1
+1","1","1 1
+1","1","3 1
+2 4 6","0","5 3
+1 1 2 1 1","2","3 0
+2 2 2","6","5 2
+1 2 1 2 1","4","3 2
+3 5 7","2","4 1
+0 1 0 1","6","5 2
+1 2 3 4 5","4","1 0
+-9","0","3 3
+-8 0 8","0","5 0
+7 -3 2 4 -7","3","7 3
+0 -9 0 1 5 -6 3","6"
+"P-036-1","Nonnegative Prefix Check","Platinum","Arrays","A prefix is the beginning of a sequence. Its prefix sum is the total of all values seen so far.","Print YES if every prefix sum is at least zero; otherwise print NO. Use the stated rule exactly.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","YES","1
+1","YES","1
+-1","NO","2
+1 -1","YES","3
+2 -3 2","NO","3
+0 0 0","YES","3
+-2 3 -1","NO","3
+5 -4 -1","YES","5
+1 2 -1 -1 -1","YES","3
+-3 -3 -6","NO","5
+-6 5 -1 4 -2","NO","7
+-1 3 2 -1 -3 5 0","NO","3
+4 1 1","YES"
+"P-036-2","Nonnegative Prefix Check Planner","Platinum","Arrays","A prefix is the beginning of a sequence. Its prefix sum is the total of all values seen so far.","Print YES if every prefix sum is at least zero; otherwise print NO. Treat all values as part of one ordered scenario.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","YES","1
+1","YES","1
+-1","NO","2
+1 -1","YES","3
+2 -3 2","NO","3
+0 0 0","YES","3
+-2 3 -1","NO","3
+5 -4 -1","YES","5
+1 2 -1 -1 -1","YES","1
+-4","NO","3
+-2 6 -5","NO","5
+-4 6 6 -6 -6","NO","7
+3 5 -6 3 6 4 0","YES"
+"P-036-3","Nonnegative Prefix Check Checkpoint","Platinum","Arrays","A prefix is the beginning of a sequence. Its prefix sum is the total of all values seen so far.","Print YES if every prefix sum is at least zero; otherwise print NO. Report the defined result without extra text.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","YES","1
+1","YES","1
+-1","NO","2
+1 -1","YES","3
+2 -3 2","NO","3
+0 0 0","YES","3
+-2 3 -1","NO","3
+5 -4 -1","YES","5
+1 2 -1 -1 -1","YES","1
+-6","NO","3
+6 -4 3","YES","5
+-4 -6 4 -3 4","NO","7
+-4 -1 6 -1 4 -4 -5","NO"
+"P-036-4","Nonnegative Prefix Check Tracker","Platinum","Arrays","A prefix is the beginning of a sequence. Its prefix sum is the total of all values seen so far.","Print YES if every prefix sum is at least zero; otherwise print NO. Keep the required tie rule unchanged.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","YES","1
+1","YES","1
+-1","NO","2
+1 -1","YES","3
+2 -3 2","NO","3
+0 0 0","YES","3
+-2 3 -1","NO","3
+5 -4 -1","YES","5
+1 2 -1 -1 -1","YES","3
+-4 6 4","NO","5
+6 1 -1 0 0","YES","7
+-6 3 -1 -6 -6 2 5","NO","1
+4","YES"
+"P-036-5","Nonnegative Prefix Check Verifier","Platinum","Arrays","A prefix is the beginning of a sequence. Its prefix sum is the total of all values seen so far.","Print YES if every prefix sum is at least zero; otherwise print NO. Use the same input and output rules.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit sums","1
+1","YES","1
+1","YES","1
+-1","NO","2
+1 -1","YES","3
+2 -3 2","NO","3
+0 0 0","YES","3
+-2 3 -1","NO","3
+5 -4 -1","YES","5
+1 2 -1 -1 -1","YES","1
+-6","NO","3
+4 6 5","YES","5
+5 1 1 0 1","YES","7
+-3 1 -6 -4 1 -1 -5","NO"
+"P-037-1","Shortest Island Bridge","Platinum","BFS","Land cells are 1 and water cells are 0. You may flip water into land to connect two separate islands, using the fewest flips.","Print the minimum water cells that must be flipped to connect the two islands. Use the stated rule exactly.","Line 1: R C.
+Next R lines: C characters 0 or 1.","2 <= R,C <= 200
+grid contains exactly two islands
+islands connect only vertically or horizontally","2 2
+11
+11","-1","2 2
+11
+11","-1","2 2
+10
+01","1","3 3
+100
+000
+001","3","3 3
+110
+000
+011","1","3 3
+101
+000
+101","1","4 4
+1000
+0000
+0001
+1111","2","4 4
+1100
+1100
+0011
+0011","1","3 3
+100
+000
+010","2","3 4
+1000
+0000
+0001","4","4 4
+1000
+0100
+0000
+0001","1","3 3
+110
+000
+101","1","3 4
+1001
+0000
+0001","1"
+"P-037-2","Shortest Island Bridge Planner","Platinum","BFS","Land cells are 1 and water cells are 0. You may flip water into land to connect two separate islands, using the fewest flips.","Print the minimum water cells that must be flipped to connect the two islands. Treat all values as part of one ordered scenario.","Line 1: R C.
+Next R lines: C characters 0 or 1.","2 <= R,C <= 200
+grid contains exactly two islands
+islands connect only vertically or horizontally","2 2
+11
+11","-1","2 2
+11
+11","-1","2 2
+10
+01","1","3 3
+100
+000
+001","3","3 3
+110
+000
+011","1","3 3
+101
+000
+101","1","4 4
+1000
+0000
+0001
+1111","2","4 4
+1100
+1100
+0011
+0011","1","3 3
+100
+000
+010","2","3 3
+100
+000
+011","2","3 4
+1000
+0000
+0001","4","4 4
+1000
+0001
+0000
+0001","1","4 4
+1000
+0000
+1000
+0001","1"
+"P-037-3","Shortest Island Bridge Checkpoint","Platinum","BFS","Land cells are 1 and water cells are 0. You may flip water into land to connect two separate islands, using the fewest flips.","Print the minimum water cells that must be flipped to connect the two islands. Report the defined result without extra text.","Line 1: R C.
+Next R lines: C characters 0 or 1.","2 <= R,C <= 200
+grid contains exactly two islands
+islands connect only vertically or horizontally","2 2
+11
+11","-1","2 2
+11
+11","-1","2 2
+10
+01","1","3 3
+100
+000
+001","3","3 3
+110
+000
+011","1","3 3
+101
+000
+101","1","4 4
+1000
+0000
+0001
+1111","2","4 4
+1100
+1100
+0011
+0011","1","3 3
+100
+000
+010","2","2 2
+11
+01","-1","3 3
+100
+000
+011","2","3 4
+1000
+0000
+0001","4","4 4
+1000
+0000
+0010
+0001","1"
+"P-037-4","Shortest Island Bridge Tracker","Platinum","BFS","Land cells are 1 and water cells are 0. You may flip water into land to connect two separate islands, using the fewest flips.","Print the minimum water cells that must be flipped to connect the two islands. Keep the required tie rule unchanged.","Line 1: R C.
+Next R lines: C characters 0 or 1.","2 <= R,C <= 200
+grid contains exactly two islands
+islands connect only vertically or horizontally","2 2
+11
+11","-1","2 2
+11
+11","-1","2 2
+10
+01","1","3 3
+100
+000
+001","3","3 3
+110
+000
+011","1","3 3
+101
+000
+101","1","4 4
+1000
+0000
+0001
+1111","2","4 4
+1100
+1100
+0011
+0011","1","3 3
+100
+000
+010","2","3 3
+101
+000
+001","1","3 4
+1000
+0001
+0001","3","4 4
+1000
+0000
+0000
+0001","5","2 2
+11
+01","-1"
+"P-037-5","Shortest Island Bridge Verifier","Platinum","BFS","Land cells are 1 and water cells are 0. You may flip water into land to connect two separate islands, using the fewest flips.","Print the minimum water cells that must be flipped to connect the two islands. Use the same input and output rules.","Line 1: R C.
+Next R lines: C characters 0 or 1.","2 <= R,C <= 200
+grid contains exactly two islands
+islands connect only vertically or horizontally","2 2
+11
+11","-1","2 2
+11
+11","-1","2 2
+10
+01","1","3 3
+100
+000
+001","3","3 3
+110
+000
+011","1","3 3
+101
+000
+101","1","4 4
+1000
+0000
+0001
+1111","2","4 4
+1100
+1100
+0011
+0011","1","3 3
+100
+000
+010","2","2 2
+11
+01","-1","3 4
+1000
+0000
+0001","4","4 4
+1000
+0000
+0000
+0001","5","4 4
+1000
+0000
+0010
+0001","1"
+"P-038-1","Fewest Reusable Coins","Platinum","Dynamic Programming","A denomination may be used any number of times. The goal is to reach the target exactly with as few coins as possible.","Print the minimum number of coins totaling T, or -1 if T cannot be formed. Use the stated rule exactly.","Line 1: N T.
+Line 2: N positive denominations.","1 <= N <= 100
+0 <= T <= 100000
+denominations: 1 to 100000","1 0
+1","0","1 0
+1","0","1 7
+1","7","3 11
+1 2 5","3","1 3
+2","-1","2 8
+2 4","2","2 6
+3 4","2","2 1
+5 7","-1","3 6
+1 3 4","2","1 11
+4","-1","2 20
+4 1","5","3 7
+1 7 4","1","4 9
+3 2 2 5","3"
+"P-038-2","Fewest Reusable Coins Planner","Platinum","Dynamic Programming","A denomination may be used any number of times. The goal is to reach the target exactly with as few coins as possible.","Print the minimum number of coins totaling T, or -1 if T cannot be formed. Treat all values as part of one ordered scenario.","Line 1: N T.
+Line 2: N positive denominations.","1 <= N <= 100
+0 <= T <= 100000
+denominations: 1 to 100000","1 0
+1","0","1 0
+1","0","1 7
+1","7","3 11
+1 2 5","3","1 3
+2","-1","2 8
+2 4","2","2 6
+3 4","2","2 1
+5 7","-1","3 6
+1 3 4","2","1 14
+6","-1","2 11
+9 1","3","3 7
+8 4 8","-1","4 15
+2 8 2 7","2"
+"P-038-3","Fewest Reusable Coins Checkpoint","Platinum","Dynamic Programming","A denomination may be used any number of times. The goal is to reach the target exactly with as few coins as possible.","Print the minimum number of coins totaling T, or -1 if T cannot be formed. Report the defined result without extra text.","Line 1: N T.
+Line 2: N positive denominations.","1 <= N <= 100
+0 <= T <= 100000
+denominations: 1 to 100000","1 0
+1","0","1 0
+1","0","1 7
+1","7","3 11
+1 2 5","3","1 3
+2","-1","2 8
+2 4","2","2 6
+3 4","2","2 1
+5 7","-1","3 6
+1 3 4","2","1 1
+9","-1","2 20
+2 4","5","3 10
+4 3 4","3","4 18
+6 1 5 3","3"
+"P-038-4","Fewest Reusable Coins Tracker","Platinum","Dynamic Programming","A denomination may be used any number of times. The goal is to reach the target exactly with as few coins as possible.","Print the minimum number of coins totaling T, or -1 if T cannot be formed. Keep the required tie rule unchanged.","Line 1: N T.
+Line 2: N positive denominations.","1 <= N <= 100
+0 <= T <= 100000
+denominations: 1 to 100000","1 0
+1","0","1 0
+1","0","1 7
+1","7","3 11
+1 2 5","3","1 3
+2","-1","2 8
+2 4","2","2 6
+3 4","2","2 1
+5 7","-1","3 6
+1 3 4","2","1 4
+1","4","2 1
+6 1","1","3 16
+3 3 6","-1","4 2
+3 6 4 1","2"
+"P-038-5","Fewest Reusable Coins Verifier","Platinum","Dynamic Programming","A denomination may be used any number of times. The goal is to reach the target exactly with as few coins as possible.","Print the minimum number of coins totaling T, or -1 if T cannot be formed. Use the same input and output rules.","Line 1: N T.
+Line 2: N positive denominations.","1 <= N <= 100
+0 <= T <= 100000
+denominations: 1 to 100000","1 0
+1","0","1 0
+1","0","1 7
+1","7","3 11
+1 2 5","3","1 3
+2","-1","2 8
+2 4","2","2 6
+3 4","2","2 1
+5 7","-1","3 6
+1 3 4","2","1 10
+3","-1","2 20
+6 6","-1","3 11
+9 5 1","3","4 5
+6 3 8 1","3"
+"P-039-1","Capacity Value Pack","Platinum","Dynamic Programming","Each item may be taken once or left behind. Taken item weights must not exceed the capacity, and values add together.","Print the maximum total value that fits within capacity C. Use the stated rule exactly.","Line 1: N C.
+Next N lines: weight value.","0 <= N <= 200
+0 <= C <= 20000
+weights: 1 to C when N > 0
+values: 0 to 10^9","0 0
+","0","0 0
+","0","1 1
+1 1","1","3 4
+1 1
+2 3
+3 4","5","3 5
+2 4
+3 5
+4 10","10","1 4
+5 10","0","3 3
+1 2
+2 2
+3 4","4","3 4
+2 3
+2 3
+2 3","6","4 10
+3 4
+4 5
+7 10
+8 11","14","0 7","0","1 5
+1 3","3","3 7
+1 8
+3 7
+1 5","20","4 3
+1 3
+2 3
+1 2
+2 5","8"
+"P-039-2","Capacity Value Pack Planner","Platinum","Dynamic Programming","Each item may be taken once or left behind. Taken item weights must not exceed the capacity, and values add together.","Print the maximum total value that fits within capacity C. Treat all values as part of one ordered scenario.","Line 1: N C.
+Next N lines: weight value.","0 <= N <= 200
+0 <= C <= 20000
+weights: 1 to C when N > 0
+values: 0 to 10^9","0 0
+","0","0 0
+","0","1 1
+1 1","1","3 4
+1 1
+2 3
+3 4","5","3 5
+2 4
+3 5
+4 10","10","1 4
+5 10","0","3 3
+1 2
+2 2
+3 4","4","3 4
+2 3
+2 3
+2 3","6","4 10
+3 4
+4 5
+7 10
+8 11","14","0 7","0","1 3
+1 3","3","3 3
+1 3
+1 5
+3 2","8","4 9
+8 5
+1 7
+3 7
+9 1","14"
+"P-039-3","Capacity Value Pack Checkpoint","Platinum","Dynamic Programming","Each item may be taken once or left behind. Taken item weights must not exceed the capacity, and values add together.","Print the maximum total value that fits within capacity C. Report the defined result without extra text.","Line 1: N C.
+Next N lines: weight value.","0 <= N <= 200
+0 <= C <= 20000
+weights: 1 to C when N > 0
+values: 0 to 10^9","0 0
+","0","0 0
+","0","1 1
+1 1","1","3 4
+1 1
+2 3
+3 4","5","3 5
+2 4
+3 5
+4 10","10","1 4
+5 10","0","3 3
+1 2
+2 2
+3 4","4","3 4
+2 3
+2 3
+2 3","6","4 10
+3 4
+4 5
+7 10
+8 11","14","0 1","0","1 7
+4 9","9","3 3
+3 1
+1 2
+2 0","2","4 12
+4 7
+3 9
+9 6
+5 3","19"
+"P-039-4","Capacity Value Pack Tracker","Platinum","Dynamic Programming","Each item may be taken once or left behind. Taken item weights must not exceed the capacity, and values add together.","Print the maximum total value that fits within capacity C. Keep the required tie rule unchanged.","Line 1: N C.
+Next N lines: weight value.","0 <= N <= 200
+0 <= C <= 20000
+weights: 1 to C when N > 0
+values: 0 to 10^9","0 0
+","0","0 0
+","0","1 1
+1 1","1","3 4
+1 1
+2 3
+3 4","5","3 5
+2 4
+3 5
+4 10","10","1 4
+5 10","0","3 3
+1 2
+2 2
+3 4","4","3 4
+2 3
+2 3
+2 3","6","4 10
+3 4
+4 5
+7 10
+8 11","14","0 7","0","1 6
+2 1","1","3 4
+3 3
+2 3
+1 0","3","4 7
+5 5
+5 0
+3 5
+5 0","5"
+"P-039-5","Capacity Value Pack Verifier","Platinum","Dynamic Programming","Each item may be taken once or left behind. Taken item weights must not exceed the capacity, and values add together.","Print the maximum total value that fits within capacity C. Use the same input and output rules.","Line 1: N C.
+Next N lines: weight value.","0 <= N <= 200
+0 <= C <= 20000
+weights: 1 to C when N > 0
+values: 0 to 10^9","0 0
+","0","0 0
+","0","1 1
+1 1","1","3 4
+1 1
+2 3
+3 4","5","3 5
+2 4
+3 5
+4 10","10","1 4
+5 10","0","3 3
+1 2
+2 2
+3 4","4","3 4
+2 3
+2 3
+2 3","6","4 10
+3 4
+4 5
+7 10
+8 11","14","0 1","0","1 5
+5 5","5","3 12
+2 9
+3 4
+5 0","13","4 4
+4 0
+4 2
+3 0
+2 4","4"
+"P-040-1","No-Equal-Neighbor String","Platinum","Greedy","Reorganizing a string means rearranging all of its letters. Neighboring letters are adjacent positions in the final string.","Print the lexicographically smallest reorganization with no equal neighboring letters, or IMPOSSIBLE if none exists. Use the stated rule exactly.","Line 1: lowercase string S.","1 <= |S| <= 8
+S uses lowercase English letters","a","a","a","a","aa","IMPOSSIBLE","aab","aba","aaab","IMPOSSIBLE","aabb","abab","aaabbc","ababac","vvvlo","vlvov","aabbcc","abacbc","aba","aba","aaba","IMPOSSIBLE","aaaaaa","IMPOSSIBLE","bbaaba","ababab"
+"P-040-2","No-Equal-Neighbor String Planner","Platinum","Greedy","Reorganizing a string means rearranging all of its letters. Neighboring letters are adjacent positions in the final string.","Print the lexicographically smallest reorganization with no equal neighboring letters, or IMPOSSIBLE if none exists. Treat all values as part of one ordered scenario.","Line 1: lowercase string S.","1 <= |S| <= 8
+S uses lowercase English letters","a","a","a","a","aa","IMPOSSIBLE","aab","aba","aaab","IMPOSSIBLE","aabb","abab","aaabbc","ababac","vvvlo","vlvov","aabbcc","abacbc","aaa","IMPOSSIBLE","bbba","IMPOSSIBLE","aaaabb","IMPOSSIBLE","abab","abab"
+"P-040-3","No-Equal-Neighbor String Checkpoint","Platinum","Greedy","Reorganizing a string means rearranging all of its letters. Neighboring letters are adjacent positions in the final string.","Print the lexicographically smallest reorganization with no equal neighboring letters, or IMPOSSIBLE if none exists. Report the defined result without extra text.","Line 1: lowercase string S.","1 <= |S| <= 8
+S uses lowercase English letters","a","a","a","a","aa","IMPOSSIBLE","aab","aba","aaab","IMPOSSIBLE","aabb","abab","aaabbc","ababac","vvvlo","vlvov","aabbcc","abacbc","bba","bab","bbba","IMPOSSIBLE","ababab","ababab","b","b"
+"P-040-4","No-Equal-Neighbor String Tracker","Platinum","Greedy","Reorganizing a string means rearranging all of its letters. Neighboring letters are adjacent positions in the final string.","Print the lexicographically smallest reorganization with no equal neighboring letters, or IMPOSSIBLE if none exists. Keep the required tie rule unchanged.","Line 1: lowercase string S.","1 <= |S| <= 8
+S uses lowercase English letters","a","a","a","a","aa","IMPOSSIBLE","aab","aba","aaab","IMPOSSIBLE","aabb","abab","aaabbc","ababac","vvvlo","vlvov","aabbcc","abacbc","aaa","IMPOSSIBLE","baabab","ababab","bbb","IMPOSSIBLE","abba","abab"
+"P-040-5","No-Equal-Neighbor String Verifier","Platinum","Greedy","Reorganizing a string means rearranging all of its letters. Neighboring letters are adjacent positions in the final string.","Print the lexicographically smallest reorganization with no equal neighboring letters, or IMPOSSIBLE if none exists. Use the same input and output rules.","Line 1: lowercase string S.","1 <= |S| <= 8
+S uses lowercase English letters","a","a","a","a","aa","IMPOSSIBLE","aab","aba","aaab","IMPOSSIBLE","aabb","abab","aaabbc","ababac","vvvlo","vlvov","aabbcc","abacbc","aaaa","IMPOSSIBLE","aaabaa","IMPOSSIBLE","aaa","IMPOSSIBLE","bbaa","abab"

@@ -1,0 +1,761 @@
+// ============================================================================
+// Firestore data layer — profiles, ratings, social, training records.
+// ============================================================================
+
+import {
+  db, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc,
+  collection, query, where, orderBy, limit, onSnapshot, serverTimestamp,
+  increment, writeBatch,
+
+} from "./firebase.js";
+import {
+  defaultRating, rate, decayRd, soloScore, soloOpponent, placementRd,
+} from "./glicko.js";
+import {
+  isGuestProfile, patchGuest, markGuestSeen, guestSeen,
+  guestPuzzleRecords, recordGuestPuzzle, renameGuest,
+} from "./local.js";
+
+/**
+ * True when Firestore refused a read. Public boards are readable by anyone
+ * under the shipped rules, so this only fires when the deployed rules are
+ * older than this build — worth distinguishing from a network blip.
+ */
+export function isPermissionDenied(e) {
+  return e?.code === "permission-denied" || /insufficient permissions/i.test(e?.message ?? "");
+}
+
+// ── Profile ─────────────────────────────────────────────────────────────────
+export function blankProfile(uid, username, isAnon) {
+  const g = defaultRating();
+  return {
+    uid,
+    username,
+    usernameLower: username.toLowerCase(),
+    isAnonymous: !!isAnon,
+    createdAt: Date.now(),
+
+    rating: g.rating, rd: g.rd, vol: g.vol,
+    wins: 0, losses: 0, draws: 0, gamesPlayed: 0, lastPlayedAt: null,
+
+    soloRating: g.rating, soloRd: g.rd, soloVol: g.vol,
+    soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
+
+    totalMatches: 0,
+    puzzlesSolved: 0,
+    bestStreak: 0, streak: 0,
+
+    seen: {},          // archetypeId -> true; drives Training Grounds discovery
+    skillLevel: null,  // set by onboarding; null means "hasn't been asked yet"
+        avatarIcon: null,
+    avatarHue: null,
+    country: "US", // Profiles created before v1.2.0 render as US until changed.
+    activityDays: {}, // YYYY-MM-DD -> last activity timestamp, used by dashboard streaks.
+
+  };
+}
+
+/** True when this player still needs to be asked how strong they are. */
+export function needsOnboarding(profile) {
+  return !!profile && !profile.skillLevel;
+}
+
+/**
+ * Apply the answer from onboarding. Both tracks start at the chosen rating with
+ * the default deviation, so they read as provisional and settle quickly if the
+ * player misjudged themselves.
+ */
+export async function applySkillLevel(profile, level) {
+  const patch = {
+    skillLevel: level.id,
+    rating: level.rating,
+    soloRating: level.rating,
+  };
+  if (isGuestProfile(profile)) { patchGuest(patch); return patch; }
+  await updateDoc(doc(db, "users", profile.uid), patch);
+  return patch;
+}
+
+export async function saveAvatar(profile, avatarIcon, avatarHue) {
+  const patch = { avatarIcon, avatarHue };
+  if (isGuestProfile(profile)) { patchGuest(patch); return patch; }
+  await updateDoc(doc(db, "users", profile.uid), patch);
+  return patch;
+}
+
+/** Save the self-reported country used for the leaderboard flag. */
+export async function saveCountry(profile, country) {
+  const patch = { country: String(country || "US").toUpperCase() };
+  if (isGuestProfile(profile)) { patchGuest(patch); return patch; }
+  await updateDoc(doc(db, "users", profile.uid), patch);
+  return patch;
+}
+
+function activityKey(now = Date.now()) {
+  // Local calendar days make the streak read naturally to the player.
+  const d = new Date(now);
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0, 10);
+}
+
+/** Record that a player completed a play activity on the current local day. */
+export async function markDailyActivity(profile) {
+  if (!profile) return;
+  const key = activityKey();
+  if (isGuestProfile(profile)) {
+    patchGuest({ activityDays: { ...(profile.activityDays || {}), [key]: Date.now() } });
+    return;
+  }
+  try { await updateDoc(doc(db, "users", profile.uid), { [`activityDays.${key}`]: Date.now() }); }
+  catch { /* a streak should never block a result write */ }
+}
+
+export async function getProfile(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
+  return snap.exists() ? { uid, ...snap.data() } : null;
+}
+
+export function watchProfile(uid, cb) {
+  return onSnapshot(doc(db, "users", uid), (s) => {
+    if (s.exists()) cb({ uid, ...s.data() });
+  });
+}
+
+export async function ensureProfile(user, preferredName) {
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return { uid: user.uid, ...snap.data() };
+
+  const name = preferredName || user.displayName || fallbackName(user);
+  const profile = blankProfile(user.uid, name, user.isAnonymous);
+  await setDoc(ref, profile);
+  if (!user.isAnonymous) {
+    try { await setDoc(doc(db, "usernames", name.toLowerCase()), { uid: user.uid }); }
+    catch { /* name taken by a race — profile still works, rename prompts later */ }
+  }
+  return profile;
+}
+
+function fallbackName(user) {
+  if (user.isAnonymous) return "Guest-" + user.uid.slice(0, 5).toUpperCase();
+  const base = (user.email || "player").split("@")[0].replace(/[^a-zA-Z0-9_]/g, "");
+  return (base || "player").slice(0, 14) + Math.floor(Math.random() * 900 + 100);
+}
+
+export const NAME_RE = /^[a-zA-Z0-9_]{3,16}$/;
+
+export async function usernameAvailable(name) {
+  const snap = await getDoc(doc(db, "usernames", name.toLowerCase()));
+  return !snap.exists();
+}
+
+export async function renameUser(uid, oldName, newName) {
+  if (!NAME_RE.test(newName)) throw new Error("3–16 characters, letters/numbers/underscore only.");
+  if (String(uid).startsWith("local:")) { renameGuest(newName); return; }
+  const lower = newName.toLowerCase();
+  if (lower !== (oldName || "").toLowerCase()) {
+    const taken = await getDoc(doc(db, "usernames", lower));
+    if (taken.exists() && taken.data().uid !== uid) throw new Error("That name is taken.");
+    await setDoc(doc(db, "usernames", lower), { uid });
+    if (oldName) { try { await deleteDoc(doc(db, "usernames", oldName.toLowerCase())); } catch {} }
+  }
+  await updateDoc(doc(db, "users", uid), { username: newName, usernameLower: lower });
+}
+
+// ── Ranked rating ───────────────────────────────────────────────────────────
+/**
+ * Apply one rated duel result to the signed-in player.
+ * `result` is "win" | "loss" | "draw"; `score` is the Glicko score in [0,1].
+ */
+export async function applyDuelResult(uid, profile, opponent, score, result) {
+  const me = {
+    rating: profile.rating,
+    rd: decayRd(profile.rd, profile.vol, profile.lastPlayedAt),
+    vol: profile.vol,
+  };
+  const next = rate(me, opponent, score);
+  // Keep placement swings large — see placementRd.
+  next.rd = placementRd(next.rd, (profile.gamesPlayed ?? 0) + 1);
+
+  const streak = result === "win" ? (profile.streak ?? 0) + 1 : 0;
+  const updates = {
+    rating: next.rating, rd: next.rd, vol: next.vol,
+    lbRating: next.rating,
+    gamesPlayed: increment(1),
+    totalMatches: increment(1),
+    lastPlayedAt: Date.now(),
+    streak,
+    bestStreak: Math.max(profile.bestStreak ?? 0, streak),
+    updatedAt: serverTimestamp(),
+  };
+  if (result === "win") updates.wins = increment(1);
+  else if (result === "loss") updates.losses = increment(1);
+  else updates.draws = increment(1);
+
+    await updateDoc(doc(db, "users", uid), updates);
+  markDailyActivity(profile);
+  return { ...next, before: Math.round(profile.rating) };
+
+}
+
+// ── Unranked rating ─────────────────────────────────────────────────────────
+// Stored under the `solo*` field names the collection has always used; the UI
+// calls this track "Unranked".
+export async function applySoloResult(uid, profile, opts) {
+  const { solved, timeMs, difficulty } = opts;
+  const secs = timeMs / 1000;
+
+  // Build the player's unranked "me" object first so the soloScore function
+  // can see the decayed RD and apply the provisional boost if appropriate.
+  const me = {
+    rating: profile.soloRating,
+    rd: decayRd(profile.soloRd, profile.soloVol, profile.lastSoloAt),
+    vol: profile.soloVol,
+  };
+
+  // Pass the decayed RD into soloScore so it can grant provisional boosts.
+  const score = soloScore(solved, secs, difficulty, me.rd);
+  const next = rate(me, soloOpponent(difficulty, me.rating), score);
+  next.rd = placementRd(next.rd, (profile.soloRuns ?? 0) + 1);
+
+  const best = { ...(profile.soloBest || {}) };
+  let newRecord = false;
+  if (solved && (best[difficulty] == null || timeMs < best[difficulty])) {
+    best[difficulty] = timeMs;
+    newRecord = true;
+  }
+
+  const common = {
+    soloRating: next.rating, soloRd: next.rd, soloVol: next.vol,
+    soloBest: best,
+    lastSoloAt: Date.now(),
+  };
+
+  if (isGuestProfile(profile)) {
+    patchGuest({
+      ...common,
+      soloRuns: (profile.soloRuns ?? 0) + 1,
+      soloSolved: (profile.soloSolved ?? 0) + (solved ? 1 : 0),
+      totalMatches: (profile.totalMatches ?? 0) + 1,
+    });
+  } else {
+    await updateDoc(doc(db, "users", uid), {
+      ...common,
+      lbSolo: next.rating,
+      soloRuns: increment(1),
+      soloSolved: increment(solved ? 1 : 0),
+      totalMatches: increment(1),
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+    markDailyActivity(profile);
+  const ratingDelta = Math.round((next.rating - (profile.soloRating ?? next.rating)) * 10) / 10;
+  return { ...next, before: Math.round(profile.soloRating), delta: ratingDelta, score, newRecord };
+
+}
+
+// ── Puzzle discovery ────────────────────────────────────────────────────────
+// Training Grounds only names a puzzle once you have actually met it in an
+// unranked run or a ranked duel. Everything else shows as "???".
+export async function markProblemSeen(profile, archetypeId) {
+  if (!profile || !archetypeId) return;
+  if (isGuestProfile(profile)) { markGuestSeen(archetypeId); return; }
+  if (profile.seen?.[archetypeId]) return;
+  try { await updateDoc(doc(db, "users", profile.uid), { [`seen.${archetypeId}`]: true }); }
+  catch { /* discovery is a nicety — never fail a match over it */ }
+}
+
+/** The set of puzzles this player has met, as an { archetypeId: true } map. */
+export function seenMap(profile) {
+  if (!profile) return {};
+  return isGuestProfile(profile) ? guestSeen() : (profile.seen ?? {});
+}
+
+/**
+ * Every difficulty starts with its first tenth already open, so Training
+ * Grounds is usable on day one instead of being a wall of ???. Everything
+ * beyond that is earned by meeting the puzzle in Unranked or Ranked.
+ */
+export const STARTER_FRACTION = 0.1;
+
+export function starterCount(poolSize) {
+  return Math.max(1, Math.ceil((poolSize ?? 0) * STARTER_FRACTION));
+}
+
+/**
+ * Is this puzzle revealed? `index` is its position in the difficulty's pool.
+ * Free starters come first so every player sees the same opening set.
+ */
+export function isRevealed(seen, puzzle, index, poolSize) {
+  return index < starterCount(poolSize) || !!seen[puzzle.archetypeId];
+}
+
+// ── Training records ────────────────────────────────────────────────────────
+const puzzleDocId = (archetypeId, uid) => `${archetypeId}__${uid}`;
+
+export async function getPuzzleRecord(archetypeId, uid) {
+  const snap = await getDoc(doc(db, "puzzleTimes", puzzleDocId(archetypeId, uid)));
+  return snap.exists() ? snap.data() : null;
+}
+
+export async function getMyPuzzleRecords(profile) {
+  if (!profile) return {};
+  if (isGuestProfile(profile)) return guestPuzzleRecords();
+  const q = query(collection(db, "puzzleTimes"), where("uid", "==", profile.uid));
+  const snap = await getDocs(q);
+  const map = {};
+  snap.forEach((d) => { map[d.data().archetypeId] = d.data(); });
+  return map;
+}
+
+export async function recordPuzzleTime(profile, puzzle, timeMs, solved) {
+  if (isGuestProfile(profile)) {
+    const result = recordGuestPuzzle(puzzle, timeMs, solved);
+    markDailyActivity(profile);
+    return result;
+  }
+
+  const uid = profile.uid;
+  const username = profile.username;
+  const id = puzzleDocId(puzzle.archetypeId, uid);
+  const ref = doc(db, "puzzleTimes", id);
+  const prev = await getDoc(ref);
+  const prevData = prev.exists() ? prev.data() : null;
+  const prevBest = prevData?.timeMs ?? null;
+  const isBest = solved && (prevBest == null || timeMs < prevBest);
+
+  const payload = {
+    uid, username,
+    archetypeId: puzzle.archetypeId,
+    title: puzzle.title,
+    difficulty: puzzle.difficulty,
+    solved: solved || !!prevData?.solved,
+    attempts: (prevData?.attempts ?? 0) + 1,
+    updatedAt: Date.now(),
+  };
+  // Only ever record a time for a puzzle that was actually cleared. The field
+  // is omitted entirely rather than set to null, because `orderBy("timeMs")`
+  // sorts nulls first — a null would take the top of the leaderboard, and the
+  // query's limit would apply before any client-side filter could drop it.
+  if (payload.solved) payload.timeMs = isBest ? timeMs : (prevBest ?? timeMs);
+
+  await setDoc(ref, payload);
+
+    if (solved && !prevData?.solved) {
+    try { await updateDoc(doc(db, "users", uid), { puzzlesSolved: increment(1) }); } catch {}
+  }
+  markDailyActivity(profile);
+  return { isBest, prevBest };
+
+}
+
+export async function puzzleLeaderboard(archetypeId, n = 25) {
+  // Sort the filtered puzzle records in the client. This intentionally avoids a
+  // composite Firestore index requirement (`archetypeId` + `timeMs`) that caused
+  // otherwise-valid personal-best records to disappear from the board.
+  const q = query(collection(db, "puzzleTimes"), where("archetypeId", "==", archetypeId));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => d.data())
+    .filter((record) => record.solved && Number.isFinite(record.timeMs))
+    .sort((a, b) => a.timeMs - b.timeMs)
+    .slice(0, n);
+}
+
+/**
+ * A puzzle's time board with each holder's ratings attached, so the board can
+ * answer "who was this, and how strong are they?" in one place. The record docs
+ * only carry a username, so the profiles are fetched alongside.
+ */
+export async function puzzleLeaderboardDetailed(archetypeId, n = 25) {
+  const rows = await puzzleLeaderboard(archetypeId, n);
+  const profiles = await Promise.all(
+    rows.map((r) => getProfile(r.uid).catch(() => null))
+  );
+  return rows.map((r, i) => {
+    const u = profiles[i];
+    return {
+      ...r,
+      username: u?.username ?? r.username,
+      rating: u?.rating ?? null,
+      rd: u?.rd ?? null,
+      gamesPlayed: u?.gamesPlayed ?? 0,
+      soloRating: u?.soloRating ?? null,
+      soloRd: u?.soloRd ?? null,
+            soloRuns: u?.soloRuns ?? 0,
+      avatarIcon: u?.avatarIcon ?? null,
+      avatarHue: u?.avatarHue ?? null,
+      country: u?.country ?? "US",
+    };
+
+  });
+}
+
+// ── Leaderboards ────────────────────────────────────────────────────────────
+export async function rankedLeaderboard(n = 100) {
+  const q = query(collection(db, "users"), orderBy("lbRating", "desc"), limit(n));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ uid: d.id, ...d.data() })).filter((u) => !u.isAnonymous);
+}
+
+export async function soloLeaderboard(n = 100) {
+  const q = query(collection(db, "users"), orderBy("lbSolo", "desc"), limit(n));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ uid: d.id, ...d.data() })).filter((u) => !u.isAnonymous);
+}
+
+/**
+ * Where a player sits on the ranked board, 1-based, or null if they aren't on
+ * it. Reads the top slice rather than counting the whole collection — outside
+ * that slice a precise number isn't worth a second query.
+ */
+export async function rankedPosition(uid, within = 100) {
+  if (!uid || String(uid).startsWith("local:")) return null;
+  const rows = await rankedLeaderboard(within);
+  const i = rows.findIndex((u) => u.uid === uid);
+  return i >= 0 ? i + 1 : null;
+}
+
+// ── Player search ───────────────────────────────────────────────────────────
+export async function searchPlayers(term, meUid) {
+  const t = term.trim().toLowerCase();
+  if (t.length < 2) return [];
+  const HI = t + String.fromCharCode(0xf8ff);
+  const q = query(
+    collection(db, "users"),
+    orderBy("usernameLower"),
+    where("usernameLower", ">=", t),
+    where("usernameLower", "<=", HI),
+    limit(12)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => ({ uid: d.id, ...d.data() }))
+    .filter((u) => u.uid !== meUid && !u.isAnonymous);
+}
+
+// ── Friends ─────────────────────────────────────────────────────────────────
+export function watchFriends(uid, cb) {
+  return onSnapshot(collection(db, "friends", uid, "list"), (snap) =>
+    cb(snap.docs.map((d) => ({ uid: d.id, ...d.data() })))
+  );
+}
+
+export async function getFriends(uid) {
+  const snap = await getDocs(collection(db, "friends", uid, "list"));
+  return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+}
+
+export async function sendFriendRequest(me, target) {
+  // The request itself lives under the recipient (they're the one who acts on
+  // it); a mirror under the sender is what lets the UI show "Pending" without
+  // reading someone else's inbox.
+  const batch = writeBatch(db);
+  batch.set(doc(db, "friendRequests", target.uid, "from", me.uid), {
+    fromUid: me.uid, fromUsername: me.username, createdAt: Date.now(),
+  });
+  batch.set(doc(db, "friendRequests", me.uid, "sent", target.uid), {
+    toUid: target.uid, toUsername: target.username, createdAt: Date.now(),
+  });
+  await batch.commit();
+  await notify(target.uid, {
+    type: "friend_request",
+    fromUid: me.uid,
+    fromUsername: me.username,
+    text: `${me.username} sent you a friend request`,
+  });
+}
+
+export async function getSentRequests(uid) {
+  const snap = await getDocs(collection(db, "friendRequests", uid, "sent"));
+  return snap.docs.map((d) => d.id);
+}
+
+export function watchIncomingFriendRequests(uid, cb) {
+  return onSnapshot(collection(db, "friendRequests", uid, "from"), (snap) =>
+    cb(snap.docs.map((d) => ({ uid: d.id, ...d.data() })))
+  );
+}
+
+export async function acceptFriendRequest(me, fromUid, fromUsername) {
+  const batch = writeBatch(db);
+  batch.set(doc(db, "friends", me.uid, "list", fromUid), {
+    username: fromUsername, since: Date.now(),
+  });
+  batch.set(doc(db, "friends", fromUid, "list", me.uid), {
+    username: me.username, since: Date.now(),
+  });
+  batch.delete(doc(db, "friendRequests", me.uid, "from", fromUid));
+  batch.delete(doc(db, "friendRequests", fromUid, "sent", me.uid));
+  await batch.commit();
+  await notify(fromUid, {
+    type: "friend_accepted",
+    fromUid: me.uid, fromUsername: me.username,
+    text: `${me.username} accepted your friend request`,
+  });
+}
+
+export async function declineFriendRequest(meUid, fromUid) {
+  await deleteDoc(doc(db, "friendRequests", meUid, "from", fromUid));
+  try { await deleteDoc(doc(db, "friendRequests", fromUid, "sent", meUid)); } catch {}
+}
+
+export async function removeFriend(meUid, otherUid) {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "friends", meUid, "list", otherUid));
+  batch.delete(doc(db, "friends", otherUid, "list", meUid));
+  await batch.commit();
+}
+
+// ── Notifications ───────────────────────────────────────────────────────────
+export async function notify(uid, payload) {
+  try {
+    await addDoc(collection(db, "notifications", uid, "items"), {
+      ...payload, read: false, createdAt: Date.now(),
+    });
+  } catch { /* notifying is never worth failing the action over */ }
+}
+
+export function watchNotifications(uid, cb) {
+  const q = query(collection(db, "notifications", uid, "items"), orderBy("createdAt", "desc"), limit(30));
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+
+export async function markNotificationRead(uid, id) {
+  try { await updateDoc(doc(db, "notifications", uid, "items", id), { read: true }); } catch {}
+}
+
+export async function markAllRead(uid, ids) {
+  const batch = writeBatch(db);
+  ids.forEach((id) => batch.update(doc(db, "notifications", uid, "items", id), { read: true }));
+  try { await batch.commit(); } catch {}
+}
+
+export async function deleteNotification(uid, id) {
+  try { await deleteDoc(doc(db, "notifications", uid, "items", id)); } catch {}
+}
+
+// ── Presence / online counts ───────────────────────────────────────────────
+/**
+ * Set a presence doc for a user. Best-effort: callers should swallow failures.
+ * Document stored at `presence/{uid}`: { online: bool, lastSeen: timestamp, inMatch: bool }
+ */
+export async function setPresence(uid, patch = {}) {
+  if (!uid) return;
+  try {
+    const payload = { online: patch.online !== false, lastSeen: Date.now() };
+    // Heartbeats only refresh `online`; they must not turn a live red ring green.
+    if (typeof patch.inMatch === "boolean") payload.inMatch = patch.inMatch;
+    const ref = doc(db, "presence", uid);
+    await setDoc(ref, payload, { merge: true });
+  } catch { /* ignore */ }
+}
+
+const PRESENCE_TTL_MS = 65000;
+
+/** Treat stale heartbeat documents as offline; closed tabs cannot always write. */
+export function normalizedPresence(data, now = Date.now()) {
+  const fresh = !!data?.online && Number(data?.lastSeen || 0) >= now - PRESENCE_TTL_MS;
+  return { online: fresh, inMatch: fresh && !!data?.inMatch, lastSeen: data?.lastSeen ?? null };
+}
+
+/** Watch a single user's fresh presence state, including heartbeat expiry. */
+export function watchPresence(uid, cb) {
+  if (!uid) return () => {};
+  const ref = doc(db, "presence", uid);
+  let expiryTimer = null;
+  let last = null;
+  const publish = () => {
+    cb(normalizedPresence(last));
+    if (expiryTimer) { clearTimeout(expiryTimer); expiryTimer = null; }
+    if (last?.online && last?.lastSeen) {
+      const wait = Math.max(0, Number(last.lastSeen) + PRESENCE_TTL_MS - Date.now()) + 10;
+      expiryTimer = setTimeout(publish, wait);
+    }
+  };
+  const unsub = onSnapshot(ref, (s) => { last = s.exists() ? s.data() : null; publish(); });
+  return () => { if (expiryTimer) clearTimeout(expiryTimer); unsub(); };
+}
+
+/** Watch global presence counts: calls cb({ inMatches, onlineNotInMatch, totalPresenceDocs }) */
+export function watchPresenceCounts(cb) {
+  const q = query(collection(db, "presence"));
+  let latest = [];
+  const publish = () => {
+    let inMatches = 0, onlineNotInMatch = 0;
+    latest.forEach((data) => {
+      const fresh = normalizedPresence(data);
+      if (fresh.inMatch) inMatches++;
+      else if (fresh.online) onlineNotInMatch++;
+    });
+    cb({ inMatches, onlineNotInMatch, totalPresenceDocs: latest.length });
+  };
+  const unsub = onSnapshot(q, (snap) => { latest = snap.docs.map((d) => d.data()); publish(); });
+  const timer = setInterval(publish, 5000);
+  return () => { clearInterval(timer); unsub(); };
+}
+
+/** Return approximate total users by counting the users collection once. */
+export async function getTotalUsers() {
+  try {
+    const snap = await getDocs(collection(db, "users"));
+    return snap.size;
+  } catch { return null; }
+}
+
+/** Keep the global player count live alongside the live presence statistics. */
+export function watchTotalUsers(cb) {
+  return onSnapshot(collection(db, "users"), (snap) => cb(snap.size));
+}
+
+// ── Messaging ───────────────────────────────────────────────────────────────
+export const convIdFor = (a, b) => [a, b].sort().join("__");
+
+export async function ensureConversation(me, other) {
+  const id = convIdFor(me.uid, other.uid);
+  const ref = doc(db, "conversations", id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      participants: [me.uid, other.uid],
+      names: { [me.uid]: me.username, [other.uid]: other.username },
+      lastMessage: "", lastAt: Date.now(),
+    });
+  }
+  return id;
+}
+
+export function watchConversations(uid, cb) {
+  const q = query(collection(db, "conversations"), where("participants", "array-contains", uid));
+  return onSnapshot(q, (snap) => {
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    list.sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0));
+    cb(list);
+  });
+}
+
+export function watchMessages(convId, cb) {
+  const q = query(collection(db, "conversations", convId, "messages"), orderBy("createdAt", "asc"), limit(200));
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+
+export async function sendMessage(convId, me, other, text) {
+  const body = text.trim().slice(0, 1000);
+  if (!body) return;
+  await addDoc(collection(db, "conversations", convId, "messages"), {
+    fromUid: me.uid, fromUsername: me.username, text: body, createdAt: Date.now(),
+  });
+  await updateDoc(doc(db, "conversations", convId), {
+    lastMessage: body, lastAt: Date.now(),
+  });
+  if (other?.uid) {
+    await notify(other.uid, {
+      type: "message", fromUid: me.uid, fromUsername: me.username,
+      text: `${me.username}: ${body.slice(0, 60)}`,
+    });
+  }
+}
+
+// Edit and delete helpers for messaging
+export async function editMessage(convId, msgId, me, newText) {
+  const body = String(newText || "").trim().slice(0, 1000);
+  if (!body) return;
+  const msgRef = doc(db, "conversations", convId, "messages", msgId);
+  const snap = await getDoc(msgRef);
+  if (!snap.exists()) throw new Error("Message not found");
+  const data = snap.data();
+  if (data.fromUid !== me.uid) throw new Error("Not allowed");
+  await updateDoc(msgRef, { text: body, editedAt: Date.now(), editedBy: me.uid });
+  // If this message was the conversation's lastMessage, update that too so
+  // the list view reflects the edit.
+  try {
+    const convRef = doc(db, "conversations", convId);
+    const convSnap = await getDoc(convRef);
+    if (convSnap.exists() && convSnap.data().lastAt === data.createdAt) {
+      await updateDoc(convRef, { lastMessage: body });
+    }
+  } catch { /* best-effort only */ }
+  return true;
+}
+
+export async function deleteMessage(convId, msgId, me) {
+  const msgRef = doc(db, "conversations", convId, "messages", msgId);
+  const snap = await getDoc(msgRef);
+  if (!snap.exists()) throw new Error("Message not found");
+  const data = snap.data();
+  if (data.fromUid !== me.uid) throw new Error("Not allowed");
+
+  // Mark the original message as deleted and append a small system note to the
+  // thread so both participants see that a deletion occurred.
+  try {
+    await updateDoc(msgRef, {
+      text: "[deleted]",
+      deleted: true,
+      deletedBy: me.uid,
+      deletedAt: Date.now(),
+    });
+  } catch (e) { throw e; }
+
+  const sysText = `${me.username} deleted a message`;
+  try {
+    await addDoc(collection(db, "conversations", convId, "messages"), {
+      system: true, text: sysText, createdAt: Date.now(), byUid: me.uid,
+    });
+  } catch { /* ignore */ }
+
+  // If the deleted message was the conversation's lastMessage, update the
+  // conversation record so list views show the deletion.
+  try {
+    const convRef = doc(db, "conversations", convId);
+    const convSnap = await getDoc(convRef);
+    if (convSnap.exists() && convSnap.data().lastAt === data.createdAt) {
+      await updateDoc(convRef, { lastMessage: sysText, lastAt: Date.now() });
+    }
+
+    // Notify the other participants that a deletion occurred.
+    const participants = convSnap.exists() ? convSnap.data().participants : [];
+    for (const uid of participants) {
+      if (uid !== me.uid) {
+        await notify(uid, { type: "message_deleted", fromUid: me.uid, text: sysText });
+      }
+    }
+  } catch { /* best-effort */ }
+
+  return true;
+}
+
+// ── Friend challenges ───────────────────────────────────────────────────────
+export async function createChallenge(me, target) {
+  const ref = await addDoc(collection(db, "challenges"), {
+    fromUid: me.uid, fromUsername: me.username,
+    fromRating: me.rating, fromRd: me.rd,
+    toUid: target.uid, toUsername: target.username,
+    status: "pending", duelId: null, createdAt: Date.now(),
+  });
+  await notify(target.uid, {
+    type: "challenge", fromUid: me.uid, fromUsername: me.username,
+    challengeId: ref.id, text: `${me.username} challenged you to a Burst duel`,
+  });
+  return ref.id;
+}
+
+export function watchChallenge(id, cb) {
+  return onSnapshot(doc(db, "challenges", id), (s) => {
+    if (s.exists()) cb({ id: s.id, ...s.data() });
+  });
+}
+
+export function watchIncomingChallenges(uid, cb) {
+  const q = query(collection(db, "challenges"), where("toUid", "==", uid), where("status", "==", "pending"));
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+}
+
+export async function setChallengeStatus(id, status, duelId = null) {
+  await updateDoc(doc(db, "challenges", id), { status, duelId });
+}
+
+export async function getChallenge(id) {
+  const s = await getDoc(doc(db, "challenges", id));
+  return s.exists() ? { id: s.id, ...s.data() } : null;
+}

@@ -1,0 +1,1546 @@
+"id","name","division","category","background","task","input_format","constraints","sample_input","sample_output","test1_input","test1_output","test2_input","test2_output","test3_input","test3_output","test4_input","test4_output","test5_input","test5_output","test6_input","test6_output","test7_input","test7_output","test8_input","test8_output"
+"M-001-1","Missing and Duplicate Value","Master","Bit Manipulation","The list should contain each number from 1 through N once, but one number is missing and one different number is repeated.","Print the missing number followed by the repeated number. Follow the stated tie rule.","Line 1: N.
+Line 2: N integers.","2 <= N <= 200000
+values: 1 to N","2
+1 1","2 1","2
+1 1","2 1","4
+1 2 2 4","3 2","5
+2 2 3 4 5","1 2","6
+1 3 3 4 5 6","2 3","5
+1 2 3 4 4","5 4","7
+1 2 2 3 4 5 6","7 2","5
+3 1 2 5 5","4 5","6
+1 1 3 4 5 6","2 1"
+"M-001-2","Missing and Duplicate Value Planner","Master","Bit Manipulation","The list should contain each number from 1 through N once, but one number is missing and one different number is repeated.","Print the missing number followed by the repeated number. Print only the requested result.","Line 1: N.
+Line 2: N integers.","2 <= N <= 200000
+values: 1 to N","2
+1 1","2 1","2
+1 1","2 1","4
+1 2 2 4","3 2","5
+2 2 3 4 5","1 2","6
+1 3 3 4 5 6","2 3","5
+1 2 3 4 4","5 4","7
+1 2 2 3 4 5 6","7 2","5
+3 1 2 5 5","4 5","6
+1 1 3 4 5 6","2 1"
+"M-001-3","Missing and Duplicate Value Checkpoint","Master","Bit Manipulation","The list should contain each number from 1 through N once, but one number is missing and one different number is repeated.","Print the missing number followed by the repeated number. Treat every input independently.","Line 1: N.
+Line 2: N integers.","2 <= N <= 200000
+values: 1 to N","2
+1 1","2 1","2
+1 1","2 1","4
+1 2 2 4","3 2","5
+2 2 3 4 5","1 2","6
+1 3 3 4 5 6","2 3","5
+1 2 3 4 4","5 4","7
+1 2 2 3 4 5 6","7 2","5
+3 1 2 5 5","4 5","6
+1 1 3 4 5 6","2 1"
+"M-001-4","Missing and Duplicate Value Tracker","Master","Bit Manipulation","The list should contain each number from 1 through N once, but one number is missing and one different number is repeated.","Print the missing number followed by the repeated number. Keep the format unchanged.","Line 1: N.
+Line 2: N integers.","2 <= N <= 200000
+values: 1 to N","2
+1 1","2 1","2
+1 1","2 1","4
+1 2 2 4","3 2","5
+2 2 3 4 5","1 2","6
+1 3 3 4 5 6","2 3","5
+1 2 3 4 4","5 4","7
+1 2 2 3 4 5 6","7 2","5
+3 1 2 5 5","4 5","6
+1 1 3 4 5 6","2 1"
+"M-001-5","Missing and Duplicate Value Verifier","Master","Bit Manipulation","The list should contain each number from 1 through N once, but one number is missing and one different number is repeated.","Print the missing number followed by the repeated number. Use the same definition throughout.","Line 1: N.
+Line 2: N integers.","2 <= N <= 200000
+values: 1 to N","2
+1 1","2 1","2
+1 1","2 1","4
+1 2 2 4","3 2","5
+2 2 3 4 5","1 2","6
+1 3 3 4 5 6","2 3","5
+1 2 3 4 4","5 4","7
+1 2 2 3 4 5 6","7 2","5
+3 1 2 5 5","4 5","6
+1 1 3 4 5 6","2 1"
+"M-002-1","Maximum Subarray XOR","Master","Bit Manipulation","XOR compares bits and cancels equal contributions. A subarray is a non-empty consecutive segment.","Print the largest XOR value of any subarray. Follow the stated tie rule.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30-1","1
+1","1","1
+1","1","2
+1 2","3","6
+3 10 5 25 2 8","31","2
+0 0","0","4
+8 1 2 12","15","3
+7 7 7","7","4
+5 1 9 3","14","4
+2 4 8 16","30"
+"M-002-2","Maximum Subarray XOR Planner","Master","Bit Manipulation","XOR compares bits and cancels equal contributions. A subarray is a non-empty consecutive segment.","Print the largest XOR value of any subarray. Print only the requested result.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30-1","1
+1","1","1
+1","1","2
+1 2","3","6
+3 10 5 25 2 8","31","2
+0 0","0","4
+8 1 2 12","15","3
+7 7 7","7","4
+5 1 9 3","14","4
+2 4 8 16","30"
+"M-002-3","Maximum Subarray XOR Checkpoint","Master","Bit Manipulation","XOR compares bits and cancels equal contributions. A subarray is a non-empty consecutive segment.","Print the largest XOR value of any subarray. Treat every input independently.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30-1","1
+1","1","1
+1","1","2
+1 2","3","6
+3 10 5 25 2 8","31","2
+0 0","0","4
+8 1 2 12","15","3
+7 7 7","7","4
+5 1 9 3","14","4
+2 4 8 16","30"
+"M-002-4","Maximum Subarray XOR Tracker","Master","Bit Manipulation","XOR compares bits and cancels equal contributions. A subarray is a non-empty consecutive segment.","Print the largest XOR value of any subarray. Keep the format unchanged.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30-1","1
+1","1","1
+1","1","2
+1 2","3","6
+3 10 5 25 2 8","31","2
+0 0","0","4
+8 1 2 12","15","3
+7 7 7","7","4
+5 1 9 3","14","4
+2 4 8 16","30"
+"M-002-5","Maximum Subarray XOR Verifier","Master","Bit Manipulation","XOR compares bits and cancels equal contributions. A subarray is a non-empty consecutive segment.","Print the largest XOR value of any subarray. Use the same definition throughout.","Line 1: N.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values: 0 to 2^30-1","1
+1","1","1
+1","1","2
+1 2","3","6
+3 10 5 25 2 8","31","2
+0 0","0","4
+8 1 2 12","15","3
+7 7 7","7","4
+5 1 9 3","14","4
+2 4 8 16","30"
+"M-003-1","All-Even Character Substrings","Master","Parity Masks","A substring is consecutive. A character has even count when it appears 0, 2, 4, and so on times inside the substring.","Count non-empty substrings in which every character count is even. Follow the stated tie rule.","Line 1: lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","0","a","0","aa","1","ab","0","abba","2","abcabc","1","aaaa","4","abca","0","abcddcba","4"
+"M-003-2","All-Even Character Substrings Planner","Master","Parity Masks","A substring is consecutive. A character has even count when it appears 0, 2, 4, and so on times inside the substring.","Count non-empty substrings in which every character count is even. Print only the requested result.","Line 1: lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","0","a","0","aa","1","ab","0","abba","2","abcabc","1","aaaa","4","abca","0","abcddcba","4"
+"M-003-3","All-Even Character Substrings Checkpoint","Master","Parity Masks","A substring is consecutive. A character has even count when it appears 0, 2, 4, and so on times inside the substring.","Count non-empty substrings in which every character count is even. Treat every input independently.","Line 1: lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","0","a","0","aa","1","ab","0","abba","2","abcabc","1","aaaa","4","abca","0","abcddcba","4"
+"M-003-4","All-Even Character Substrings Tracker","Master","Parity Masks","A substring is consecutive. A character has even count when it appears 0, 2, 4, and so on times inside the substring.","Count non-empty substrings in which every character count is even. Keep the format unchanged.","Line 1: lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","0","a","0","aa","1","ab","0","abba","2","abcabc","1","aaaa","4","abca","0","abcddcba","4"
+"M-003-5","All-Even Character Substrings Verifier","Master","Parity Masks","A substring is consecutive. A character has even count when it appears 0, 2, 4, and so on times inside the substring.","Count non-empty substrings in which every character count is even. Use the same definition throughout.","Line 1: lowercase string S.","1 <= |S| <= 200000
+S uses lowercase English letters","a","0","a","0","aa","1","ab","0","abba","2","abcabc","1","aaaa","4","abca","0","abcddcba","4"
+"M-004-1","Subarray AND Nearest Target","Master","Bit Manipulation","Bitwise AND keeps a bit only when every value has that bit. Compare closeness by absolute numeric difference; choose the smaller AND value on ties.","Print the subarray AND value closest to T. Follow the stated tie rule.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 2^30-1","1 1
+1","1","1 1
+1","1","3 3
+1 2 4","2","3 2
+7 3 5","1","2 1
+0 0","0","3 8
+12 10 6","8","3 5
+15 7 3","3","3 1
+8 4 2","0","3 6
+5 1 7","5"
+"M-004-2","Subarray AND Nearest Target Planner","Master","Bit Manipulation","Bitwise AND keeps a bit only when every value has that bit. Compare closeness by absolute numeric difference; choose the smaller AND value on ties.","Print the subarray AND value closest to T. Print only the requested result.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 2^30-1","1 1
+1","1","1 1
+1","1","3 3
+1 2 4","2","3 2
+7 3 5","1","2 1
+0 0","0","3 8
+12 10 6","8","3 5
+15 7 3","3","3 1
+8 4 2","0","3 6
+5 1 7","5"
+"M-004-3","Subarray AND Nearest Target Checkpoint","Master","Bit Manipulation","Bitwise AND keeps a bit only when every value has that bit. Compare closeness by absolute numeric difference; choose the smaller AND value on ties.","Print the subarray AND value closest to T. Treat every input independently.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 2^30-1","1 1
+1","1","1 1
+1","1","3 3
+1 2 4","2","3 2
+7 3 5","1","2 1
+0 0","0","3 8
+12 10 6","8","3 5
+15 7 3","3","3 1
+8 4 2","0","3 6
+5 1 7","5"
+"M-004-4","Subarray AND Nearest Target Tracker","Master","Bit Manipulation","Bitwise AND keeps a bit only when every value has that bit. Compare closeness by absolute numeric difference; choose the smaller AND value on ties.","Print the subarray AND value closest to T. Keep the format unchanged.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 2^30-1","1 1
+1","1","1 1
+1","1","3 3
+1 2 4","2","3 2
+7 3 5","1","2 1
+0 0","0","3 8
+12 10 6","8","3 5
+15 7 3","3","3 1
+8 4 2","0","3 6
+5 1 7","5"
+"M-004-5","Subarray AND Nearest Target Verifier","Master","Bit Manipulation","Bitwise AND keeps a bit only when every value has that bit. Compare closeness by absolute numeric difference; choose the smaller AND value on ties.","Print the subarray AND value closest to T. Use the same definition throughout.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 2^30-1","1 1
+1","1","1 1
+1","1","3 3
+1 2 4","2","3 2
+7 3 5","1","2 1
+0 0","0","3 8
+12 10 6","8","3 5
+15 7 3","3","3 1
+8 4 2","0","3 6
+5 1 7","5"
+"M-005-1","Power Contribution Count","Master","Bit Manipulation","Every nonnegative integer is a sum of powers of two. Its binary popcount is the number of 1 bits in that representation.","Print the minimum number of power-of-two contributions needed to make N. Follow the stated tie rule.","Line 1: N.","0 <= N <= 10^18","0","0","0","0","1","1","2","1","3","2","7","3","8","1","15","4","1023","10"
+"M-005-2","Power Contribution Count Planner","Master","Bit Manipulation","Every nonnegative integer is a sum of powers of two. Its binary popcount is the number of 1 bits in that representation.","Print the minimum number of power-of-two contributions needed to make N. Print only the requested result.","Line 1: N.","0 <= N <= 10^18","0","0","0","0","1","1","2","1","3","2","7","3","8","1","15","4","1023","10"
+"M-005-3","Power Contribution Count Checkpoint","Master","Bit Manipulation","Every nonnegative integer is a sum of powers of two. Its binary popcount is the number of 1 bits in that representation.","Print the minimum number of power-of-two contributions needed to make N. Treat every input independently.","Line 1: N.","0 <= N <= 10^18","0","0","0","0","1","1","2","1","3","2","7","3","8","1","15","4","1023","10"
+"M-005-4","Power Contribution Count Tracker","Master","Bit Manipulation","Every nonnegative integer is a sum of powers of two. Its binary popcount is the number of 1 bits in that representation.","Print the minimum number of power-of-two contributions needed to make N. Keep the format unchanged.","Line 1: N.","0 <= N <= 10^18","0","0","0","0","1","1","2","1","3","2","7","3","8","1","15","4","1023","10"
+"M-005-5","Power Contribution Count Verifier","Master","Bit Manipulation","Every nonnegative integer is a sum of powers of two. Its binary popcount is the number of 1 bits in that representation.","Print the minimum number of power-of-two contributions needed to make N. Use the same definition throughout.","Line 1: N.","0 <= N <= 10^18","0","0","0","0","1","1","2","1","3","2","7","3","8","1","15","4","1023","10"
+"M-006-1","GCD Target Reachability","Master","Number Theory","The gcd is the greatest positive number dividing every listed value. A target is reachable exactly when the collection gcd divides it; zero is reachable only from an all-zero collection.","Print YES if target T is reachable, otherwise NO. Follow the stated tie rule.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 10^9","3 2
+6 10 14","YES","3 2
+6 10 14","YES","3 3
+6 10 14","NO","3 20
+5 10 15","YES","2 0
+0 0","YES","1 14
+7","YES","2 6
+12 18","YES","2 5
+12 18","NO","3 3
+9 15 21","YES"
+"M-006-2","GCD Target Reachability Planner","Master","Number Theory","The gcd is the greatest positive number dividing every listed value. A target is reachable exactly when the collection gcd divides it; zero is reachable only from an all-zero collection.","Print YES if target T is reachable, otherwise NO. Print only the requested result.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 10^9","3 2
+6 10 14","YES","3 2
+6 10 14","YES","3 3
+6 10 14","NO","3 20
+5 10 15","YES","2 0
+0 0","YES","1 14
+7","YES","2 6
+12 18","YES","2 5
+12 18","NO","3 3
+9 15 21","YES"
+"M-006-3","GCD Target Reachability Checkpoint","Master","Number Theory","The gcd is the greatest positive number dividing every listed value. A target is reachable exactly when the collection gcd divides it; zero is reachable only from an all-zero collection.","Print YES if target T is reachable, otherwise NO. Treat every input independently.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 10^9","3 2
+6 10 14","YES","3 2
+6 10 14","YES","3 3
+6 10 14","NO","3 20
+5 10 15","YES","2 0
+0 0","YES","1 14
+7","YES","2 6
+12 18","YES","2 5
+12 18","NO","3 3
+9 15 21","YES"
+"M-006-4","GCD Target Reachability Tracker","Master","Number Theory","The gcd is the greatest positive number dividing every listed value. A target is reachable exactly when the collection gcd divides it; zero is reachable only from an all-zero collection.","Print YES if target T is reachable, otherwise NO. Keep the format unchanged.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 10^9","3 2
+6 10 14","YES","3 2
+6 10 14","YES","3 3
+6 10 14","NO","3 20
+5 10 15","YES","2 0
+0 0","YES","1 14
+7","YES","2 6
+12 18","YES","2 5
+12 18","NO","3 3
+9 15 21","YES"
+"M-006-5","GCD Target Reachability Verifier","Master","Number Theory","The gcd is the greatest positive number dividing every listed value. A target is reachable exactly when the collection gcd divides it; zero is reachable only from an all-zero collection.","Print YES if target T is reachable, otherwise NO. Use the same definition throughout.","Line 1: N T.
+Line 2: N non-negative integers.","1 <= N <= 200000
+values and T: 0 to 10^9","3 2
+6 10 14","YES","3 2
+6 10 14","YES","3 3
+6 10 14","NO","3 20
+5 10 15","YES","2 0
+0 0","YES","1 14
+7","YES","2 6
+12 18","YES","2 5
+12 18","NO","3 3
+9 15 21","YES"
+"M-007-1","Common Repeating Unit","Master","Strings","Two strings share a repeating unit when both can be made by repeating the same shortest base string.","Print that shortest common unit, or NONE if no unit exists. Follow the stated tie rule.","Line 1: string A.
+Line 2: string B.","1 <= lengths <= 200000
+uppercase English letters","A
+A","A","A
+A","A","ABAB
+AB","AB","ABCABC
+ABC","ABC","LEET
+CODE","NONE","AAAA
+AA","AA","XYZXYZ
+XYZXYZXYZ","XYZ","AB
+ABABAB","AB","ABC
+ABCABC","ABC"
+"M-007-2","Common Repeating Unit Planner","Master","Strings","Two strings share a repeating unit when both can be made by repeating the same shortest base string.","Print that shortest common unit, or NONE if no unit exists. Print only the requested result.","Line 1: string A.
+Line 2: string B.","1 <= lengths <= 200000
+uppercase English letters","A
+A","A","A
+A","A","ABAB
+AB","AB","ABCABC
+ABC","ABC","LEET
+CODE","NONE","AAAA
+AA","AA","XYZXYZ
+XYZXYZXYZ","XYZ","AB
+ABABAB","AB","ABC
+ABCABC","ABC"
+"M-007-3","Common Repeating Unit Checkpoint","Master","Strings","Two strings share a repeating unit when both can be made by repeating the same shortest base string.","Print that shortest common unit, or NONE if no unit exists. Treat every input independently.","Line 1: string A.
+Line 2: string B.","1 <= lengths <= 200000
+uppercase English letters","A
+A","A","A
+A","A","ABAB
+AB","AB","ABCABC
+ABC","ABC","LEET
+CODE","NONE","AAAA
+AA","AA","XYZXYZ
+XYZXYZXYZ","XYZ","AB
+ABABAB","AB","ABC
+ABCABC","ABC"
+"M-007-4","Common Repeating Unit Tracker","Master","Strings","Two strings share a repeating unit when both can be made by repeating the same shortest base string.","Print that shortest common unit, or NONE if no unit exists. Keep the format unchanged.","Line 1: string A.
+Line 2: string B.","1 <= lengths <= 200000
+uppercase English letters","A
+A","A","A
+A","A","ABAB
+AB","AB","ABCABC
+ABC","ABC","LEET
+CODE","NONE","AAAA
+AA","AA","XYZXYZ
+XYZXYZXYZ","XYZ","AB
+ABABAB","AB","ABC
+ABCABC","ABC"
+"M-007-5","Common Repeating Unit Verifier","Master","Strings","Two strings share a repeating unit when both can be made by repeating the same shortest base string.","Print that shortest common unit, or NONE if no unit exists. Use the same definition throughout.","Line 1: string A.
+Line 2: string B.","1 <= lengths <= 200000
+uppercase English letters","A
+A","A","A
+A","A","ABAB
+AB","AB","ABCABC
+ABC","ABC","LEET
+CODE","NONE","AAAA
+AA","AA","XYZXYZ
+XYZXYZXYZ","XYZ","AB
+ABABAB","AB","ABC
+ABCABC","ABC"
+"M-008-1","Digit One Occurrence Count","Master","Number Theory","Write every positive integer from 1 through N in decimal. Count each written digit 1, including repeated appearances in one number.","Print the total number of written digit 1 characters. Follow the stated tie rule.","Line 1: N.","1 <= N <= 10^12","1","1","1","1","9","1","10","2","11","4","25","13","99","20","100","21","321","173"
+"M-008-2","Digit One Occurrence Count Planner","Master","Number Theory","Write every positive integer from 1 through N in decimal. Count each written digit 1, including repeated appearances in one number.","Print the total number of written digit 1 characters. Print only the requested result.","Line 1: N.","1 <= N <= 10^12","1","1","1","1","9","1","10","2","11","4","25","13","99","20","100","21","321","173"
+"M-008-3","Digit One Occurrence Count Checkpoint","Master","Number Theory","Write every positive integer from 1 through N in decimal. Count each written digit 1, including repeated appearances in one number.","Print the total number of written digit 1 characters. Treat every input independently.","Line 1: N.","1 <= N <= 10^12","1","1","1","1","9","1","10","2","11","4","25","13","99","20","100","21","321","173"
+"M-008-4","Digit One Occurrence Count Tracker","Master","Number Theory","Write every positive integer from 1 through N in decimal. Count each written digit 1, including repeated appearances in one number.","Print the total number of written digit 1 characters. Keep the format unchanged.","Line 1: N.","1 <= N <= 10^12","1","1","1","1","9","1","10","2","11","4","25","13","99","20","100","21","321","173"
+"M-008-5","Digit One Occurrence Count Verifier","Master","Number Theory","Write every positive integer from 1 through N in decimal. Count each written digit 1, including repeated appearances in one number.","Print the total number of written digit 1 characters. Use the same definition throughout.","Line 1: N.","1 <= N <= 10^12","1","1","1","1","9","1","10","2","11","4","25","13","99","20","100","21","321","173"
+"M-009-1","Coprime Remainder Construction","Master","Number Theory","A congruence x mod m = r means x leaves remainder r after division by m. All moduli in this task are pairwise coprime.","Print the smallest nonnegative x satisfying every congruence. Follow the stated tie rule.","Line 1: K.
+Next K lines: remainder modulus.","1 <= K <= 6
+moduli are pairwise coprime
+product fits signed 64-bit","1
+0 2","0","1
+0 2","0","2
+1 2
+2 3","5","2
+2 3
+3 5","8","2
+1 2
+1 5","1","3
+2 3
+3 5
+2 7","23","2
+0 5
+2 3","5","2
+4 5
+1 7","29","3
+1 2
+2 3
+3 5","23"
+"M-009-2","Coprime Remainder Construction Planner","Master","Number Theory","A congruence x mod m = r means x leaves remainder r after division by m. All moduli in this task are pairwise coprime.","Print the smallest nonnegative x satisfying every congruence. Print only the requested result.","Line 1: K.
+Next K lines: remainder modulus.","1 <= K <= 6
+moduli are pairwise coprime
+product fits signed 64-bit","1
+0 2","0","1
+0 2","0","2
+1 2
+2 3","5","2
+2 3
+3 5","8","2
+1 2
+1 5","1","3
+2 3
+3 5
+2 7","23","2
+0 5
+2 3","5","2
+4 5
+1 7","29","3
+1 2
+2 3
+3 5","23"
+"M-009-3","Coprime Remainder Construction Checkpoint","Master","Number Theory","A congruence x mod m = r means x leaves remainder r after division by m. All moduli in this task are pairwise coprime.","Print the smallest nonnegative x satisfying every congruence. Treat every input independently.","Line 1: K.
+Next K lines: remainder modulus.","1 <= K <= 6
+moduli are pairwise coprime
+product fits signed 64-bit","1
+0 2","0","1
+0 2","0","2
+1 2
+2 3","5","2
+2 3
+3 5","8","2
+1 2
+1 5","1","3
+2 3
+3 5
+2 7","23","2
+0 5
+2 3","5","2
+4 5
+1 7","29","3
+1 2
+2 3
+3 5","23"
+"M-009-4","Coprime Remainder Construction Tracker","Master","Number Theory","A congruence x mod m = r means x leaves remainder r after division by m. All moduli in this task are pairwise coprime.","Print the smallest nonnegative x satisfying every congruence. Keep the format unchanged.","Line 1: K.
+Next K lines: remainder modulus.","1 <= K <= 6
+moduli are pairwise coprime
+product fits signed 64-bit","1
+0 2","0","1
+0 2","0","2
+1 2
+2 3","5","2
+2 3
+3 5","8","2
+1 2
+1 5","1","3
+2 3
+3 5
+2 7","23","2
+0 5
+2 3","5","2
+4 5
+1 7","29","3
+1 2
+2 3
+3 5","23"
+"M-009-5","Coprime Remainder Construction Verifier","Master","Number Theory","A congruence x mod m = r means x leaves remainder r after division by m. All moduli in this task are pairwise coprime.","Print the smallest nonnegative x satisfying every congruence. Use the same definition throughout.","Line 1: K.
+Next K lines: remainder modulus.","1 <= K <= 6
+moduli are pairwise coprime
+product fits signed 64-bit","1
+0 2","0","1
+0 2","0","2
+1 2
+2 3","5","2
+2 3
+3 5","8","2
+1 2
+1 5","1","3
+2 3
+3 5
+2 7","23","2
+0 5
+2 3","5","2
+4 5
+1 7","29","3
+1 2
+2 3
+3 5","23"
+"M-010-1","Coprime Pair Count","Master","Number Theory","A pair is coprime when its greatest common divisor is 1. Values at different positions form different pairs even if they are equal.","Count unordered coprime pairs. Follow the stated tie rule.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 5000
+values: 1 to 10^6","1
+1","0","1
+1","0","2
+2 3","1","2
+2 4","0","3
+2 3 4","2","3
+6 10 15","0","3
+1 1 1","3","4
+5 7 11 13","6","3
+6 35 10","1"
+"M-010-2","Coprime Pair Count Planner","Master","Number Theory","A pair is coprime when its greatest common divisor is 1. Values at different positions form different pairs even if they are equal.","Count unordered coprime pairs. Print only the requested result.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 5000
+values: 1 to 10^6","1
+1","0","1
+1","0","2
+2 3","1","2
+2 4","0","3
+2 3 4","2","3
+6 10 15","0","3
+1 1 1","3","4
+5 7 11 13","6","3
+6 35 10","1"
+"M-010-3","Coprime Pair Count Checkpoint","Master","Number Theory","A pair is coprime when its greatest common divisor is 1. Values at different positions form different pairs even if they are equal.","Count unordered coprime pairs. Treat every input independently.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 5000
+values: 1 to 10^6","1
+1","0","1
+1","0","2
+2 3","1","2
+2 4","0","3
+2 3 4","2","3
+6 10 15","0","3
+1 1 1","3","4
+5 7 11 13","6","3
+6 35 10","1"
+"M-010-4","Coprime Pair Count Tracker","Master","Number Theory","A pair is coprime when its greatest common divisor is 1. Values at different positions form different pairs even if they are equal.","Count unordered coprime pairs. Keep the format unchanged.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 5000
+values: 1 to 10^6","1
+1","0","1
+1","0","2
+2 3","1","2
+2 4","0","3
+2 3 4","2","3
+6 10 15","0","3
+1 1 1","3","4
+5 7 11 13","6","3
+6 35 10","1"
+"M-010-5","Coprime Pair Count Verifier","Master","Number Theory","A pair is coprime when its greatest common divisor is 1. Values at different positions form different pairs even if they are equal.","Count unordered coprime pairs. Use the same definition throughout.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 5000
+values: 1 to 10^6","1
+1","0","1
+1","0","2
+2 3","1","2
+2 4","0","3
+2 3 4","2","3
+6 10 15","0","3
+1 1 1","3","4
+5 7 11 13","6","3
+6 35 10","1"
+"M-011-1","Safe Circular Balance Start","Master","Greedy","A rotation chooses a starting position in a circular list. A start is safe when every running sum around one full cycle stays nonnegative.","Print the smallest safe 0-based start index, or -1 if none exists. Follow the stated tie rule.","Line 1: N.
+Line 2: N signed balances.","1 <= N <= 200000
+balances: -10^9 to 10^9","1
+0","0","1
+0","0","2
+1 -1","0","3
+1 2 -3","0","4
+2 -3 2 -1","2","3
+5 -6 1","2","4
+1 1 -1 -1","0","4
+3 -4 2 -1","2","4
+2 -1 -1 1","0"
+"M-011-2","Safe Circular Balance Start Planner","Master","Greedy","A rotation chooses a starting position in a circular list. A start is safe when every running sum around one full cycle stays nonnegative.","Print the smallest safe 0-based start index, or -1 if none exists. Print only the requested result.","Line 1: N.
+Line 2: N signed balances.","1 <= N <= 200000
+balances: -10^9 to 10^9","1
+0","0","1
+0","0","2
+1 -1","0","3
+1 2 -3","0","4
+2 -3 2 -1","2","3
+5 -6 1","2","4
+1 1 -1 -1","0","4
+3 -4 2 -1","2","4
+2 -1 -1 1","0"
+"M-011-3","Safe Circular Balance Start Checkpoint","Master","Greedy","A rotation chooses a starting position in a circular list. A start is safe when every running sum around one full cycle stays nonnegative.","Print the smallest safe 0-based start index, or -1 if none exists. Treat every input independently.","Line 1: N.
+Line 2: N signed balances.","1 <= N <= 200000
+balances: -10^9 to 10^9","1
+0","0","1
+0","0","2
+1 -1","0","3
+1 2 -3","0","4
+2 -3 2 -1","2","3
+5 -6 1","2","4
+1 1 -1 -1","0","4
+3 -4 2 -1","2","4
+2 -1 -1 1","0"
+"M-011-4","Safe Circular Balance Start Tracker","Master","Greedy","A rotation chooses a starting position in a circular list. A start is safe when every running sum around one full cycle stays nonnegative.","Print the smallest safe 0-based start index, or -1 if none exists. Keep the format unchanged.","Line 1: N.
+Line 2: N signed balances.","1 <= N <= 200000
+balances: -10^9 to 10^9","1
+0","0","1
+0","0","2
+1 -1","0","3
+1 2 -3","0","4
+2 -3 2 -1","2","3
+5 -6 1","2","4
+1 1 -1 -1","0","4
+3 -4 2 -1","2","4
+2 -1 -1 1","0"
+"M-011-5","Safe Circular Balance Start Verifier","Master","Greedy","A rotation chooses a starting position in a circular list. A start is safe when every running sum around one full cycle stays nonnegative.","Print the smallest safe 0-based start index, or -1 if none exists. Use the same definition throughout.","Line 1: N.
+Line 2: N signed balances.","1 <= N <= 200000
+balances: -10^9 to 10^9","1
+0","0","1
+0","0","2
+1 -1","0","3
+1 2 -3","0","4
+2 -3 2 -1","2","3
+5 -6 1","2","4
+1 1 -1 -1","0","4
+3 -4 2 -1","2","4
+2 -1 -1 1","0"
+"M-012-1","Smallest Limited-Swap String","Master","Greedy","One adjacent swap exchanges neighboring characters. You may use at most K swaps to make the string as lexicographically small as possible.","Print the smallest obtainable string. Follow the stated tie rule.","Line 1: string S.
+Line 2: K.","1 <= |S| <= 200000
+0 <= K <= 10^9
+lowercase English letters","a
+0","a","a
+0","a","cba
+1","bca","cba
+2","acb","dcba
+3","adcb","baca
+2","abac","leetcode
+5","celetode","aaaa
+3","aaaa","zxy
+1","xzy"
+"M-012-2","Smallest Limited-Swap String Planner","Master","Greedy","One adjacent swap exchanges neighboring characters. You may use at most K swaps to make the string as lexicographically small as possible.","Print the smallest obtainable string. Print only the requested result.","Line 1: string S.
+Line 2: K.","1 <= |S| <= 200000
+0 <= K <= 10^9
+lowercase English letters","a
+0","a","a
+0","a","cba
+1","bca","cba
+2","acb","dcba
+3","adcb","baca
+2","abac","leetcode
+5","celetode","aaaa
+3","aaaa","zxy
+1","xzy"
+"M-012-3","Smallest Limited-Swap String Checkpoint","Master","Greedy","One adjacent swap exchanges neighboring characters. You may use at most K swaps to make the string as lexicographically small as possible.","Print the smallest obtainable string. Treat every input independently.","Line 1: string S.
+Line 2: K.","1 <= |S| <= 200000
+0 <= K <= 10^9
+lowercase English letters","a
+0","a","a
+0","a","cba
+1","bca","cba
+2","acb","dcba
+3","adcb","baca
+2","abac","leetcode
+5","celetode","aaaa
+3","aaaa","zxy
+1","xzy"
+"M-012-4","Smallest Limited-Swap String Tracker","Master","Greedy","One adjacent swap exchanges neighboring characters. You may use at most K swaps to make the string as lexicographically small as possible.","Print the smallest obtainable string. Keep the format unchanged.","Line 1: string S.
+Line 2: K.","1 <= |S| <= 200000
+0 <= K <= 10^9
+lowercase English letters","a
+0","a","a
+0","a","cba
+1","bca","cba
+2","acb","dcba
+3","adcb","baca
+2","abac","leetcode
+5","celetode","aaaa
+3","aaaa","zxy
+1","xzy"
+"M-012-5","Smallest Limited-Swap String Verifier","Master","Greedy","One adjacent swap exchanges neighboring characters. You may use at most K swaps to make the string as lexicographically small as possible.","Print the smallest obtainable string. Use the same definition throughout.","Line 1: string S.
+Line 2: K.","1 <= |S| <= 200000
+0 <= K <= 10^9
+lowercase English letters","a
+0","a","a
+0","a","cba
+1","bca","cba
+2","acb","dcba
+3","adcb","baca
+2","abac","leetcode
+5","celetode","aaaa
+3","aaaa","zxy
+1","xzy"
+"M-013-1","Maximum Selection Score","Master","Greedy","Choose exactly K matching positions. The score is the sum of chosen A values multiplied by the smallest chosen B value.","Print the largest possible score. Follow the stated tie rule.","Line 1: N K.
+Line 2: A values.
+Line 3: B values.","1 <= K <= N <= 200000
+values: 0 to 10^9
+use 64-bit output","1 1
+1
+2","2","1 1
+1
+2","2","4 2
+1 3 3 2
+2 1 3 4","15","5 3
+4 2 3 1 1
+7 5 10 9 6","56","2 1
+5 5
+1 2","10","3 2
+1 2 3
+3 2 1","6","3 2
+10 1 1
+1 10 10","20","3 2
+2 2 2
+2 2 2","8","4 3
+8 3 5 7
+4 8 1 6","72"
+"M-013-2","Maximum Selection Score Planner","Master","Greedy","Choose exactly K matching positions. The score is the sum of chosen A values multiplied by the smallest chosen B value.","Print the largest possible score. Print only the requested result.","Line 1: N K.
+Line 2: A values.
+Line 3: B values.","1 <= K <= N <= 200000
+values: 0 to 10^9
+use 64-bit output","1 1
+1
+2","2","1 1
+1
+2","2","4 2
+1 3 3 2
+2 1 3 4","15","5 3
+4 2 3 1 1
+7 5 10 9 6","56","2 1
+5 5
+1 2","10","3 2
+1 2 3
+3 2 1","6","3 2
+10 1 1
+1 10 10","20","3 2
+2 2 2
+2 2 2","8","4 3
+8 3 5 7
+4 8 1 6","72"
+"M-013-3","Maximum Selection Score Checkpoint","Master","Greedy","Choose exactly K matching positions. The score is the sum of chosen A values multiplied by the smallest chosen B value.","Print the largest possible score. Treat every input independently.","Line 1: N K.
+Line 2: A values.
+Line 3: B values.","1 <= K <= N <= 200000
+values: 0 to 10^9
+use 64-bit output","1 1
+1
+2","2","1 1
+1
+2","2","4 2
+1 3 3 2
+2 1 3 4","15","5 3
+4 2 3 1 1
+7 5 10 9 6","56","2 1
+5 5
+1 2","10","3 2
+1 2 3
+3 2 1","6","3 2
+10 1 1
+1 10 10","20","3 2
+2 2 2
+2 2 2","8","4 3
+8 3 5 7
+4 8 1 6","72"
+"M-013-4","Maximum Selection Score Tracker","Master","Greedy","Choose exactly K matching positions. The score is the sum of chosen A values multiplied by the smallest chosen B value.","Print the largest possible score. Keep the format unchanged.","Line 1: N K.
+Line 2: A values.
+Line 3: B values.","1 <= K <= N <= 200000
+values: 0 to 10^9
+use 64-bit output","1 1
+1
+2","2","1 1
+1
+2","2","4 2
+1 3 3 2
+2 1 3 4","15","5 3
+4 2 3 1 1
+7 5 10 9 6","56","2 1
+5 5
+1 2","10","3 2
+1 2 3
+3 2 1","6","3 2
+10 1 1
+1 10 10","20","3 2
+2 2 2
+2 2 2","8","4 3
+8 3 5 7
+4 8 1 6","72"
+"M-013-5","Maximum Selection Score Verifier","Master","Greedy","Choose exactly K matching positions. The score is the sum of chosen A values multiplied by the smallest chosen B value.","Print the largest possible score. Use the same definition throughout.","Line 1: N K.
+Line 2: A values.
+Line 3: B values.","1 <= K <= N <= 200000
+values: 0 to 10^9
+use 64-bit output","1 1
+1
+2","2","1 1
+1
+2","2","4 2
+1 3 3 2
+2 1 3 4","15","5 3
+4 2 3 1 1
+7 5 10 9 6","56","2 1
+5 5
+1 2","10","3 2
+1 2 3
+3 2 1","6","3 2
+10 1 1
+1 10 10","20","3 2
+2 2 2
+2 2 2","8","4 3
+8 3 5 7
+4 8 1 6","72"
+"M-014-1","Minimum Adjacent Palindrome Merges","Master","Greedy","An adjacent merge replaces two neighboring positive numbers by their sum. A sequence is palindromic when it reads the same forward and backward.","Print the minimum adjacent merges needed to make the sequence palindromic. Follow the stated tie rule.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200000
+values: 1 to 10^9","1
+1","0","1
+1","0","2
+1 2","1","4
+1 4 5 1","1","4
+11 14 15 99","3","4
+1 3 2 1","1","3
+5 5 5","0","4
+2 1 3 2","1","5
+7 1 2 3 7","1"
+"M-014-2","Minimum Adjacent Palindrome Merges Planner","Master","Greedy","An adjacent merge replaces two neighboring positive numbers by their sum. A sequence is palindromic when it reads the same forward and backward.","Print the minimum adjacent merges needed to make the sequence palindromic. Print only the requested result.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200000
+values: 1 to 10^9","1
+1","0","1
+1","0","2
+1 2","1","4
+1 4 5 1","1","4
+11 14 15 99","3","4
+1 3 2 1","1","3
+5 5 5","0","4
+2 1 3 2","1","5
+7 1 2 3 7","1"
+"M-014-3","Minimum Adjacent Palindrome Merges Checkpoint","Master","Greedy","An adjacent merge replaces two neighboring positive numbers by their sum. A sequence is palindromic when it reads the same forward and backward.","Print the minimum adjacent merges needed to make the sequence palindromic. Treat every input independently.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200000
+values: 1 to 10^9","1
+1","0","1
+1","0","2
+1 2","1","4
+1 4 5 1","1","4
+11 14 15 99","3","4
+1 3 2 1","1","3
+5 5 5","0","4
+2 1 3 2","1","5
+7 1 2 3 7","1"
+"M-014-4","Minimum Adjacent Palindrome Merges Tracker","Master","Greedy","An adjacent merge replaces two neighboring positive numbers by their sum. A sequence is palindromic when it reads the same forward and backward.","Print the minimum adjacent merges needed to make the sequence palindromic. Keep the format unchanged.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200000
+values: 1 to 10^9","1
+1","0","1
+1","0","2
+1 2","1","4
+1 4 5 1","1","4
+11 14 15 99","3","4
+1 3 2 1","1","3
+5 5 5","0","4
+2 1 3 2","1","5
+7 1 2 3 7","1"
+"M-014-5","Minimum Adjacent Palindrome Merges Verifier","Master","Greedy","An adjacent merge replaces two neighboring positive numbers by their sum. A sequence is palindromic when it reads the same forward and backward.","Print the minimum adjacent merges needed to make the sequence palindromic. Use the same definition throughout.","Line 1: N.
+Line 2: N positive integers.","1 <= N <= 200000
+values: 1 to 10^9","1
+1","0","1
+1","0","2
+1 2","1","4
+1 4 5 1","1","4
+11 14 15 99","3","4
+1 3 2 1","1","3
+5 5 5","0","4
+2 1 3 2","1","5
+7 1 2 3 7","1"
+"M-015-1","Minimum Absolute Deviation","Master","Arrays","For a chosen integer X, total absolute deviation is the sum of |value-X|. Any median minimizes this total.","Print the minimum possible total absolute deviation. Follow the stated tie rule.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit total","1
+1","0","1
+1","0","2
+1 2","1","3
+1 10 2","9","3
+5 5 5","0","3
+-5 0 5","10","4
+1 2 3 4","4","3
+10 -10 0","20","5
+7 1 9 3 5","12"
+"M-015-2","Minimum Absolute Deviation Planner","Master","Arrays","For a chosen integer X, total absolute deviation is the sum of |value-X|. Any median minimizes this total.","Print the minimum possible total absolute deviation. Print only the requested result.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit total","1
+1","0","1
+1","0","2
+1 2","1","3
+1 10 2","9","3
+5 5 5","0","3
+-5 0 5","10","4
+1 2 3 4","4","3
+10 -10 0","20","5
+7 1 9 3 5","12"
+"M-015-3","Minimum Absolute Deviation Checkpoint","Master","Arrays","For a chosen integer X, total absolute deviation is the sum of |value-X|. Any median minimizes this total.","Print the minimum possible total absolute deviation. Treat every input independently.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit total","1
+1","0","1
+1","0","2
+1 2","1","3
+1 10 2","9","3
+5 5 5","0","3
+-5 0 5","10","4
+1 2 3 4","4","3
+10 -10 0","20","5
+7 1 9 3 5","12"
+"M-015-4","Minimum Absolute Deviation Tracker","Master","Arrays","For a chosen integer X, total absolute deviation is the sum of |value-X|. Any median minimizes this total.","Print the minimum possible total absolute deviation. Keep the format unchanged.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit total","1
+1","0","1
+1","0","2
+1 2","1","3
+1 10 2","9","3
+5 5 5","0","3
+-5 0 5","10","4
+1 2 3 4","4","3
+10 -10 0","20","5
+7 1 9 3 5","12"
+"M-015-5","Minimum Absolute Deviation Verifier","Master","Arrays","For a chosen integer X, total absolute deviation is the sum of |value-X|. Any median minimizes this total.","Print the minimum possible total absolute deviation. Use the same definition throughout.","Line 1: N.
+Line 2: N integers.","1 <= N <= 200000
+values: -10^9 to 10^9
+use 64-bit total","1
+1","0","1
+1","0","2
+1 2","1","3
+1 10 2","9","3
+5 5 5","0","3
+-5 0 5","10","4
+1 2 3 4","4","3
+10 -10 0","20","5
+7 1 9 3 5","12"
+"M-016-1","Permutation Minimum Swaps","Master","Graphs","A permutation contains each number 1 through N once. One swap may exchange any two positions.","Print the minimum swaps needed to sort the permutation into 1 through N. Follow the stated tie rule.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 200000
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+2 3 1","2","4
+4 3 2 1","2","4
+1 2 3 4","0","5
+3 1 2 5 4","3","4
+2 1 4 3","2","5
+5 1 2 3 4","4"
+"M-016-2","Permutation Minimum Swaps Planner","Master","Graphs","A permutation contains each number 1 through N once. One swap may exchange any two positions.","Print the minimum swaps needed to sort the permutation into 1 through N. Print only the requested result.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 200000
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+2 3 1","2","4
+4 3 2 1","2","4
+1 2 3 4","0","5
+3 1 2 5 4","3","4
+2 1 4 3","2","5
+5 1 2 3 4","4"
+"M-016-3","Permutation Minimum Swaps Checkpoint","Master","Graphs","A permutation contains each number 1 through N once. One swap may exchange any two positions.","Print the minimum swaps needed to sort the permutation into 1 through N. Treat every input independently.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 200000
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+2 3 1","2","4
+4 3 2 1","2","4
+1 2 3 4","0","5
+3 1 2 5 4","3","4
+2 1 4 3","2","5
+5 1 2 3 4","4"
+"M-016-4","Permutation Minimum Swaps Tracker","Master","Graphs","A permutation contains each number 1 through N once. One swap may exchange any two positions.","Print the minimum swaps needed to sort the permutation into 1 through N. Keep the format unchanged.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 200000
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+2 3 1","2","4
+4 3 2 1","2","4
+1 2 3 4","0","5
+3 1 2 5 4","3","4
+2 1 4 3","2","5
+5 1 2 3 4","4"
+"M-016-5","Permutation Minimum Swaps Verifier","Master","Graphs","A permutation contains each number 1 through N once. One swap may exchange any two positions.","Print the minimum swaps needed to sort the permutation into 1 through N. Use the same definition throughout.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 200000
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+2 3 1","2","4
+4 3 2 1","2","4
+1 2 3 4","0","5
+3 1 2 5 4","3","4
+2 1 4 3","2","5
+5 1 2 3 4","4"
+"M-017-1","Next-Pointer Cycle Entry","Master","Two Pointers","Each node points to one next node, or 0 for no next node. Starting at node 1, a cycle entry is the first node that belongs to the repeated loop.","Print the cycle entry node, or 0 if the walk reaches 0. Follow the stated tie rule.","Line 1: N.
+Line 2: next pointers for nodes 1 through N.","1 <= N <= 200000
+each pointer: 0 to N","1
+0","0","1
+0","0","2
+1 0","1","3
+2 3 2","2","4
+2 3 4 2","2","3
+0 0 0","0","2
+2 1","1","5
+2 3 4 5 3","3","4
+1 2 3 4","1"
+"M-017-2","Next-Pointer Cycle Entry Planner","Master","Two Pointers","Each node points to one next node, or 0 for no next node. Starting at node 1, a cycle entry is the first node that belongs to the repeated loop.","Print the cycle entry node, or 0 if the walk reaches 0. Print only the requested result.","Line 1: N.
+Line 2: next pointers for nodes 1 through N.","1 <= N <= 200000
+each pointer: 0 to N","1
+0","0","1
+0","0","2
+1 0","1","3
+2 3 2","2","4
+2 3 4 2","2","3
+0 0 0","0","2
+2 1","1","5
+2 3 4 5 3","3","4
+1 2 3 4","1"
+"M-017-3","Next-Pointer Cycle Entry Checkpoint","Master","Two Pointers","Each node points to one next node, or 0 for no next node. Starting at node 1, a cycle entry is the first node that belongs to the repeated loop.","Print the cycle entry node, or 0 if the walk reaches 0. Treat every input independently.","Line 1: N.
+Line 2: next pointers for nodes 1 through N.","1 <= N <= 200000
+each pointer: 0 to N","1
+0","0","1
+0","0","2
+1 0","1","3
+2 3 2","2","4
+2 3 4 2","2","3
+0 0 0","0","2
+2 1","1","5
+2 3 4 5 3","3","4
+1 2 3 4","1"
+"M-017-4","Next-Pointer Cycle Entry Tracker","Master","Two Pointers","Each node points to one next node, or 0 for no next node. Starting at node 1, a cycle entry is the first node that belongs to the repeated loop.","Print the cycle entry node, or 0 if the walk reaches 0. Keep the format unchanged.","Line 1: N.
+Line 2: next pointers for nodes 1 through N.","1 <= N <= 200000
+each pointer: 0 to N","1
+0","0","1
+0","0","2
+1 0","1","3
+2 3 2","2","4
+2 3 4 2","2","3
+0 0 0","0","2
+2 1","1","5
+2 3 4 5 3","3","4
+1 2 3 4","1"
+"M-017-5","Next-Pointer Cycle Entry Verifier","Master","Two Pointers","Each node points to one next node, or 0 for no next node. Starting at node 1, a cycle entry is the first node that belongs to the repeated loop.","Print the cycle entry node, or 0 if the walk reaches 0. Use the same definition throughout.","Line 1: N.
+Line 2: next pointers for nodes 1 through N.","1 <= N <= 200000
+each pointer: 0 to N","1
+0","0","1
+0","0","2
+1 0","1","3
+2 3 2","2","4
+2 3 4 2","2","3
+0 0 0","0","2
+2 1","1","5
+2 3 4 5 3","3","4
+1 2 3 4","1"
+"M-018-1","Tree Path XOR Pair Count","Master","Trees","The XOR of a tree path combines its edge labels. Each unordered pair of different nodes determines one unique path.","Count node pairs whose path XOR equals K. Follow the stated tie rule.","Line 1: N K.
+Next N-1 lines: u v edgeXor.","1 <= N <= 200000
+edge labels and K: 0 to 2^30-1","2 5
+1 2 5","1","2 5
+1 2 5","1","3 3
+1 2 1
+2 3 2","1","3 0
+1 2 1
+1 3 1","1","4 0
+1 2 3
+2 3 3
+3 4 3","2","1 0
+","0","4 3
+1 2 1
+1 3 2
+1 4 3","2","5 4
+1 2 4
+2 3 1
+2 4 5
+4 5 1","3","3 0
+1 2 0
+2 3 0","3"
+"M-018-2","Tree Path XOR Pair Count Planner","Master","Trees","The XOR of a tree path combines its edge labels. Each unordered pair of different nodes determines one unique path.","Count node pairs whose path XOR equals K. Print only the requested result.","Line 1: N K.
+Next N-1 lines: u v edgeXor.","1 <= N <= 200000
+edge labels and K: 0 to 2^30-1","2 5
+1 2 5","1","2 5
+1 2 5","1","3 3
+1 2 1
+2 3 2","1","3 0
+1 2 1
+1 3 1","1","4 0
+1 2 3
+2 3 3
+3 4 3","2","1 0
+","0","4 3
+1 2 1
+1 3 2
+1 4 3","2","5 4
+1 2 4
+2 3 1
+2 4 5
+4 5 1","3","3 0
+1 2 0
+2 3 0","3"
+"M-018-3","Tree Path XOR Pair Count Checkpoint","Master","Trees","The XOR of a tree path combines its edge labels. Each unordered pair of different nodes determines one unique path.","Count node pairs whose path XOR equals K. Treat every input independently.","Line 1: N K.
+Next N-1 lines: u v edgeXor.","1 <= N <= 200000
+edge labels and K: 0 to 2^30-1","2 5
+1 2 5","1","2 5
+1 2 5","1","3 3
+1 2 1
+2 3 2","1","3 0
+1 2 1
+1 3 1","1","4 0
+1 2 3
+2 3 3
+3 4 3","2","1 0
+","0","4 3
+1 2 1
+1 3 2
+1 4 3","2","5 4
+1 2 4
+2 3 1
+2 4 5
+4 5 1","3","3 0
+1 2 0
+2 3 0","3"
+"M-018-4","Tree Path XOR Pair Count Tracker","Master","Trees","The XOR of a tree path combines its edge labels. Each unordered pair of different nodes determines one unique path.","Count node pairs whose path XOR equals K. Keep the format unchanged.","Line 1: N K.
+Next N-1 lines: u v edgeXor.","1 <= N <= 200000
+edge labels and K: 0 to 2^30-1","2 5
+1 2 5","1","2 5
+1 2 5","1","3 3
+1 2 1
+2 3 2","1","3 0
+1 2 1
+1 3 1","1","4 0
+1 2 3
+2 3 3
+3 4 3","2","1 0
+","0","4 3
+1 2 1
+1 3 2
+1 4 3","2","5 4
+1 2 4
+2 3 1
+2 4 5
+4 5 1","3","3 0
+1 2 0
+2 3 0","3"
+"M-018-5","Tree Path XOR Pair Count Verifier","Master","Trees","The XOR of a tree path combines its edge labels. Each unordered pair of different nodes determines one unique path.","Count node pairs whose path XOR equals K. Use the same definition throughout.","Line 1: N K.
+Next N-1 lines: u v edgeXor.","1 <= N <= 200000
+edge labels and K: 0 to 2^30-1","2 5
+1 2 5","1","2 5
+1 2 5","1","3 3
+1 2 1
+2 3 2","1","3 0
+1 2 1
+1 3 1","1","4 0
+1 2 3
+2 3 3
+3 4 3","2","1 0
+","0","4 3
+1 2 1
+1 3 2
+1 4 3","2","5 4
+1 2 4
+2 3 1
+2 4 5
+4 5 1","3","3 0
+1 2 0
+2 3 0","3"
+"M-019-1","Unique Topological Order","Master","Graphs","A topological order lists directed prerequisites before what depends on them. The order is unique only when every step has exactly one available next node.","Print YES if the directed graph has exactly one topological order; otherwise print NO. Follow the stated tie rule.","Line 1: N M.
+Next M lines: directed edge u v.","1 <= N <= 200000
+0 <= M <= 300000
+node labels: 1 to N","1 0
+","YES","1 0
+","YES","2 1
+1 2","YES","2 0
+","NO","3 2
+1 2
+2 3","YES","3 2
+1 3
+2 3","NO","3 2
+1 2
+2 1","NO","4 4
+1 2
+1 3
+2 4
+3 4","NO","4 3
+1 2
+2 3
+3 4","YES"
+"M-019-2","Unique Topological Order Planner","Master","Graphs","A topological order lists directed prerequisites before what depends on them. The order is unique only when every step has exactly one available next node.","Print YES if the directed graph has exactly one topological order; otherwise print NO. Print only the requested result.","Line 1: N M.
+Next M lines: directed edge u v.","1 <= N <= 200000
+0 <= M <= 300000
+node labels: 1 to N","1 0
+","YES","1 0
+","YES","2 1
+1 2","YES","2 0
+","NO","3 2
+1 2
+2 3","YES","3 2
+1 3
+2 3","NO","3 2
+1 2
+2 1","NO","4 4
+1 2
+1 3
+2 4
+3 4","NO","4 3
+1 2
+2 3
+3 4","YES"
+"M-019-3","Unique Topological Order Checkpoint","Master","Graphs","A topological order lists directed prerequisites before what depends on them. The order is unique only when every step has exactly one available next node.","Print YES if the directed graph has exactly one topological order; otherwise print NO. Treat every input independently.","Line 1: N M.
+Next M lines: directed edge u v.","1 <= N <= 200000
+0 <= M <= 300000
+node labels: 1 to N","1 0
+","YES","1 0
+","YES","2 1
+1 2","YES","2 0
+","NO","3 2
+1 2
+2 3","YES","3 2
+1 3
+2 3","NO","3 2
+1 2
+2 1","NO","4 4
+1 2
+1 3
+2 4
+3 4","NO","4 3
+1 2
+2 3
+3 4","YES"
+"M-019-4","Unique Topological Order Tracker","Master","Graphs","A topological order lists directed prerequisites before what depends on them. The order is unique only when every step has exactly one available next node.","Print YES if the directed graph has exactly one topological order; otherwise print NO. Keep the format unchanged.","Line 1: N M.
+Next M lines: directed edge u v.","1 <= N <= 200000
+0 <= M <= 300000
+node labels: 1 to N","1 0
+","YES","1 0
+","YES","2 1
+1 2","YES","2 0
+","NO","3 2
+1 2
+2 3","YES","3 2
+1 3
+2 3","NO","3 2
+1 2
+2 1","NO","4 4
+1 2
+1 3
+2 4
+3 4","NO","4 3
+1 2
+2 3
+3 4","YES"
+"M-019-5","Unique Topological Order Verifier","Master","Graphs","A topological order lists directed prerequisites before what depends on them. The order is unique only when every step has exactly one available next node.","Print YES if the directed graph has exactly one topological order; otherwise print NO. Use the same definition throughout.","Line 1: N M.
+Next M lines: directed edge u v.","1 <= N <= 200000
+0 <= M <= 300000
+node labels: 1 to N","1 0
+","YES","1 0
+","YES","2 1
+1 2","YES","2 0
+","NO","3 2
+1 2
+2 3","YES","3 2
+1 3
+2 3","NO","3 2
+1 2
+2 1","NO","4 4
+1 2
+1 3
+2 4
+3 4","NO","4 3
+1 2
+2 3
+3 4","YES"
+"M-020-1","Common Subsequence Length","Master","Dynamic Programming","A subsequence keeps character order but may skip characters. It does not need to be contiguous.","Print the length of the longest common subsequence of A and B. Follow the stated tie rule.","Line 1: string A.
+Line 2: string B.","0 <= lengths <= 1000
+lowercase or uppercase English letters","a
+a","1","a
+a","1","abc
+abc","3","abc
+def","0","abcde
+ace","3","aaaa
+aa","2","AGGTAB
+GXTXAYB","4","banana
+atana","4","abcdef
+fbdamn","2"
+"M-020-2","Common Subsequence Length Planner","Master","Dynamic Programming","A subsequence keeps character order but may skip characters. It does not need to be contiguous.","Print the length of the longest common subsequence of A and B. Print only the requested result.","Line 1: string A.
+Line 2: string B.","0 <= lengths <= 1000
+lowercase or uppercase English letters","a
+a","1","a
+a","1","abc
+abc","3","abc
+def","0","abcde
+ace","3","aaaa
+aa","2","AGGTAB
+GXTXAYB","4","banana
+atana","4","abcdef
+fbdamn","2"
+"M-020-3","Common Subsequence Length Checkpoint","Master","Dynamic Programming","A subsequence keeps character order but may skip characters. It does not need to be contiguous.","Print the length of the longest common subsequence of A and B. Treat every input independently.","Line 1: string A.
+Line 2: string B.","0 <= lengths <= 1000
+lowercase or uppercase English letters","a
+a","1","a
+a","1","abc
+abc","3","abc
+def","0","abcde
+ace","3","aaaa
+aa","2","AGGTAB
+GXTXAYB","4","banana
+atana","4","abcdef
+fbdamn","2"
+"M-020-4","Common Subsequence Length Tracker","Master","Dynamic Programming","A subsequence keeps character order but may skip characters. It does not need to be contiguous.","Print the length of the longest common subsequence of A and B. Keep the format unchanged.","Line 1: string A.
+Line 2: string B.","0 <= lengths <= 1000
+lowercase or uppercase English letters","a
+a","1","a
+a","1","abc
+abc","3","abc
+def","0","abcde
+ace","3","aaaa
+aa","2","AGGTAB
+GXTXAYB","4","banana
+atana","4","abcdef
+fbdamn","2"
+"M-020-5","Common Subsequence Length Verifier","Master","Dynamic Programming","A subsequence keeps character order but may skip characters. It does not need to be contiguous.","Print the length of the longest common subsequence of A and B. Use the same definition throughout.","Line 1: string A.
+Line 2: string B.","0 <= lengths <= 1000
+lowercase or uppercase English letters","a
+a","1","a
+a","1","abc
+abc","3","abc
+def","0","abcde
+ace","3","aaaa
+aa","2","AGGTAB
+GXTXAYB","4","banana
+atana","4","abcdef
+fbdamn","2"
+"M-021-1","Target Subset Sum","Master","Meet in the Middle","A subset may choose any positions and does not need to be consecutive. The empty subset has sum zero.","Print YES if some subset sums exactly to T; otherwise print NO. Follow the stated tie rule.","Line 1: N T.
+Line 2: N integers.","1 <= N <= 40
+values and T: -10^9 to 10^9","1 1
+1","YES","1 1
+1","YES","3 5
+1 2 3","YES","3 7
+1 2 3","NO","2 0
+0 0","YES","3 3
+-1 2 4","YES","6 30
+5 10 12 13 15 18","YES","6 9
+3 34 4 12 5 2","YES","4 2
+1 1 1 1","YES"
+"M-021-2","Target Subset Sum Planner","Master","Meet in the Middle","A subset may choose any positions and does not need to be consecutive. The empty subset has sum zero.","Print YES if some subset sums exactly to T; otherwise print NO. Print only the requested result.","Line 1: N T.
+Line 2: N integers.","1 <= N <= 40
+values and T: -10^9 to 10^9","1 1
+1","YES","1 1
+1","YES","3 5
+1 2 3","YES","3 7
+1 2 3","NO","2 0
+0 0","YES","3 3
+-1 2 4","YES","6 30
+5 10 12 13 15 18","YES","6 9
+3 34 4 12 5 2","YES","4 2
+1 1 1 1","YES"
+"M-021-3","Target Subset Sum Checkpoint","Master","Meet in the Middle","A subset may choose any positions and does not need to be consecutive. The empty subset has sum zero.","Print YES if some subset sums exactly to T; otherwise print NO. Treat every input independently.","Line 1: N T.
+Line 2: N integers.","1 <= N <= 40
+values and T: -10^9 to 10^9","1 1
+1","YES","1 1
+1","YES","3 5
+1 2 3","YES","3 7
+1 2 3","NO","2 0
+0 0","YES","3 3
+-1 2 4","YES","6 30
+5 10 12 13 15 18","YES","6 9
+3 34 4 12 5 2","YES","4 2
+1 1 1 1","YES"
+"M-021-4","Target Subset Sum Tracker","Master","Meet in the Middle","A subset may choose any positions and does not need to be consecutive. The empty subset has sum zero.","Print YES if some subset sums exactly to T; otherwise print NO. Keep the format unchanged.","Line 1: N T.
+Line 2: N integers.","1 <= N <= 40
+values and T: -10^9 to 10^9","1 1
+1","YES","1 1
+1","YES","3 5
+1 2 3","YES","3 7
+1 2 3","NO","2 0
+0 0","YES","3 3
+-1 2 4","YES","6 30
+5 10 12 13 15 18","YES","6 9
+3 34 4 12 5 2","YES","4 2
+1 1 1 1","YES"
+"M-021-5","Target Subset Sum Verifier","Master","Meet in the Middle","A subset may choose any positions and does not need to be consecutive. The empty subset has sum zero.","Print YES if some subset sums exactly to T; otherwise print NO. Use the same definition throughout.","Line 1: N T.
+Line 2: N integers.","1 <= N <= 40
+values and T: -10^9 to 10^9","1 1
+1","YES","1 1
+1","YES","3 5
+1 2 3","YES","3 7
+1 2 3","NO","2 0
+0 0","YES","3 3
+-1 2 4","YES","6 30
+5 10 12 13 15 18","YES","6 9
+3 34 4 12 5 2","YES","4 2
+1 1 1 1","YES"
+"M-022-1","Kth Across Sorted Arrays","Master","Binary Search","Two input arrays are already sorted in nondecreasing order. Count positions starting from 1 in their combined sorted order.","Print the Kth smallest value across both arrays. Follow the stated tie rule.","Line 1: N M K.
+Line 2: N sorted integers, possibly empty.
+Line 3: M sorted integers, possibly empty.","0 <= N,M <= 200000
+1 <= K <= N+M
+values: -10^9 to 10^9","1 1 1
+1
+2","1","1 1 1
+1
+2","1","1 1 2
+1
+2","2","2 2 3
+1 3
+2 4","3","0 1 1
+
+5","5","3 2 4
+1 2 3
+4 5","4","2 2 3
+1 1
+1 1","1","2 3 2
+-5 0
+1 2 3","0","3 4 5
+2 6 9
+1 4 7 10","7"
+"M-022-2","Kth Across Sorted Arrays Planner","Master","Binary Search","Two input arrays are already sorted in nondecreasing order. Count positions starting from 1 in their combined sorted order.","Print the Kth smallest value across both arrays. Print only the requested result.","Line 1: N M K.
+Line 2: N sorted integers, possibly empty.
+Line 3: M sorted integers, possibly empty.","0 <= N,M <= 200000
+1 <= K <= N+M
+values: -10^9 to 10^9","1 1 1
+1
+2","1","1 1 1
+1
+2","1","1 1 2
+1
+2","2","2 2 3
+1 3
+2 4","3","0 1 1
+
+5","5","3 2 4
+1 2 3
+4 5","4","2 2 3
+1 1
+1 1","1","2 3 2
+-5 0
+1 2 3","0","3 4 5
+2 6 9
+1 4 7 10","7"
+"M-022-3","Kth Across Sorted Arrays Checkpoint","Master","Binary Search","Two input arrays are already sorted in nondecreasing order. Count positions starting from 1 in their combined sorted order.","Print the Kth smallest value across both arrays. Treat every input independently.","Line 1: N M K.
+Line 2: N sorted integers, possibly empty.
+Line 3: M sorted integers, possibly empty.","0 <= N,M <= 200000
+1 <= K <= N+M
+values: -10^9 to 10^9","1 1 1
+1
+2","1","1 1 1
+1
+2","1","1 1 2
+1
+2","2","2 2 3
+1 3
+2 4","3","0 1 1
+
+5","5","3 2 4
+1 2 3
+4 5","4","2 2 3
+1 1
+1 1","1","2 3 2
+-5 0
+1 2 3","0","3 4 5
+2 6 9
+1 4 7 10","7"
+"M-022-4","Kth Across Sorted Arrays Tracker","Master","Binary Search","Two input arrays are already sorted in nondecreasing order. Count positions starting from 1 in their combined sorted order.","Print the Kth smallest value across both arrays. Keep the format unchanged.","Line 1: N M K.
+Line 2: N sorted integers, possibly empty.
+Line 3: M sorted integers, possibly empty.","0 <= N,M <= 200000
+1 <= K <= N+M
+values: -10^9 to 10^9","1 1 1
+1
+2","1","1 1 1
+1
+2","1","1 1 2
+1
+2","2","2 2 3
+1 3
+2 4","3","0 1 1
+
+5","5","3 2 4
+1 2 3
+4 5","4","2 2 3
+1 1
+1 1","1","2 3 2
+-5 0
+1 2 3","0","3 4 5
+2 6 9
+1 4 7 10","7"
+"M-022-5","Kth Across Sorted Arrays Verifier","Master","Binary Search","Two input arrays are already sorted in nondecreasing order. Count positions starting from 1 in their combined sorted order.","Print the Kth smallest value across both arrays. Use the same definition throughout.","Line 1: N M K.
+Line 2: N sorted integers, possibly empty.
+Line 3: M sorted integers, possibly empty.","0 <= N,M <= 200000
+1 <= K <= N+M
+values: -10^9 to 10^9","1 1 1
+1
+2","1","1 1 1
+1
+2","1","1 1 2
+1
+2","2","2 2 3
+1 3
+2 4","3","0 1 1
+
+5","5","3 2 4
+1 2 3
+4 5","4","2 2 3
+1 1
+1 1","1","2 3 2
+-5 0
+1 2 3","0","3 4 5
+2 6 9
+1 4 7 10","7"
+"M-023-1","Largest Floor Average Segment","Master","Binary Search","A segment is consecutive and must contain at least K values. Its floor average is the integer floor of its sum divided by its length.","Print the largest floor average among all segments of length at least K. Follow the stated tie rule.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","2 2
+1 2","1","6 4
+1 12 -5 -6 50 3","12","3 2
+-1 -2 -3","-2","3 2
+5 5 5","5","5 3
+1 -1 1 -1 1","0","3 2
+10 -10 10","3","5 3
+3 1 4 1 5","3"
+"M-023-2","Largest Floor Average Segment Planner","Master","Binary Search","A segment is consecutive and must contain at least K values. Its floor average is the integer floor of its sum divided by its length.","Print the largest floor average among all segments of length at least K. Print only the requested result.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","2 2
+1 2","1","6 4
+1 12 -5 -6 50 3","12","3 2
+-1 -2 -3","-2","3 2
+5 5 5","5","5 3
+1 -1 1 -1 1","0","3 2
+10 -10 10","3","5 3
+3 1 4 1 5","3"
+"M-023-3","Largest Floor Average Segment Checkpoint","Master","Binary Search","A segment is consecutive and must contain at least K values. Its floor average is the integer floor of its sum divided by its length.","Print the largest floor average among all segments of length at least K. Treat every input independently.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","2 2
+1 2","1","6 4
+1 12 -5 -6 50 3","12","3 2
+-1 -2 -3","-2","3 2
+5 5 5","5","5 3
+1 -1 1 -1 1","0","3 2
+10 -10 10","3","5 3
+3 1 4 1 5","3"
+"M-023-4","Largest Floor Average Segment Tracker","Master","Binary Search","A segment is consecutive and must contain at least K values. Its floor average is the integer floor of its sum divided by its length.","Print the largest floor average among all segments of length at least K. Keep the format unchanged.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","2 2
+1 2","1","6 4
+1 12 -5 -6 50 3","12","3 2
+-1 -2 -3","-2","3 2
+5 5 5","5","5 3
+1 -1 1 -1 1","0","3 2
+10 -10 10","3","5 3
+3 1 4 1 5","3"
+"M-023-5","Largest Floor Average Segment Verifier","Master","Binary Search","A segment is consecutive and must contain at least K values. Its floor average is the integer floor of its sum divided by its length.","Print the largest floor average among all segments of length at least K. Use the same definition throughout.","Line 1: N K.
+Line 2: N integers.","1 <= K <= N <= 200000
+values: -10^9 to 10^9","1 1
+1","1","1 1
+1","1","2 2
+1 2","1","6 4
+1 12 -5 -6 50 3","12","3 2
+-1 -2 -3","-2","3 2
+5 5 5","5","5 3
+1 -1 1 -1 1","0","3 2
+10 -10 10","3","5 3
+3 1 4 1 5","3"
+"M-024-1","Minimum Reversal Sort","Master","Graphs","One reversal chooses a contiguous block and reverses its order. The goal is to sort a permutation into increasing order.","Print the minimum number of contiguous reversals needed to sort the permutation. Follow the stated tie rule.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 7
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+3 2 1","1","3
+2 3 1","2","4
+4 1 3 2","2","4
+3 1 4 2","3","4
+1 2 3 4","0","4
+4 3 1 2","2"
+"M-024-2","Minimum Reversal Sort Planner","Master","Graphs","One reversal chooses a contiguous block and reverses its order. The goal is to sort a permutation into increasing order.","Print the minimum number of contiguous reversals needed to sort the permutation. Print only the requested result.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 7
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+3 2 1","1","3
+2 3 1","2","4
+4 1 3 2","2","4
+3 1 4 2","3","4
+1 2 3 4","0","4
+4 3 1 2","2"
+"M-024-3","Minimum Reversal Sort Checkpoint","Master","Graphs","One reversal chooses a contiguous block and reverses its order. The goal is to sort a permutation into increasing order.","Print the minimum number of contiguous reversals needed to sort the permutation. Treat every input independently.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 7
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+3 2 1","1","3
+2 3 1","2","4
+4 1 3 2","2","4
+3 1 4 2","3","4
+1 2 3 4","0","4
+4 3 1 2","2"
+"M-024-4","Minimum Reversal Sort Tracker","Master","Graphs","One reversal chooses a contiguous block and reverses its order. The goal is to sort a permutation into increasing order.","Print the minimum number of contiguous reversals needed to sort the permutation. Keep the format unchanged.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 7
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+3 2 1","1","3
+2 3 1","2","4
+4 1 3 2","2","4
+3 1 4 2","3","4
+1 2 3 4","0","4
+4 3 1 2","2"
+"M-024-5","Minimum Reversal Sort Verifier","Master","Graphs","One reversal chooses a contiguous block and reverses its order. The goal is to sort a permutation into increasing order.","Print the minimum number of contiguous reversals needed to sort the permutation. Use the same definition throughout.","Line 1: N.
+Line 2: a permutation.","1 <= N <= 7
+values: 1 to N","1
+1","0","1
+1","0","2
+2 1","1","3
+3 2 1","1","3
+2 3 1","2","4
+4 1 3 2","2","4
+3 1 4 2","3","4
+1 2 3 4","0","4
+4 3 1 2","2"
