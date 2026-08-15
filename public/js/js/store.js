@@ -681,28 +681,58 @@ export async function saveSolution(profile, puzzle, {
 export const saveCompletedSolution = (profile, puzzle, details) =>
   saveSolution(profile, puzzle, { ...details, completed: true });
 
+function normalizeSolution(id, data = {}) {
+  const completed = data.completed ?? Number(data.solveCount || 0) > 0;
+  const saveCount = Number(data.saveCount ?? data.solveCount ?? 1) || 1;
+  return {
+    id, ...data,
+    completed,
+    saveCount,
+    completedSubmits: Number(data.completedSubmits ?? (completed ? data.solveCount ?? 1 : 0)),
+    incompleteSaves: Number(data.incompleteSaves ?? (completed ? 0 : saveCount)),
+    lastSavedAt: data.lastSavedAt ?? data.lastSolvedAt ?? data.updatedAt ?? data.firstSavedAt ?? data.firstSolvedAt ?? 0,
+    firstSavedAt: data.firstSavedAt ?? data.firstSolvedAt ?? data.updatedAt ?? 0,
+    isPublic: !!data.isPublic,
+    publicShareId: data.publicShareId ?? data.lastShareId ?? null,
+    accomplishment: !!data.accomplishment,
+    pinned: !!data.pinned,
+  };
+}
+
+function normalizeSolutionHistory(id, data = {}) {
+  return {
+    id, ...data,
+    completed: data.completed ?? true,
+    savedAt: data.savedAt ?? data.solvedAt ?? data.createdAt ?? 0,
+    testsPassed: Number(data.testsPassed ?? 0),
+    totalTests: Number(data.totalTests ?? 0),
+    timeMs: Number(data.timeMs ?? 0),
+  };
+}
+
 export async function getSavedSolution(uid, archetypeId) {
   if (!uid || !archetypeId) return null;
   const snap = await getDoc(solutionRef(uid, archetypeId));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  return snap.exists() ? normalizeSolution(snap.id, snap.data()) : null;
 }
 
 export async function getSavedSolutions(uid, n = 100) {
   if (!uid) return [];
-  const snap = await getDocs(query(
-    collection(db, "users", uid, "solutions"),
-    orderBy("lastSavedAt", "desc"), limit(n),
-  ));
-  return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
+  // Do not order in Firestore here: v1.3's earlier solution summaries used
+  // lastSolvedAt, whereas the refined format uses lastSavedAt. Client sorting
+  // preserves both formats until every player writes a new solution summary.
+  const snap = await getDocs(collection(db, "users", uid, "solutions"));
+  return snap.docs.map((entry) => normalizeSolution(entry.id, entry.data()))
+    .sort((a, b) => Number(b.lastSavedAt || 0) - Number(a.lastSavedAt || 0))
+    .slice(0, n);
 }
 
 export async function getSolutionHistory(uid, archetypeId, n = 30) {
   if (!uid || !archetypeId) return [];
-  const snap = await getDocs(query(
-    collection(db, "users", uid, "solutions", archetypeId, "history"),
-    orderBy("savedAt", "desc"), limit(n),
-  ));
-  return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
+  const snap = await getDocs(collection(db, "users", uid, "solutions", archetypeId, "history"));
+  return snap.docs.map((entry) => normalizeSolutionHistory(entry.id, entry.data()))
+    .sort((a, b) => Number(b.savedAt || 0) - Number(a.savedAt || 0))
+    .slice(0, n);
 }
 
 export async function toggleAccomplishment(profile, archetypeId, accomplished) {
