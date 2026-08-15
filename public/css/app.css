@@ -531,7 +531,7 @@ select.input { cursor: pointer; }
   display: grid; grid-template-columns: 1fr; gap: 20px;
   align-items: stretch;
 }
-@media (min-width: 1080px) { .home-grid { grid-template-columns: 268px 1fr; } }
+@media (min-width: 1080px) { .home-grid { grid-template-columns: 268px minmax(0, 1fr) minmax(220px, 260px); } }
 
 .home-side { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
 .home-main { display: flex; flex-direction: column; min-height: 0; }
@@ -563,6 +563,7 @@ select.input { cursor: pointer; }
   .home-grid { display: flex; flex-direction: column; }
   .home-main { order: 1; }
   .home-side { order: 2; }
+  .home-news { order: 3; }
   .rail { min-height: 0; }
   .rail-body { max-height: 320px; }
 }
@@ -575,6 +576,8 @@ select.input { cursor: pointer; }
   .home-page .home-grid { height: 100%; }
   .home-page .rail { flex: 1; min-height: 120px; }
   .home-page .welcome { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .home-page .home-news { height: 100%; max-height: none; display: flex; flex-direction: column; }
+  .home-page .home-news-list { flex: 1; max-height: none; }
   /* One row of equal cards that fills whatever is left, so selecting a mode
      can't change any card's size — the container decides, not the content. */
   .home-page .gm-grid {

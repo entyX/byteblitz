@@ -44,8 +44,9 @@ export async function renderHome(params, root) {
   page.append(
     streakHost,
     h("div", { class: "home-grid" },
-      h("div", { class: "home-side" }, railHost, newsHost, extrasHost),
-      h("div", { class: "home-main" }, welcomeHost)),
+      h("div", { class: "home-side" }, railHost, extrasHost),
+      h("div", { class: "home-main" }, welcomeHost),
+      newsHost),
   );
 
   // ── Welcome panel ────────────────────────────────────────────────────────
