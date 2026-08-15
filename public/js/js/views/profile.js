@@ -286,6 +286,8 @@ export async function renderProfile(params, root) {
 
     h("div", { class: "profile-achievement-grid mt-4" },
       stat(String(p.puzzlesSolved ?? 0), "Puzzles cleared", "var(--ok)"),
+      stat(String(p.solutionsSaved ?? 0), "Saved solutions", "var(--primary)"),
+      stat(String(p.accomplishments ?? 0), "Accomplishments", "var(--warn)"),
       puzzleRecordsHost(),
       stat(String(p.bestStreak ?? 0), "Best streak"),
       stat(placed ? "PLACED" : `${placementConfidence(p)}/10`, placed ? "Ranked status" : "Confidence", placed ? rank.color : "var(--muted)")),

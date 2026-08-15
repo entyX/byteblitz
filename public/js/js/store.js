@@ -52,6 +52,8 @@ export function blankProfile(uid, username, isAnon) {
 
     totalMatches: 0,
     puzzlesSolved: 0,
+    solutionsSaved: 0,
+    accomplishments: 0,
     bestStreak: 0, streak: 0,
 
     seen: {},          // archetypeId -> true; drives Training Grounds discovery
@@ -219,6 +221,17 @@ export async function deleteAccountData(profile) {
     add(conversation.ref);
   }
 
+  // Saved solutions own a nested history collection, so remove child attempts
+  // before their summary documents as part of the same account cleanup.
+  const savedSolutions = await getDocs(collection(db, "users", uid, "solutions"));
+  for (const solution of savedSolutions.docs) {
+    const attempts = await getDocs(collection(db, "users", uid, "solutions", solution.id, "history"));
+    attempts.forEach((entry) => add(entry.ref));
+    add(solution.ref);
+  }
+  const publicShares = await getDocs(query(collection(db, "sharedSolutions"), where("ownerUid", "==", uid)));
+  publicShares.forEach((entry) => add(entry.ref));
+
   // Current username reservation, profile document, and direct social mirrors.
   if (usernameKey) add(doc(db, "usernames", usernameKey));
   add(doc(db, "users", uid));
@@ -284,7 +297,7 @@ export async function resetAccountProgress(profile) {
     placementGames: 0, placementConfidence: 0, placementBaseRating: null, rankedUnlocked: false,
     // Clearing the selected skill forces onboarding to establish a new base.
     skillLevel: null,
-    totalMatches: 0, puzzlesSolved: 0, bestStreak: 0, streak: 0,
+    totalMatches: 0, puzzlesSolved: 0, solutionsSaved: 0, accomplishments: 0, bestStreak: 0, streak: 0,
     seen: {}, activityDays: {}, tutorialCompleted: false, updatedAt: serverTimestamp(),
   };
   await updateDoc(doc(db, "users", profile.uid), patch);
@@ -601,8 +614,122 @@ export async function recordPuzzleTime(profile, puzzle, timeMs, solved) {
 
 }
 
+// ── Saved solutions, accomplishments, and public shares ────────────────────
+// One summary document per player and puzzle keeps Training Ground quick to
+// render. Each successful submit is also preserved as a timestamped attempt.
+const solutionRef = (uid, archetypeId) => doc(db, "users", uid, "solutions", archetypeId);
+
+export async function saveCompletedSolution(profile, puzzle, { code, language, timeMs, mode }) {
+  if (!profile || isGuestProfile(profile) || !String(code || "").trim()) return null;
+  const ref = solutionRef(profile.uid, puzzle.archetypeId);
+  const previous = await getDoc(ref);
+  const before = previous.exists() ? previous.data() : null;
+  const now = Date.now();
+  const source = String(code).slice(0, 100000);
+  const bestTimeMs = Number.isFinite(before?.bestTimeMs)
+    ? Math.min(before.bestTimeMs, timeMs)
+    : timeMs;
+  const payload = {
+    uid: profile.uid,
+    username: profile.username,
+    archetypeId: puzzle.archetypeId,
+    title: puzzle.title,
+    difficulty: puzzle.difficulty,
+    category: puzzle.category ?? null,
+    code: source,
+    language: language || "python",
+    lastMode: mode || "training",
+    solveCount: Number(before?.solveCount || 0) + 1,
+    firstSolvedAt: before?.firstSolvedAt ?? now,
+    lastSolvedAt: now,
+    bestTimeMs,
+    accomplishment: !!before?.accomplishment,
+    updatedAt: now,
+  };
+  await setDoc(ref, payload, { merge: true });
+  await addDoc(collection(db, "users", profile.uid, "solutions", puzzle.archetypeId, "history"), {
+    code: source,
+    language: payload.language,
+    mode: payload.lastMode,
+    timeMs,
+    solvedAt: now,
+  });
+  if (!before) {
+    try { await updateDoc(doc(db, "users", profile.uid), { solutionsSaved: increment(1) }); } catch {}
+  }
+  return payload;
+}
+
+export async function getSavedSolution(uid, archetypeId) {
+  if (!uid || !archetypeId) return null;
+  const snap = await getDoc(solutionRef(uid, archetypeId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function getSavedSolutions(uid, n = 100) {
+  if (!uid) return [];
+  const snap = await getDocs(query(
+    collection(db, "users", uid, "solutions"),
+    orderBy("lastSolvedAt", "desc"), limit(n),
+  ));
+  return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
+}
+
+export async function getSolutionHistory(uid, archetypeId, n = 30) {
+  if (!uid || !archetypeId) return [];
+  const snap = await getDocs(query(
+    collection(db, "users", uid, "solutions", archetypeId, "history"),
+    orderBy("solvedAt", "desc"), limit(n),
+  ));
+  return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
+}
+
+export async function toggleAccomplishment(profile, archetypeId, accomplished) {
+  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to mark accomplishments.");
+  const ref = solutionRef(profile.uid, archetypeId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Solve this problem before marking it as an accomplishment.");
+  const before = !!snap.data().accomplishment;
+  const next = !!accomplished;
+  if (before === next) return { ...snap.data(), accomplishment: next };
+  await updateDoc(ref, { accomplishment: next, updatedAt: Date.now() });
+  try { await updateDoc(doc(db, "users", profile.uid), { accomplishments: increment(next ? 1 : -1) }); } catch {}
+  return { ...snap.data(), accomplishment: next };
+}
+
+export async function createPublicSolutionShare(profile, archetypeId) {
+  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to share a solution.");
+  const solution = await getSavedSolution(profile.uid, archetypeId);
+  if (!solution) throw new Error("Save a completed solution before sharing it.");
+  const share = await addDoc(collection(db, "sharedSolutions"), {
+    ownerUid: profile.uid,
+    ownerUsername: profile.username,
+    ownerAvatarIcon: profile.avatarIcon ?? null,
+    ownerAvatarHue: profile.avatarHue ?? null,
+    archetypeId: solution.archetypeId,
+    title: solution.title,
+    difficulty: solution.difficulty,
+    category: solution.category ?? null,
+    code: solution.code,
+    language: solution.language,
+    mode: solution.lastMode,
+    bestTimeMs: solution.bestTimeMs ?? null,
+    accomplishment: !!solution.accomplishment,
+    createdAt: Date.now(),
+  });
+  await updateDoc(solutionRef(profile.uid, archetypeId), { lastShareId: share.id, updatedAt: Date.now() });
+  return { id: share.id, ...solution };
+}
+
+export async function getPublicSolutionShare(id) {
+  if (!id) return null;
+  const snap = await getDoc(doc(db, "sharedSolutions", id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
 /**
  * Return the puzzle IDs that have at least one valid recorded solve. The
+
  * Training catalogue uses this to paint its trophy indicators in small batched
  * queries rather than issuing one Firestore request for every visible card.
  */

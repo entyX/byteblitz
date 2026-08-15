@@ -21,6 +21,7 @@ import { renderLeaderboard } from "./views/leaderboard.js";
 import { renderMessages } from "./views/messages.js";
 import { renderProfile } from "./views/profile.js";
 import { renderChangelog } from "./views/changelog.js";
+import { renderPublicSolution } from "./views/share.js";
 
 const NAV = [
   { path: "/", label: "Play" },
@@ -38,7 +39,7 @@ const outlet = h("main", { id: "outlet" });
 function buildShell() {
   const nav = h("nav", { class: "nav" },
     h("div", { class: "nav-inner" },
-      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.2.8")),
+      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.3 [C1 BETA]")),
       navLinks,
       h("div", { class: "nav-right" },
         playerSearchBox({ onExpandedChange: (open) => nav.classList.toggle("search-open", open) }),
@@ -267,6 +268,7 @@ route("/leaderboard", renderLeaderboard);
 route("/messages", renderMessages);
 route("/messages/:uid", renderMessages);
 route("/profile/:uid", renderProfile);
+route("/share/:id", renderPublicSolution);
 route("/changelog", renderChangelog);
 route("/duel/:id", async (params, root) => {
   root.append(h("div", { class: "wrap", style: { paddingTop: "60px" } },

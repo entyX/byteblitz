@@ -329,7 +329,7 @@ select.input { cursor: pointer; }
    of allowing the two controls to overlap on wide navigation bars. */
 .nav.search-open .nav-links { left: calc(50% - clamp(108px, 13vw, 150px)); }
 .nav-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
-.logo-version { font-size: 11px; margin-left: 8px; color: var(--muted-fg); font-weight: 500; display: inline-block; vertical-align: middle; }
+.logo-version { font-size: clamp(8px, .8vw, 11px); margin-left: 8px; color: var(--muted-fg); font-weight: 700; letter-spacing: .03em; display: inline-block; vertical-align: middle; }
 
 /* ── Collapsible search ──────────────────────────────────────────────────── */
 /* Rests as a single icon and slides open on click, so the bar stays clean. */
@@ -1218,6 +1218,7 @@ select.input { cursor: pointer; }
   .nav-search.open { width: 200px; }
 }
 @media (max-width: 760px) {
+  .logo-version { margin-left: 5px; }
   .nav-search.open { width: min(260px, 60vw); }
   /* Keep the avatar, drop the name+rank stack — the chip still opens the profile. */
   .user-chip > .stack { display: none; }
@@ -1413,4 +1414,28 @@ select.input { cursor: pointer; }
   .profile-achievement-grid { grid-template-columns: minmax(0, 1fr); }
   .profile-track-card .between { align-items: center; }
   .profile-division { font-size: 1.05rem; }
+}
+
+/* ── v1.3 Chunk 1 beta: solution library and public shares ─────────────── */
+.solution-library-preview { border: 1px solid hsl(var(--primary-raw) / .32); background: linear-gradient(135deg, hsl(var(--primary-raw) / .08), hsl(240 7% 7% / .8)); padding: 14px; }
+.solution-library-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.solution-library-empty { border: 1px dashed var(--border-bright); padding: 13px; font: 11.5px/1.6 var(--font-mono); color: var(--muted-fg); }
+.solution-modal { max-width: min(820px, calc(100vw - 42px)); }
+.solution-code { margin: 16px 0 0; max-height: min(48vh, 510px); overflow: auto; padding: 16px; border: 1px solid hsl(240 5% 20%); background: #07070a; color: #e7e7ed; font: 12.5px/1.72 var(--font-mono); tab-size: 2; white-space: pre; }
+.solution-history-list { display: grid; gap: 7px; }
+.solution-history-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; width: 100%; padding: 10px 12px; border: 1px solid var(--border); background: hsl(240 6% 7% / .66); color: var(--foreground); text-align: left; }
+.solution-history-row:hover { border-color: hsl(var(--primary-raw) / .55); background: hsl(var(--primary-raw) / .08); }
+.share-hero { position: relative; overflow: hidden; padding: 28px; border: 1px solid hsl(var(--primary-raw) / .5); background: radial-gradient(80% 140% at 0 0, hsl(var(--primary-raw) / .22), transparent 62%), hsl(240 8% 5% / .9); }
+.share-hero::after { content: ""; position: absolute; inset: auto -10% -72px 36%; height: 150px; transform: rotate(-8deg); background: linear-gradient(90deg, transparent, hsl(var(--primary-raw) / .15), transparent); pointer-events: none; }
+.share-stamp { display: inline-flex; padding: 6px 9px; border: 1px solid hsl(var(--primary-raw) / .5); color: var(--primary-bright); background: hsl(var(--primary-raw) / .1); font: 700 9px var(--font-mono); letter-spacing: .17em; }
+.share-owner { display: inline-flex; align-items: center; gap: 10px; padding: 8px 11px; border: 1px solid var(--border); background: hsl(240 7% 7% / .7); color: var(--foreground); text-align: left; }
+.share-owner:hover { border-color: var(--primary); }
+.share-owner > span:last-child { display: grid; gap: 3px; text-align: left; }
+.share-code-card { border: 1px solid var(--border); background: hsl(240 7% 6% / .88); overflow: hidden; }
+.share-code-head { padding: 12px 15px; border-bottom: 1px solid var(--border); background: hsl(240 8% 4% / .86); }
+.share-code { margin: 0; max-height: min(60vh, 650px); border: 0; }
+@media (max-width: 620px) {
+  .solution-library-head, .solution-history-row { align-items: flex-start; flex-direction: column; }
+  .share-hero { padding: 20px; }
+  .solution-code { max-height: 48vh; padding: 13px; font-size: 11.5px; }
 }

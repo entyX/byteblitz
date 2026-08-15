@@ -8,12 +8,13 @@
 // stays honest, its contents are earned.
 // ============================================================================
 
-import { h, add, clear, emptyState, icon, fmtTime, fmtClock, modal, debounce, avatar } from "../ui.js";
+import { h, add, clear, emptyState, icon, fmtTime, fmtClock, fmtAgo, modal, debounce, avatar, toast } from "../ui.js";
 import { session, onSession } from "../session.js";
 import { TIERS, TIME_LIMITS, displayPlacementRating, rankFor } from "../glicko.js";
 import { loadPool } from "../problems.js";
 import {
   getMyPuzzleRecords, puzzleLeaderboard, puzzleLeaderboardDetailed, puzzleLeaderboardIds,
+  getSavedSolution, getSavedSolutions, getSolutionHistory, toggleAccomplishment, createPublicSolutionShare,
   seenMap, isPermissionDenied, isRevealed, starterCount,
 } from "../store.js";
 import { startTraining } from "../game.js";
@@ -28,6 +29,7 @@ export async function renderTraining(params, root) {
 
   let active = sessionStorage.getItem("bb_train_tier") || "Bronze";
   let records = {};
+  let savedSolutions = [];
   let searchTerm = "";
   let showOnly = sessionStorage.getItem("bb_train_filter") || "all"; // all | found
     let unknownLimit = UNKNOWN_PREVIEW;
@@ -42,6 +44,8 @@ export async function renderTraining(params, root) {
     class: "input", type: "text", placeholder: "Filter unlocked puzzles…",
     style: { maxWidth: "300px", paddingLeft: "36px" },
   });
+  const libraryBtn = h("button", { class: "btn", onClick: openSolutionLibrary },
+    icon("target", 14), "Solution library");
   searchInput.addEventListener("input", debounce(() => {
     searchTerm = searchInput.value.trim().toLowerCase();
     paintBody();
@@ -52,9 +56,11 @@ export async function renderTraining(params, root) {
       h("div", {},
         h("div", { class: "eyebrow mb-2" }, "// Practice"),
         h("h1", { class: "head" }, "Training ", h("span", { class: "gradient-text" }, "Grounds"))),
-      h("div", { class: "search-wrap" },
-        h("span", { style: { position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)", display: "flex" } }, icon("search", 15)),
-        searchInput)),
+      h("div", { class: "row gap-2 wrapflex" },
+        libraryBtn,
+        h("div", { class: "search-wrap" },
+          h("span", { style: { position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)", display: "flex" } }, icon("search", 15)),
+          searchInput))),
     h("p", { class: "body-text mb-8", style: { maxWidth: "680px" } },
       "Every difficulty is open from day one and starts you with its first 10% unlocked. The rest reveal themselves as you meet them in an Unranked run or a Ranked duel — until then they stay ???. Times are recorded per puzzle and ranked on their own board. Training never moves a rating."),
     tabsHost, progressHost, bodyHost,
@@ -238,7 +244,7 @@ export async function renderTraining(params, root) {
   // ── Puzzle detail ────────────────────────────────────────────────────────
   function openPuzzle(pz) {
     const rec = records[pz.archetypeId];
-
+    const solutionHost = h("div", { class: "solution-library-preview mt-5" });
     const m = modal(h("div", {},
       h("div", { class: "eyebrow mb-2" }, "// " + pz.difficulty + " puzzle"),
       h("h2", { class: "head mb-3" }, pz.title),
@@ -247,12 +253,86 @@ export async function renderTraining(params, root) {
         h("span", { class: "pill" }, fmtClock(TIME_LIMITS[pz.difficulty]) + " limit"),
         pz.category ? h("span", { class: "pill" }, pz.category.replace(/_/g, " ")) : null,
         rec?.solved ? h("span", { class: "pill pill-ok" }, "best " + fmtTime(rec.timeMs)) : null),
-      h("div", { class: "row gap-3 wrapflex" },
+      solutionHost,
+      h("div", { class: "row gap-3 wrapflex mt-5" },
         h("button", { class: "btn btn-primary grow", onClick: () => { m.close(); startTraining(pz.difficulty, pz.archetypeId); } },
           rec?.solved ? "Beat your time ▸" : "Start puzzle ▸"),
         h("button", { class: "btn", onClick: () => { m.close(); openBoard(pz, false); } },
           icon("trophy", 14), "Leaderboard")),
     ), { wide: true });
+
+    const profile = session.profile;
+    if (!profile || profile.isGuest || profile.isAnonymous) return;
+    clear(solutionHost).append(h("div", { class: "label" }, "// Loading your solution library…"));
+    getSavedSolution(profile.uid, pz.archetypeId).then((solution) => {
+      clear(solutionHost);
+      if (!solution) {
+        solutionHost.append(h("div", { class: "solution-library-empty" },
+          "Solve and submit this problem to save your code, solution history, and a shareable accomplishment."));
+        return;
+      }
+      const accomplishment = h("button", { class: "btn btn-sm", onClick: async () => {
+        accomplishment.disabled = true;
+        try {
+          solution.accomplishment = !solution.accomplishment;
+          await toggleAccomplishment(profile, pz.archetypeId, solution.accomplishment);
+          accomplishment.textContent = solution.accomplishment ? "★ Accomplishment" : "Mark accomplishment";
+          toast(solution.accomplishment ? "Marked as an accomplishment." : "Removed from accomplishments.", "ok");
+        } catch (error) {
+          solution.accomplishment = !solution.accomplishment;
+          toast(error.message || "Couldn't update accomplishment.", "err");
+        } finally { accomplishment.disabled = false; }
+      } }, solution.accomplishment ? "★ Accomplishment" : "Mark accomplishment");
+      const share = h("button", { class: "btn btn-sm", onClick: async () => {
+        share.disabled = true;
+        try {
+          const created = await createPublicSolutionShare(profile, pz.archetypeId);
+          const url = `${window.location.origin}${window.location.pathname}#/share/${created.id}`;
+          try { await navigator.clipboard.writeText(url); toast("Public solution link copied.", "ok"); }
+          catch { prompt("Copy your public solution link:", url); }
+        } catch (error) { toast(error.message || "Couldn't create public share.", "err"); }
+        finally { share.disabled = false; }
+      } }, icon("target", 13), "Share");
+      solutionHost.append(
+        h("div", { class: "solution-library-head" },
+          h("div", {},
+            h("div", { class: "label" }, "// Saved solution"),
+            h("div", { class: "mono mt-1", style: { fontSize: "12px", color: "var(--muted-fg)" } },
+              `${solution.solveCount} accepted ${solution.solveCount === 1 ? "submit" : "submits"} · best ${fmtTime(solution.bestTimeMs)}`)),
+          h("span", { class: "pill pill-ok" }, solution.language)),
+        h("div", { class: "row gap-2 wrapflex mt-3" },
+          h("button", { class: "btn btn-sm btn-primary", onClick: () => openSavedSolution(pz, solution) }, "View code"),
+          accomplishment, share),
+      );
+    }).catch(() => {
+      clear(solutionHost).append(h("div", { class: "solution-library-empty" }, "Your solution library is temporarily unavailable."));
+    });
+  }
+
+  async function openSavedSolution(pz, solution) {
+    const historyHost = h("div", { class: "solution-history-list mt-5" }, h("div", { class: "label" }, "// Loading solve history…"));
+    const code = h("pre", { class: "solution-code" }, solution.code || "// No saved source available.");
+    modal(h("div", { class: "solution-modal" },
+      h("div", { class: "eyebrow mb-2" }, "// Saved solution"),
+      h("h2", { class: "head mb-2" }, pz.title),
+      h("p", { class: "mono", style: { fontSize: "12px", color: "var(--muted-fg)" } },
+        `${solution.language} · ${solution.lastMode} · best ${fmtTime(solution.bestTimeMs)}`),
+      code,
+      h("div", { class: "section-title mt-6" }, "// Submission history"),
+      historyHost,
+    ), { wide: true });
+    try {
+      const history = await getSolutionHistory(session.profile.uid, pz.archetypeId);
+      clear(historyHost);
+      if (!history.length) historyHost.append(h("div", { class: "solution-library-empty" }, "No prior saved submissions."));
+      else historyHost.append(...history.map((entry, index) => h("button", { class: "solution-history-row", onClick: () => {
+        code.textContent = entry.code || "// Source unavailable";
+      } },
+        h("span", { class: "mono" }, `#${history.length - index} · ${fmtTime(entry.timeMs)}`),
+        h("span", { class: "label" }, `${entry.language} · ${entry.mode} · ${fmtAgo(entry.solvedAt)}`))));
+    } catch {
+      clear(historyHost).append(h("div", { class: "solution-library-empty" }, "Couldn't load submission history."));
+    }
   }
 
   // ── Per-puzzle leaderboard ───────────────────────────────────────────────
@@ -322,8 +402,44 @@ export async function renderTraining(params, root) {
 
   // ── Load records, then paint ─────────────────────────────────────────────
   async function loadRecords() {
-    try { records = await getMyPuzzleRecords(session.profile); }
-    catch (e) { console.error(e); records = {}; }
+    const profile = session.profile;
+    try {
+      records = await getMyPuzzleRecords(profile);
+      savedSolutions = profile && !profile.isGuest && !profile.isAnonymous
+        ? await getSavedSolutions(profile.uid)
+        : [];
+    } catch (e) {
+      console.error(e);
+      records = {};
+      savedSolutions = [];
+    }
+    libraryBtn.textContent = `Solution library${savedSolutions.length ? ` · ${savedSolutions.length}` : ""}`;
+  }
+
+  function openSolutionLibrary() {
+    const profile = session.profile;
+    if (!profile || profile.isGuest || profile.isAnonymous) {
+      toast("Sign in to keep a solution library.", "err");
+      return;
+    }
+    const host = h("div", { class: "solution-history-list" });
+    const m = modal(h("div", { class: "solution-modal" },
+      h("div", { class: "eyebrow mb-2" }, "// Your solution library"),
+      h("h2", { class: "head mb-3" }, `${savedSolutions.length} saved ${savedSolutions.length === 1 ? "solution" : "solutions"}`),
+      h("p", { class: "mono mb-5", style: { fontSize: "12px", color: "var(--muted-fg)", lineHeight: "1.6" } },
+        "Every accepted submit is saved here with its code, time, mode, and submission history."),
+      host,
+    ), { wide: true });
+    if (!savedSolutions.length) {
+      host.append(h("div", { class: "solution-library-empty" }, "Solve and submit a problem to start your library."));
+      return;
+    }
+    savedSolutions.forEach((solution) => host.append(h("button", { class: "solution-history-row", onClick: () => {
+      m.close();
+      openSavedSolution(solution, solution);
+    } },
+      h("span", { class: "mono", style: { fontWeight: "700" } }, solution.title),
+      h("span", { class: "label" }, `${solution.difficulty} · ${solution.solveCount} submits · ${fmtAgo(solution.lastSolvedAt)}`))));
   }
 
   paintTabs();

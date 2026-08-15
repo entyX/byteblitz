@@ -213,7 +213,7 @@ class Arena {
               h("div", { class: "bar" }, bar))))),
     );
 
-        push("BYTEBLITZ // CODE BURST v1.2.8");
+        push("BYTEBLITZ // CODE BURST v1.3 [C1 BETA]");
 
     await wait(180); push("> Establishing secure session…"); bump(15);
     await wait(220); push("> Session authenticated. ✓"); bump(30);
@@ -728,10 +728,17 @@ class Arena {
     this.releaseLockdown();
 
     const timeMs = this.elapsedMs();
+    const submission = {
+      timeMs,
+      passed: reason === "solved" ? this.problem.testCases.length : this.bestPassed,
+      message,
+      code: this.ta?.value ?? this.code ?? "",
+      language: this.lang,
+    };
     if (reason === "solved") {
-      this.cfg.onSolved?.({ timeMs, passed: this.problem.testCases.length, message });
+      this.cfg.onSolved?.(submission);
     } else {
-      this.cfg.onFailed?.({ reason, passed: this.bestPassed, timeMs, message });
+      this.cfg.onFailed?.({ ...submission, reason });
     }
   }
 

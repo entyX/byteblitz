@@ -6,9 +6,20 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.8",
+    version: "v1.3 [C1 BETA]",
     date: "August 14, 2026",
     current: true,
+    items: [
+      "Chunk 1 beta introduces a persistent Training Ground solution library. Accepted submissions now retain source code, language, mode, best time, and a per-problem history of past completed solutions.",
+      "Solved problems can be marked as accomplishments and shared through a read-only public solution page with the owner, puzzle details, accepted source, and a copyable link.",
+      "Player profiles now highlight solved puzzles, saved solutions, accomplishments, ELO, rank, win-loss record, best times, streaks, and puzzle records as one evolving player identity.",
+      "Private source and solution history remain owner-only; a code snapshot becomes public only when its owner explicitly creates a share link.",
+    ],
+  },
+  {
+    version: "v1.2.8",
+    date: "August 14, 2026",
+    current: false,
     items: [
       "New email-password accounts now receive a verification link at sign-up and remain inactive until the inbox owner confirms it.",
       "The account activation screen can resend the verification email and refresh Firebase after the link is opened. Unverified accounts cannot reserve usernames, create profiles, complete onboarding, enter Ranked, use friends or chat, or appear on public boards.",

@@ -16,7 +16,7 @@ import {
 } from "./glicko.js";
 import {
   applySoloResult, applyDuelResult, recordPuzzleTime, puzzleLeaderboard,
-  getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence,
+  saveCompletedSolution, getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence,
 
 } from "./store.js";
 import { session, requireAccount, requireAnySession, refreshGuest } from "./session.js";
@@ -94,6 +94,11 @@ export async function startSolo(preset) {
             soloRating: res.rating, soloRd: res.rd, soloVol: res.vol,
             rating: res.rankedRating, placementGames: res.placementGames,
             placementConfidence: res.placementConfidence,
+          });
+        }
+        if (solved) {
+          await saveCompletedSolution(profile, problem, {
+            code: r.code, language: r.language, timeMs: r.timeMs, mode: "unranked",
           });
         }
         refreshGuest();
@@ -274,6 +279,11 @@ export async function startTraining(difficulty, archetypeId) {
     if (profile) {
       try {
         outcome = await recordPuzzleTime(profile, problem, r.timeMs, solved);
+        if (solved) {
+          await saveCompletedSolution(profile, problem, {
+            code: r.code, language: r.language, timeMs: r.timeMs, mode: "training",
+          });
+        }
         refreshGuest();
         if (!profile.isAnonymous) board = await puzzleLeaderboard(problem.archetypeId, 10);
       } catch (e) {
@@ -500,8 +510,14 @@ export async function enterDuel(duelId, identity = null) {
       catch { toast("Couldn't send the draw offer.", "err"); }
     },
     onSolved: async (r) => {
-      try { await mm.submitSolve(duelId, playerNum, r.timeMs / 1000, latest); }
-      catch (e) { console.error(e); }
+      try {
+        if (profile) {
+          await saveCompletedSolution(profile, problem, {
+            code: r.code, language: r.language, timeMs: r.timeMs, mode: "ranked",
+          });
+        }
+        await mm.submitSolve(duelId, playerNum, r.timeMs / 1000, latest);
+      } catch (e) { console.error(e); }
     },
     onFailed: async (r) => {
       if (r.reason === "timeout") {
