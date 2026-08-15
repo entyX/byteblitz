@@ -7,7 +7,7 @@ import { h } from "../ui.js";
 const RELEASES = [
   {
     version: "v1.3 [C1 BETA]",
-    date: "August 14, 2026",
+    date: "August 15, 2026",
     current: true,
     items: [
       "Chunk 1 beta introduces a dedicated My Solutions workspace in Training Grounds. After Training, Unranked, or Ranked runs, players can visibly save an accepted solution or an incomplete draft with source, language, mode, result, time, tests, and history.",

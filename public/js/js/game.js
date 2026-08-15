@@ -86,6 +86,9 @@ export async function startSolo(preset) {
           solved,
           timeMs: solved ? r.timeMs : limit * 1000,
           difficulty,
+          archetypeId: problem.archetypeId,
+          puzzleTitle: problem.title,
+          category: problem.category ?? null,
           testsPassed: r.passed ?? 0,
           totalTests: problem.testCases?.length ?? 0,
         });
@@ -631,7 +634,8 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
         profile.uid, profile,
         { uid: opponent.uid, username: opponent.username, rating: opponent.rating, rd: opponent.rd },
         score, result, {
-          duelId: d.id, difficulty: d.difficulty, winBy,
+          duelId: d.id, difficulty: d.difficulty, archetypeId: problem.archetypeId,
+          puzzleTitle: problem.title, category: problem.category ?? null, winBy,
           testsPassed: myTests, totalTests,
           timeMs: myTime ? Math.round(myTime * 1000) : null,
         }

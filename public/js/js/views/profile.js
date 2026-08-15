@@ -25,6 +25,13 @@ import { challengeFriend } from "../game.js";
 import { openAvatarPicker } from "../onboarding.js";
 import { navigate } from "../router.js";
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+function svgNode(tag, attrs = {}) {
+  const node = document.createElementNS(SVG_NS, tag);
+  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
+  return node;
+}
+
 export async function renderProfile(params, root) {
   const unsubs = [];
   const page = h("div", { class: "wrap", style: { paddingTop: "32px", paddingBottom: "72px" } });
@@ -440,14 +447,17 @@ export async function renderProfile(params, root) {
       });
       const points = coords.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
       const trendStroke = "#ff3b30";
+      const chart = svgNode("svg", { viewBox: `0 0 ${width} ${height}`, class: "history-chart", role: "img", "aria-label": "Rating history graph" });
+      chart.append(
+        svgNode("line", { x1: pad, y1: height - pad, x2: width - pad, y2: height - pad, stroke: "#34343d", "stroke-width": "1" }),
+        svgNode("polyline", { points, fill: "none", stroke: trendStroke, "stroke-width": "3.5", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+        ...coords.map(({ x, y }, index) => svgNode("circle", { cx: x, cy: y, r: index === coords.length - 1 ? "4.8" : "3", fill: trendStroke, stroke: "#09090b", "stroke-width": "2" })),
+      );
       panel.append(
         h("div", { class: "between mb-3" },
           h("span", { class: "label" }, "// Rating trend · last " + series.length),
           h("span", { class: "label" }, `${Math.round(min)}–${Math.round(max)}`)),
-        h("svg", { viewBox: `0 0 ${width} ${height}`, class: "history-chart", role: "img", "aria-label": "Rating history graph" },
-          h("line", { x1: pad, y1: height - pad, x2: width - pad, y2: height - pad, stroke: "#34343d", "stroke-width": "1" }),
-          h("polyline", { points, fill: "none", stroke: trendStroke, "stroke-width": "3.5", "stroke-linecap": "round", "stroke-linejoin": "round" }),
-          ...coords.map(({ x, y }, index) => h("circle", { cx: x, cy: y, r: index === coords.length - 1 ? "4.8" : "3", fill: trendStroke, stroke: "#09090b", "stroke-width": "2" }))),
+        chart,
         h("div", { class: "divide mt-4" }, ...rows.map((row) => {
           const won = row.result === "win" || row.result === "solved";
           const delta = Number(row.delta ?? 0);

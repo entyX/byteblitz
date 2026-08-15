@@ -1487,3 +1487,31 @@ select.input { cursor: pointer; }
 .home-news-empty { padding: 20px 0; color: var(--muted-fg); font: 11.5px/1.6 var(--font-mono); }
 @media (min-width: 1240px) { .gm-grid { grid-template-columns: 1fr 1fr 1.15fr; grid-auto-rows: minmax(444px, auto); } }
 @media (max-width: 760px) { .home-news { max-height: none; } .home-news-list { max-height: none; } .solutions-layout { grid-template-columns: 1fr; } .solutions-side { position: static; grid-template-columns: repeat(3, minmax(0, 1fr)); } .solutions-side .label { grid-column: 1 / -1; } .solutions-side-link { text-align: center; border-left: 0; border-bottom: 2px solid transparent; } .solutions-side-link.active { border-bottom-color: var(--primary); } .solutions-filter-divider { display: none; } }
+
+/* ── v1.3 Training Ground navigation refinement ─────────────────────────── */
+.training-primary-nav { display: flex; align-items: stretch; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); }
+.training-tier-nav { display: inline-flex; min-width: 0; overflow-x: auto; }
+.training-primary-nav .tab { flex: none; }
+.training-solutions-tab { display: inline-flex; flex: none; align-items: center; gap: 7px; padding: 0 14px; border: 1px solid transparent; border-bottom: 0; background: hsl(240 7% 7% / .66); color: var(--muted-fg); font: 700 10.5px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.training-solutions-tab:hover, .training-solutions-tab.active { color: var(--foreground); border-color: hsl(var(--primary-raw) / .58); background: hsl(var(--primary-raw) / .1); }
+.training-search { width: min(520px, 72vw); }
+.training-content-layout { display: grid; grid-template-columns: minmax(0, 1fr) 206px; gap: 20px; align-items: start; }
+.training-content-main { min-width: 0; }
+.training-filter-rail { min-width: 0; }
+.training-filter-side { display: grid; gap: 5px; position: sticky; top: 80px; padding: 14px; border: 1px solid var(--border); background: hsl(240 7% 7% / .68); }
+.training-filter-side .solutions-side-link { width: 100%; }
+.solution-play-icon { width: 30px; min-width: 30px; height: 28px; padding: 0; display: inline-grid; place-items: center; }
+.solution-view-btn { min-width: 146px; }
+.accomplishment-btn { min-width: 184px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.solution-public-url { display: grid; gap: 5px; min-width: 0; padding: 10px; border: 1px dashed hsl(140 70% 50% / .4); background: hsl(140 70% 50% / .045); }
+.solution-share-link { overflow: hidden; color: var(--ok); font: 11px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.solution-share-link:hover { text-decoration: underline; }
+@media (max-width: 760px) {
+  .training-primary-nav { align-items: stretch; }
+  .training-tier-nav { flex: 1; }
+  .training-solutions-tab { padding: 0 10px; font-size: 9px; }
+  .training-content-layout { grid-template-columns: 1fr; }
+  .training-filter-side { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .training-filter-side .label { grid-column: 1 / -1; }
+  .training-search { width: 100%; }
+}

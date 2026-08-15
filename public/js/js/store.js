@@ -389,7 +389,8 @@ export async function applyDuelResult(uid, profile, opponent, score, result, his
     await setDoc(doc(db, "users", uid, "history", `duel_${history.duelId}`), {
       mode: "ranked", duelId: history.duelId, result, score,
       opponentUid: opponent.uid ?? null, opponentUsername: opponent.username ?? "Opponent",
-      difficulty: history.difficulty ?? null, winBy: history.winBy ?? null,
+      difficulty: history.difficulty ?? null, archetypeId: history.archetypeId ?? null,
+      puzzleTitle: history.puzzleTitle ?? null, category: history.category ?? null, winBy: history.winBy ?? null,
       ratingBefore: Math.round(profile.rating), ratingAfter: Math.round(next.rating),
       delta: Math.round(next.rating) - Math.round(profile.rating),
       testsPassed: Number(history.testsPassed) || 0, totalTests: Number(history.totalTests) || 0,
@@ -405,7 +406,7 @@ export async function applyDuelResult(uid, profile, opponent, score, result, his
 // Stored under the `solo*` field names the collection has always used; the UI
 // calls this track "Unranked".
 export async function applySoloResult(uid, profile, opts) {
-  const { solved, timeMs, difficulty, testsPassed = 0, totalTests = 0 } = opts;
+  const { solved, timeMs, difficulty, archetypeId = null, puzzleTitle = null, category = null, testsPassed = 0, totalTests = 0 } = opts;
   const secs = timeMs / 1000;
 
   // Build the player's unranked "me" object first so the soloScore function
@@ -480,6 +481,7 @@ export async function applySoloResult(uid, profile, opts) {
     await updateDoc(doc(db, "users", uid), updates);
     await addDoc(collection(db, "users", uid, "history"), {
       mode: "unranked", result: solved ? "solved" : "missed", difficulty,
+      archetypeId, puzzleTitle, category,
       timeMs: solved ? timeMs : null, score,
       ratingBefore: Math.round(profile.soloRating ?? next.rating),
       ratingAfter: Math.round(next.rating),
@@ -616,6 +618,31 @@ export async function recordPuzzleTime(profile, puzzle, timeMs, solved) {
 }
 
 // ── Saved solutions, accomplishments, and public shares ────────────────────
+
+/**
+ * Repair missing Training leaderboard records from completed saved solutions.
+ * This is intentionally one-way and only fills a missing record; it never
+ * overwrites a player’s established Training best time.
+ */
+export async function syncSavedSolutionsToPuzzleRecords(profile) {
+  if (!profile || isGuestProfile(profile)) return 0;
+  const saved = await getSavedSolutions(profile.uid, 250);
+  let repaired = 0;
+  for (const solution of saved) {
+    if (!solution.completed || !Number.isFinite(solution.bestTimeMs) || solution.bestTimeMs <= 0) continue;
+    const existing = await getPuzzleRecord(solution.archetypeId, profile.uid);
+    if (existing?.solved) continue;
+    await recordPuzzleTime(profile, {
+      archetypeId: solution.archetypeId,
+      title: solution.title || solution.archetypeId,
+      difficulty: solution.difficulty || "Bronze",
+      category: solution.category ?? null,
+    }, solution.bestTimeMs, true);
+    repaired += 1;
+  }
+  return repaired;
+}
+
 // One summary document per player and puzzle keeps Training Ground quick to
 // render. Each successful submit is also preserved as a timestamped attempt.
 const solutionRef = (uid, archetypeId) => doc(db, "users", uid, "solutions", archetypeId);
@@ -716,6 +743,46 @@ export async function getSavedSolution(uid, archetypeId) {
   return snap.exists() ? normalizeSolution(snap.id, snap.data()) : null;
 }
 
+// Before the solution library existed, accepted runs were stored only in
+// puzzleTimes. Materialize a minimal, code-less summary when a player wants to
+// turn one of those verified legacy clears into an accomplishment.
+export async function getAccomplishableSolution(profile, archetypeId) {
+  if (!profile || isGuestProfile(profile) || !archetypeId) return null;
+  const existing = await getSavedSolution(profile.uid, archetypeId);
+  if (existing) return existing;
+  const record = await getPuzzleRecord(archetypeId, profile.uid);
+  if (!record?.solved) return null;
+  const now = Number(record.updatedAt) || Date.now();
+  const payload = {
+    uid: profile.uid,
+    username: profile.username,
+    archetypeId,
+    title: record.title || archetypeId,
+    difficulty: record.difficulty || "Bronze",
+    category: null,
+    code: "",
+    language: "—",
+    lastMode: "legacy",
+    completed: true,
+    legacy: true,
+    lastStatus: "completed",
+    saveCount: 0,
+    completedSubmits: 1,
+    incompleteSaves: 0,
+    firstSavedAt: now,
+    lastSavedAt: now,
+    bestTimeMs: Number.isFinite(record.timeMs) ? record.timeMs : null,
+    accomplishment: false,
+    pinned: false,
+    isPublic: false,
+    publicShareId: null,
+    updatedAt: now,
+  };
+  await setDoc(solutionRef(profile.uid, archetypeId), payload);
+  try { await updateDoc(doc(db, "users", profile.uid), { solutionsSaved: increment(1) }); } catch {}
+  return normalizeSolution(archetypeId, payload);
+}
+
 export async function getSavedSolutions(uid, n = 100) {
   if (!uid) return [];
   // Do not order in Firestore here: v1.3's earlier solution summaries used
@@ -738,21 +805,42 @@ export async function getSolutionHistory(uid, archetypeId, n = 30) {
 export async function toggleAccomplishment(profile, archetypeId, accomplished) {
   if (!profile || isGuestProfile(profile)) throw new Error("Sign in to mark accomplishments.");
   const ref = solutionRef(profile.uid, archetypeId);
-  const snap = await getDoc(ref);
-  if (!snap.exists() || !snap.data().completed) throw new Error("Complete this problem before marking it as an accomplishment.");
-  const before = !!snap.data().accomplishment;
+  let snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await getAccomplishableSolution(profile, archetypeId);
+    snap = await getDoc(ref);
+  }
+  const data = snap.exists() ? snap.data() : null;
+  if (!data?.completed) throw new Error("Complete this problem before marking it as an accomplishment.");
+  const before = !!data.accomplishment;
   const next = !!accomplished;
-  if (before === next) return { ...snap.data(), accomplishment: next };
-  const pinned = !next ? false : !!snap.data().pinned;
-  await updateDoc(ref, { accomplishment: next, pinned, updatedAt: Date.now() });
-  const profileRef = doc(db, "users", profile.uid);
+  if (before === next) return normalizeSolution(snap.id, { ...data, accomplishment: next });
+
+  const userRef = doc(db, "users", profile.uid);
+  const userData = await getDoc(userRef).then((entry) => entry.exists() ? entry.data() : profile).catch(() => profile);
+  const oldId = userData?.pinnedAccomplishment?.archetypeId;
+  const now = Date.now();
+  let pinnedAccomplishment = null;
+  if (next) {
+    if (oldId && oldId !== archetypeId) {
+      try { await updateDoc(solutionRef(profile.uid, oldId), { pinned: false, updatedAt: now }); } catch {}
+    }
+    pinnedAccomplishment = {
+      archetypeId,
+      title: data.title || archetypeId,
+      difficulty: data.difficulty || null,
+      category: data.category ?? null,
+      pinnedAt: now,
+    };
+  }
+  await updateDoc(ref, { accomplishment: next, pinned: next, updatedAt: now });
   try {
-    await updateDoc(profileRef, {
+    await updateDoc(userRef, {
       accomplishments: increment(next ? 1 : -1),
-      ...(!next && profile.pinnedAccomplishment?.archetypeId === archetypeId ? { pinnedAccomplishment: null } : {}),
+      pinnedAccomplishment: next ? pinnedAccomplishment : (oldId === archetypeId ? null : userData?.pinnedAccomplishment ?? null),
     });
   } catch {}
-  return { ...snap.data(), accomplishment: next, pinned };
+  return normalizeSolution(snap.id, { ...data, accomplishment: next, pinned: next });
 }
 
 export async function pinAccomplishment(profile, archetypeId, pinned) {
@@ -795,6 +883,7 @@ export async function setSolutionVisibility(profile, archetypeId, isPublic) {
     return { ...solution, isPublic: false, publicShareId: null };
   }
   if (!solution.completed) throw new Error("Only completed solutions can be shared publicly.");
+  if (!String(solution.code || "").trim()) throw new Error("This legacy clear has no saved source code to share publicly.");
   const share = {
     ownerUid: profile.uid,
     ownerUsername: profile.username,
