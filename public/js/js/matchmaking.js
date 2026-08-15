@@ -375,8 +375,23 @@ export async function resolveTimeout(duelId, duel) {
   });
 }
 
-export async function abortDuel(duelId, uid) {
-  try { await updateDoc(doc(db, "duels", duelId), { status: "aborted", abortedBy: uid }); } catch {}
+/** End a duel without selecting a winner, used for disconnects and explicit withdrawals. */
+export async function abortDuel(duelId, uid = null, reason = "disconnect") {
+  const duelRef = doc(db, "duels", duelId);
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(duelRef);
+      if (!snap.exists()) return;
+      const duel = snap.data();
+      if (duel.status === "complete" || duel.status === "aborted") return;
+      tx.update(duelRef, {
+        status: "aborted",
+        abortedBy: uid,
+        abortedReason: reason,
+        abortedAt: Date.now(),
+      });
+    });
+  } catch { /* A concurrent normal result always wins over a neutral abort. */ }
 }
 
 export async function offerDraw(duelId, uid) {

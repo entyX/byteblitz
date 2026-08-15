@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "duelPresence": {
+      "$duelId": {
+        ".read": "auth != null && data.child('participants').child(auth.uid).val() === true",
+        "participants": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "sessions": {
+          "$uid": {
+            "$sessionId": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -56,6 +56,8 @@ class Arena {
     this.lastMemoryBytes = null;
     this.submitting = false;
     this.timer = null;
+    this.autoStartTimer = null;
+    this.booting = false;
     this.timeLeft = cfg.timeLimit;
     this.cleanups = [];
         this.results = [];
@@ -74,6 +76,7 @@ class Arena {
   }
 
     destroy() {
+    if (this.autoStartTimer) { clearTimeout(this.autoStartTimer); this.autoStartTimer = null; }
     this.stopClock();
     this.releaseLockdown();
     this.referenceCleanups.forEach((fn) => { try { fn(); } catch {} });
@@ -141,6 +144,13 @@ class Arena {
       ),
     );
 
+    if (this.cfg.mode === "duel" && this.cfg.startAtMs) {
+      const wait = Math.max(0, this.cfg.startAtMs - Date.now());
+      this.autoStartTimer = setTimeout(() => {
+        if (!this.finished && !this.booting) this.beginBoot();
+      }, wait);
+    }
+
     function rule(t, d) {
       return h("div", { class: "row gap-3", style: { alignItems: "flex-start" } },
         h("span", { class: "dot", style: { marginTop: "7px" } }),
@@ -155,17 +165,20 @@ class Arena {
     if (this.cfg.mode === "duel") {
       const ok = await confirmModal(
         "Abandon match",
-        "Your opponent is already waiting. Backing out now counts as a resignation and costs you rating.",
-        "Resign"
+        "Leaving now costs you ELO, but your opponent receives no ELO. They will be told that the match was aborted.",
+        "Abandon match"
       );
       if (!ok) return;
-      this.cfg.onFailed?.({ reason: "abandoned", passed: 0, timeMs: 0 });
+      await this.cfg.onFailed?.({ reason: "abandoned", passed: this.bestPassed, timeMs: this.elapsedMs(), code: this.ta?.value ?? this.code ?? "", language: this.lang, submissionCount: this.submissionCount, runtimeMs: this.lastRuntimeMs, memoryBytes: this.lastMemoryBytes });
     }
     this.exit();
   }
 
   // ── Boot screen (warms the runtime) ───────────────────────────────────────
   async beginBoot() {
+    if (this.finished || this.booting) return;
+    this.booting = true;
+    if (this.autoStartTimer) { clearTimeout(this.autoStartTimer); this.autoStartTimer = null; }
     // Fullscreen must be requested from inside the click handler.
     this.enteringFs = true;
     try {
@@ -615,33 +628,25 @@ class Arena {
     };
 
     const onFs = () => {
-      if (!document.fullscreenElement) bail("You exited fullscreen. Match resigned.");
+      if (this.cfg.mode !== "duel" && !document.fullscreenElement) bail("You exited fullscreen.");
     };
     const onVis = () => {
-      if (document.hidden) bail("You switched away from the page. Match resigned.");
+      if (this.cfg.mode !== "duel" && document.hidden) bail("You switched away from the page.");
     };
-    const onBlur = () => bail("You left the arena window. Match resigned.");
-    const onBeforeUnload = (e) => {
-      if (this.finished || !this.started) return;
-      e.preventDefault();
-      e.returnValue = "";
-      return "";
-    };
+    const onBlur = () => { if (this.cfg.mode !== "duel") bail("You left the arena window."); };
+    // Reloads, tab closes, and temporary network loss are resolved neutrally by
+    // the dedicated live-presence channel after a reconnect grace period.
+    const onPageHide = () => { if (this.cfg.mode !== "duel") bail("Solo run left."); };
 
     document.addEventListener("fullscreenchange", onFs);
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("blur", onBlur);
-    window.addEventListener("beforeunload", onBeforeUnload);
-    // Treat hard closes just like visibility changes. Duels forfeit; solo runs
-    // settle as neutral exits so no ELO is awarded or lost after a tab switch.
-    const onPageHide = () => bail(this.cfg.mode === "duel" ? "Page closed. Match resigned." : "Solo run left.");
     window.addEventListener("pagehide", onPageHide);
 
     this.cleanups.push(
       () => document.removeEventListener("fullscreenchange", onFs),
       () => document.removeEventListener("visibilitychange", onVis),
       () => window.removeEventListener("blur", onBlur),
-      () => window.removeEventListener("beforeunload", onBeforeUnload),
       () => window.removeEventListener("pagehide", onPageHide),
     );
   }
@@ -786,7 +791,11 @@ class Arena {
     this.finished = true;
     this.stopClock();
     this.releaseLockdown();
-    this.cfg.onForcedEnd?.({ reason, message, timeMs: this.elapsedMs(), passed: this.bestPassed });
+    this.cfg.onForcedEnd?.({
+      reason, message, timeMs: this.elapsedMs(), passed: this.bestPassed,
+      code: this.ta?.value ?? this.code ?? "", language: this.lang,
+      submissionCount: this.submissionCount, runtimeMs: this.lastRuntimeMs, memoryBytes: this.lastMemoryBytes,
+    });
   }
 
   /** Swap the arena contents for an outcome screen. */

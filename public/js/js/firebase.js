@@ -6,6 +6,11 @@ import {
 import {
   getFirestore, onSnapshot as firebaseOnSnapshot,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import {
+  getDatabase, ref as databaseRef, set as databaseSet, remove as databaseRemove,
+  onValue as databaseOnValue, onDisconnect as databaseOnDisconnect,
+  serverTimestamp as databaseServerTimestamp,
+} from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyADxqvXuy61QfRXyd7gLV6mWavokJ3InSg",
@@ -15,11 +20,19 @@ const firebaseConfig = {
   messagingSenderId: "344331634699",
   appId: "1:344331634699:web:6f8f7b7ee5834bb83c9f0e",
   measurementId: "G-B6DL8J108T",
+  databaseURL: "https://byteblitzonline-default-rtdb.firebaseio.com",
 };
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const rtdb = getDatabase(app);
+export const rtdbRef = databaseRef;
+export const rtdbSet = databaseSet;
+export const rtdbRemove = databaseRemove;
+export const rtdbOnValue = databaseOnValue;
+export const rtdbOnDisconnect = databaseOnDisconnect;
+export const rtdbServerTimestamp = databaseServerTimestamp;
 export const googleProvider = new GoogleAuthProvider();
 
 googleProvider.setCustomParameters({ prompt: "select_account" });

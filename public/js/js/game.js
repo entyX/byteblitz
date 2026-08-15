@@ -7,6 +7,8 @@
 
 import { h, clear, modal, toast, fmtTime, confirmModal } from "./ui.js";
 import { openArena } from "./arena.js";
+import { joinDuelPresence } from "./duel-presence.js";
+
 import {
   randomProblem, problemForSeed, problemById, TESTS_PER_PROBLEM,
 } from "./problems.js";
@@ -109,11 +111,12 @@ export async function startSolo(preset) {
       }
     }
 
+    const autoSaved = await autoSaveAttempt(profile, problem, r, { mode: "unranked", completed: solved });
     arena.showResult(soloResultScreen({
-      solved, reason: r.reason, timeMs: r.timeMs, limit, difficulty, problem, res,
+      solved, reason: r.reason, timeMs: r.timeMs, limit, difficulty, problem, res, submission: r,
       placement: placing,
       signedOut: !profile || profile.isGuest || profile.isAnonymous,
-      saveAction: () => saveAttempt(profile, problem, r, { mode: "unranked", completed: solved }),
+      autoSaved,
       onAgain: () => { arena.destroy(); startSolo(); },
       onHome: () => arena.exit(),
     }));
@@ -121,7 +124,7 @@ export async function startSolo(preset) {
 }
 
 function soloResultScreen(o) {
-  const { solved, reason, timeMs, difficulty, problem, res, placement, signedOut } = o;
+  const { solved, reason, timeMs, difficulty, problem, res, submission, placement, signedOut, autoSaved } = o;
   const delta = res ? Math.round(res.rating) - res.before : 0;
   const par = PAR_TIME[difficulty];
 
@@ -139,10 +142,20 @@ function soloResultScreen(o) {
           ? "You left the arena, so this Unranked run was not recorded and your ELO is unchanged."
           : `${problem.title} — better luck next run.`),
 
+    h("div", { class: "postmatch-problem mb-5" },
+      h("span", { class: "label" }, "Problem"),
+      h("span", { class: "mono" }, problem.title),
+      h("span", { class: "label" }, difficulty)),
+    h("div", { class: "stats postmatch-metrics mb-5" },
+      stat(solved ? fmtTime(timeMs) : "—", "Time to solve"),
+      stat(String(submission?.submissionCount || 0), "Submissions"),
+      stat(formatRuntime(submission?.runtimeMs), "Test runtime"),
+      stat(formatMemory(submission?.memoryBytes), "Memory delta"),
+      stat(`${submission?.passed || 0}/${problem.testCases?.length || 0}`, "Tests passed"),
+    ),
     h("div", { class: "stats mb-6" },
-      stat(solved ? fmtTime(timeMs) : "—", "Your time"),
       stat(par ? par + "s" : "—", "Par time"),
-      stat(res ? displayPlacementRating(res.rating, res.rd, { placementGames: res.placementGames }) : "—", "Unranked ELO"),
+      stat(res ? animatedElo(res.before, res.rating, (value) => displayPlacementRating(value, res.rd, { placementGames: res.placementGames })) : "—", "Unranked ELO"),
       stat(res ? (delta >= 0 ? "+" : "") + delta : "0", res ? "Change" : "No ELO change", res && delta >= 0 ? "var(--ok)" : res ? "var(--primary)" : "var(--muted)"),
     ),
 
@@ -161,8 +174,8 @@ function soloResultScreen(o) {
             "★ New personal best for ", difficulty, "."))
       : null,
 
-    h("div", { class: "row gap-3 wrapflex" },
-      saveAttemptButton(o.saveAction, signedOut, solved),
+    autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
+    h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Run again ▸"),
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena"),
     ),
@@ -192,20 +205,29 @@ async function saveAttempt(profile, problem, submission, { mode, completed }) {
   });
 }
 
-function saveAttemptButton(action, signedOut, completed) {
-  const button = h("button", { class: "btn", onClick: async () => {
-    button.disabled = true;
-    try {
-      await action();
-      button.textContent = completed ? "Solution saved ✓" : "Incomplete solution saved ✓";
-      toast(completed ? "Solution saved to Training Grounds." : "Incomplete solution saved to Training Grounds.", "ok");
-    } catch (error) {
-      toast(error.message || "Couldn't save this solution.", "err");
-      button.disabled = false;
-    }
-  } }, signedOut ? "Sign in to save" : completed ? "Save solution" : "Save incomplete");
-  if (signedOut) button.disabled = true;
-  return button;
+async function autoSaveAttempt(profile, problem, submission, { mode, completed }) {
+  if (!profile || profile.isGuest || profile.isAnonymous || !String(submission?.code || "").trim()) return false;
+  try {
+    await saveAttempt(profile, problem, submission, { mode, completed });
+    return true;
+  } catch (error) {
+    console.error("automatic solution save failed", error);
+    return false;
+  }
+}
+
+function animatedElo(from, to, formatter = (value) => String(Math.round(value))) {
+  const value = h("span", { class: "result-elo" }, formatter(from));
+  const start = performance.now();
+  const duration = 720;
+  const tick = (now) => {
+    const progress = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    value.textContent = formatter(from + (to - from) * eased);
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  return value;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -258,6 +280,7 @@ export async function startTutorial() {
     settled = true;
     setBattlePresence(false);
     try { await markTutorialComplete(session.profile); refreshGuest(); } catch {}
+    const autoSaved = await autoSaveAttempt(session.profile, problem, result, { mode: "training", completed: solved });
     arena.showResult(h("div", { style: { maxWidth: "520px", width: "100%" } },
       h("div", { class: "eyebrow mb-2" }, "// Tutorial complete"),
       h("h1", { class: "head mb-3", style: { color: solved ? "var(--ok)" : "var(--foreground)" } },
@@ -266,7 +289,8 @@ export async function startTutorial() {
         solved
           ? "You have used the editor, test runner, and judge. Your seven Unranked placement games are ready when you are."
           : "You can return to this tutorial at any time from the arena home."),
-      h("div", { class: "row gap-3 wrapflex" },
+      autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
+      h("div", { class: "row gap-3 wrapflex result-actions" },
         h("button", { class: "btn btn-primary", onClick: () => { arena.destroy(); startSolo(); } }, "Start placement ▸"),
         h("button", { class: "btn", onClick: () => arena.exit() }, "Back to arena")),
     ));
@@ -322,11 +346,11 @@ export async function startTraining(difficulty, archetypeId) {
       }
     }
 
+    const autoSaved = await autoSaveAttempt(profile, problem, r, { mode: "training", completed: solved });
     arena.showResult(trainingResultScreen({
       solved, reason: r.reason, timeMs: r.timeMs, problem, outcome, board,
       anon: !profile || profile.isGuest || profile.isAnonymous,
-      meUid: profile?.uid,
-      saveAction: () => saveAttempt(profile, problem, r, { mode: "training", completed: solved }),
+      meUid: profile?.uid, autoSaved,
       onAgain: () => { arena.destroy(); startTraining(difficulty, archetypeId); },
       onBack: () => arena.exit(),
     }));
@@ -334,7 +358,7 @@ export async function startTraining(difficulty, archetypeId) {
 }
 
 function trainingResultScreen(o) {
-  const { solved, reason, timeMs, problem, outcome, board, anon, meUid } = o;
+  const { solved, reason, timeMs, problem, outcome, board, anon, meUid, autoSaved } = o;
   const myRank = board.findIndex((b) => b.uid === meUid);
 
   return h("div", { style: { maxWidth: "620px", width: "100%" } },
@@ -368,8 +392,8 @@ function trainingResultScreen(o) {
                   h("span", { class: "nm" }, r.username),
                   h("span", { class: "tnum" }, fmtTime(r.timeMs)))))),
 
-    h("div", { class: "row gap-3 wrapflex" },
-      saveAttemptButton(o.saveAction, anon, solved),
+    autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
+    h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Try again ▸"),
       h("button", { class: "btn", onClick: o.onBack }, "Training grounds"),
     ),
@@ -504,6 +528,19 @@ export async function enterDuel(duelId, identity = null) {
   const me = playerNum === 1 ? duel.player1 : duel.player2;
   const opponent = playerNum === 1 ? duel.player2 : duel.player1;
   const duelMode = duel.mode === "casual" ? "casual" : "rated";
+  if (duel.status === "aborted") {
+    toast("This duel was aborted before it could begin.", "err");
+    navigate("/");
+    return;
+  }
+  if (duel.status !== "ready" && duel.status !== "complete") {
+    toast("This duel is still waiting for both players.", "err");
+    navigate("/");
+    return;
+  }
+  // Keep reloads on a duel route so the router restores this exact match rather
+  // than leaving an active player on the home page.
+  try { history.replaceState(null, "", `#/duel/${encodeURIComponent(duelId)}`); } catch {}
 
   let problem;
   try {
@@ -523,8 +560,17 @@ export async function enterDuel(duelId, identity = null) {
   let ended = false;
   let unsub = null;
   let latestSubmission = null;
+  let stopDuelPresence = () => {};
 
-  const cleanup = () => { unsub?.(); unsub = null; };
+  const cleanup = () => {
+    unsub?.(); unsub = null;
+    stopDuelPresence(); stopDuelPresence = () => {};
+  };
+  const neutralAbort = async () => {
+    if (ended || latest.status === "complete" || latest.status === "aborted") return;
+    await mm.abortDuel(duelId, opponent.uid, "disconnect");
+  };
+  stopDuelPresence = joinDuelPresence(duelId, activeIdentity.uid, opponent.uid, neutralAbort);
 
   arena = openArena({
     mode: "duel",
@@ -556,9 +602,13 @@ export async function enterDuel(duelId, identity = null) {
         await mm.submitSolve(duelId, playerNum, r.timeMs / 1000, r);
       } catch (e) { console.error(e); }
     },
+    onForcedEnd: (r) => { latestSubmission = r; },
     onFailed: async (r) => {
       latestSubmission = r;
-      if (r.reason === "timeout") {
+      if (r.reason === "abandoned") {
+        await settleVoluntaryWithdrawal({ duelId, profile, opponent, duelMode, problem, submission: r });
+        await mm.abortDuel(duelId, activeIdentity.uid, "withdrawal");
+      } else if (r.reason === "timeout") {
         try { await mm.resolveTimeout(duelId, latest); } catch {}
       } else {
         try { await mm.forfeitDuel(duelId, activeIdentity.uid, latest); } catch {}
@@ -580,9 +630,15 @@ export async function enterDuel(duelId, identity = null) {
       ended = true;
       setBattlePresence(false);
       cleanup();
-      arena.showResult(simpleEnd("Match cancelled", d.abortedBy === activeIdentity.uid
-        ? "You left before the match began."
-        : "Your opponent left before the match began.", () => { arena.exit(); }));
+      arena.forceEnd?.("aborted", "");
+      const withdrew = d.abortedReason === "withdrawal";
+      const mine = d.abortedBy === activeIdentity.uid;
+      const message = withdrew
+        ? (mine ? "You abandoned this duel. Your ELO was adjusted; your opponent received no ELO."
+          : "Your opponent aborted this duel. No ELO was awarded or lost for you.")
+        : (mine ? "Your connection ended before the duel could finish. No ELO changed."
+          : "Your opponent disconnected or reloaded and did not return. No ELO changed.");
+      arena.showResult(simpleEnd("Match aborted", message, () => { arena.exit(); }));
       return;
     }
 
@@ -657,12 +713,12 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
   // Before that it is the handshake's evidence that both players accepted.
   try { await mm.leaveLobby(actorUid); } catch {}
 
-    arena.showResult(duelResultScreen({
+  const autoSaved = await autoSaveAttempt(profile, problem, submission, {
+    mode: "ranked", completed: !!submission && submission.passed >= (problem.testCases?.length ?? TESTS_PER_PROBLEM),
+  });
+  arena.showResult(duelResultScreen({
     result, winBy, res, me, opponent, myTime, oppTime, problem, duelMode,
-    submission, duel: d, playerNum,
-    saveAction: () => saveAttempt(profile, problem, submission, {
-      mode: "ranked", completed: !!submission && submission.passed >= (problem.testCases?.length ?? TESTS_PER_PROBLEM),
-    }),
+    submission, duel: d, playerNum, autoSaved,
     onRematch: async () => {
       try {
         const meP = session.profile ? mm.lobbyPlayer(session.profile) : activeIdentity;
@@ -678,8 +734,37 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
   }));
 }
 
+async function settleVoluntaryWithdrawal({ duelId, profile, opponent, duelMode, problem, submission }) {
+  if (!profile || duelMode !== "rated" || applied.has(duelId)) return;
+  applied.add(duelId);
+  try {
+    const res = await applyDuelResult(
+      profile.uid, profile,
+      { uid: opponent.uid, username: opponent.username, rating: opponent.rating, rd: opponent.rd },
+      0, "loss", {
+        duelId,
+        difficulty: problem.difficulty,
+        archetypeId: problem.archetypeId,
+        puzzleTitle: problem.title,
+        category: problem.category ?? null,
+        winBy: "withdrawal",
+        testsPassed: Number(submission?.passed || 0),
+        totalTests: problem.testCases?.length ?? TESTS_PER_PROBLEM,
+        timeMs: Number.isFinite(Number(submission?.timeMs)) ? Number(submission.timeMs) : null,
+        submissions: Number(submission?.submissionCount || 0),
+        runtimeMs: Number.isFinite(Number(submission?.runtimeMs)) ? Number(submission.runtimeMs) : null,
+        memoryBytes: Number.isFinite(Number(submission?.memoryBytes)) ? Number(submission.memoryBytes) : null,
+      },
+    );
+    Object.assign(profile, { rating: res.rating, rd: res.rd, vol: res.vol });
+  } catch (error) {
+    console.error("withdrawal rating update failed", error);
+  }
+  await autoSaveAttempt(profile, problem, submission, { mode: "ranked", completed: false });
+}
+
 function duelResultScreen(o) {
-  const { result, winBy, res, me, opponent, myTime, oppTime, duelMode, submission, duel, playerNum, problem } = o;
+  const { result, winBy, res, me, opponent, myTime, oppTime, duelMode, submission, duel, playerNum, problem, autoSaved } = o;
   const delta = res?.delta ?? (res ? Math.round(res.rating) - res.before : 0);
   const mineFromDuel = playerNum === 1 ? duel?.p1Submission : duel?.p2Submission;
   const opponentSubmission = playerNum === 1 ? duel?.p2Submission : duel?.p1Submission;
@@ -730,7 +815,7 @@ function duelResultScreen(o) {
           h("div", { class: "row gap-3", style: { justifyContent: "center", alignItems: "baseline" } },
             h("span", { class: "mono dim tnum", style: { fontSize: "20px" } }, res.before),
             h("span", { class: "dim" }, "→"),
-            h("span", { class: "result-elo" }, displayRating(res.rating, res.rd)),
+            animatedElo(res.before, res.rating, (value) => displayRating(value, res.rd)),
             h("span", { class: "mono tnum " + (delta >= 0 ? "delta-up" : "delta-down"), style: { fontSize: "18px" } },
               (delta >= 0 ? "+" : "") + delta)),
           res.rd > 110
@@ -739,8 +824,8 @@ function duelResultScreen(o) {
             : null)
       : h("p", { class: "mono center mb-5", style: { fontSize: "12px", color: "var(--muted-fg)" } },
           "Casual duel — no ELO was changed."),
-    h("div", { class: "row gap-3 wrapflex" },
-      submission ? saveAttemptButton(o.saveAction, false, submission.passed >= totalTests) : null,
+    autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
+    h("div", { class: "row gap-3 wrapflex result-actions" },
       compare,
       h("button", { class: "btn btn-primary", onClick: o.onRematch }, "Rematch ▸"),
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena"),
@@ -777,7 +862,7 @@ function openDuelCodeComparison(me, opponent, mine = {}, theirs = {}) {
     h("h2", { class: "head mb-4" }, "Compare submissions"),
     h("div", { class: "postmatch-code-grid" },
       codePane("Your submission", me, mine, "var(--ok)"),
-      codePane("Opponent submission", opponent, theirs || {}, "var(--primary)"))), { wide: true });
+      codePane("Opponent submission", opponent, theirs || {}, "var(--primary)"))), { wide: true, className: "modal-postmatch-comparison" });
 }
 
 function simpleEnd(title, body, onBack) {

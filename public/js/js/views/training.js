@@ -8,14 +8,15 @@
 // stays honest, its contents are earned.
 // ============================================================================
 
-import { h, add, clear, emptyState, icon, fmtTime, fmtClock, fmtAgo, modal, debounce, avatar, toast } from "../ui.js";
+import { h, add, clear, emptyState, icon, fmtTime, fmtClock, fmtAgo, modal, confirmModal, debounce, avatar, toast } from "../ui.js";
+
 import { session, onSession } from "../session.js";
 import { TIERS, TIME_LIMITS, displayPlacementRating, rankFor } from "../glicko.js";
 import { loadPool } from "../problems.js";
 import {
   getMyPuzzleRecords, puzzleLeaderboard, puzzleLeaderboardDetailed, puzzleLeaderboardIds,
   getSavedSolution, getAccomplishableSolution, getSavedSolutions, getSolutionHistory, toggleAccomplishment,
-  setSolutionVisibility, getPublicPuzzleSolution, getPublicPuzzleSolutions, syncSavedSolutionsToPuzzleRecords,
+  setSolutionVisibility, getPublicPuzzleSolution, getPublicPuzzleSolutions, trashSavedSolution, syncSavedSolutionsToPuzzleRecords,
   seenMap, isPermissionDenied, isRevealed, starterCount,
 } from "../store.js";
 import { startTraining } from "../game.js";
@@ -388,9 +389,8 @@ export async function renderTraining(params, root) {
               completed ? `${solution.completedSubmits || 1} accepted submit${(solution.completedSubmits || 1) === 1 ? "" : "s"} · best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete save${(solution.incompleteSaves || 1) === 1 ? "" : "s"}`)),
           h("span", { class: "pill" + (completed ? " pill-ok" : "") }, solution.language)),
         h("div", { class: "row gap-2 wrapflex mt-3" },
-          h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openPuzzleSolutions(pz) },
-            icon("users", 14), "View solutions"),
-          h("button", { class: "btn btn-sm", onClick: () => openSavedSolution(pz, solution) }, icon("pencil", 14), "Mine"),
+          h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openSavedSolution(pz, solution) },
+            icon("pencil", 14), "View solution"),
           accomplishment, visibility),
         publicLinkHost,
       );
@@ -507,7 +507,7 @@ export async function renderTraining(params, root) {
           clear(solutionCell).append(h("button", { class: "btn btn-sm", onClick: (event) => {
             event.stopPropagation();
             navigate("/share/" + share.id);
-          } }, "View solution"));
+          } }, icon("pencil", 14), "View solution"));
         }).catch(() => {});
       });
 
@@ -587,7 +587,7 @@ export async function renderTraining(params, root) {
 
     if (!visible.length) {
       content.append(h("div", { class: "solution-library-empty mt-5" },
-        savedSolutions.length ? "No saved solutions match these filters." : "After any Training, Unranked, or Ranked run, use Save solution to preserve a complete solve or incomplete draft here."));
+        savedSolutions.length ? "No saved solutions match these filters." : "Completed and incomplete code is saved here automatically after Training, Unranked, or Ranked runs."));
     } else {
       const list = h("div", { class: "solutions-grid mt-5" });
       visible.forEach((solution) => list.append(solutionCard(solution)));
@@ -645,6 +645,20 @@ export async function renderTraining(params, root) {
         toggle.disabled = !completed;
       }
     });
+    const trash = h("button", { class: "btn btn-sm solution-trash-icon", title: "Trash solution", "aria-label": "Trash solution", onClick: async () => {
+      const confirmed = await confirmModal("Trash solution", "This permanently removes the saved code, submission history, public share, and accomplishment badge for this puzzle.", "Trash solution");
+      if (!confirmed) return;
+      trash.disabled = true;
+      try {
+        await trashSavedSolution(profile, solution.archetypeId);
+        savedSolutions = savedSolutions.filter((entry) => entry.archetypeId !== solution.archetypeId);
+        toast("Solution trashed.", "ok");
+        paintSolutionsWorkspace();
+      } catch (error) {
+        toast(error.message || "Couldn't trash this solution.", "err");
+        trash.disabled = false;
+      }
+    } }, icon("trash", 15));
     const publicLink = solution.isPublic && solution.publicShareId
       ? h("a", { class: "solution-share-link", href: `/share/${solution.publicShareId}`, target: "_blank", rel: "noopener" },
           `${window.location.origin}/share/${solution.publicShareId}`)
@@ -662,8 +676,9 @@ export async function renderTraining(params, root) {
         h("span", {}, completed ? `Best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete ${solution.incompleteSaves === 1 ? "draft" : "drafts"}`),
         h("span", {}, `${solution.saveCount || 1} saved`)),
       h("div", { class: "row gap-2 wrapflex mt-5" },
-        h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openPuzzleSolutions(solution) },
-          icon("users", 14), "View solutions")),
+        h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openSavedSolution(solution, solution) },
+          icon("pencil", 14), "View solution"),
+        trash),
       h("div", { class: "row gap-2 wrapflex mt-3" }, accomplishment, visibility),
       publicLink ? h("div", { class: "solution-public-url mt-3" }, h("span", { class: "label" }, "Public link"), publicLink) : null);
   }

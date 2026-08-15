@@ -836,6 +836,33 @@ export async function getSolutionHistory(uid, archetypeId, n = 30) {
     .slice(0, n);
 }
 
+/** Permanently remove one saved puzzle solution, its attempt history, and any public share. */
+export async function trashSavedSolution(profile, archetypeId) {
+  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to trash a solution.");
+  const solution = await getSavedSolution(profile.uid, archetypeId);
+  if (!solution) return false;
+  const history = await getDocs(collection(db, "users", profile.uid, "solutions", archetypeId, "history"));
+  const batch = writeBatch(db);
+  history.docs.forEach((entry) => batch.delete(entry.ref));
+  batch.delete(solutionRef(profile.uid, archetypeId));
+  if (solution.publicShareId) batch.delete(doc(db, "sharedSolutions", solution.publicShareId));
+  await batch.commit();
+
+  const userRef = doc(db, "users", profile.uid);
+  const userData = await getDoc(userRef).then((entry) => entry.exists() ? entry.data() : profile).catch(() => profile);
+  const legacyCard = userData?.pinnedAccomplishment?.title ? [userData.pinnedAccomplishment] : [];
+  const cards = (Array.isArray(userData?.accomplishmentCards) ? userData.accomplishmentCards : legacyCard)
+    .filter((card) => card?.archetypeId !== archetypeId);
+  const patch = {
+    solutionsSaved: increment(-1),
+    accomplishmentCards: cards,
+    pinnedAccomplishment: cards[cards.length - 1] ?? null,
+  };
+  if (solution.accomplishment) patch.accomplishments = increment(-1);
+  await updateDoc(userRef, patch);
+  return true;
+}
+
 export async function toggleAccomplishment(profile, archetypeId, accomplished) {
   if (!profile || isGuestProfile(profile)) throw new Error("Sign in to mark accomplishments.");
   const ref = solutionRef(profile.uid, archetypeId);
@@ -867,55 +894,35 @@ export async function toggleAccomplishment(profile, archetypeId, accomplished) {
 
   const userRef = doc(db, "users", profile.uid);
   const userData = await getDoc(userRef).then((entry) => entry.exists() ? entry.data() : profile).catch(() => profile);
-  const oldId = userData?.pinnedAccomplishment?.archetypeId;
+  const legacyCard = userData?.pinnedAccomplishment?.title ? [userData.pinnedAccomplishment] : [];
+  const existingCards = Array.isArray(userData?.accomplishmentCards) ? userData.accomplishmentCards : legacyCard;
   const now = Date.now();
-  let pinnedAccomplishment = null;
-  if (next) {
-    if (oldId && oldId !== archetypeId) {
-      try { await updateDoc(solutionRef(profile.uid, oldId), { pinned: false, updatedAt: now }); } catch {}
-    }
-    pinnedAccomplishment = {
-      archetypeId,
-      title: data.title || archetypeId,
-      difficulty: data.difficulty || null,
-      category: data.category ?? null,
-      pinnedAt: now,
-    };
-  }
+  const card = {
+    archetypeId,
+    title: data.title || archetypeId,
+    difficulty: data.difficulty || null,
+    category: data.category ?? null,
+    bestTimeMs: data.bestTimeMs != null && Number.isFinite(Number(data.bestTimeMs)) ? Number(data.bestTimeMs) : null,
+    pinnedAt: now,
+  };
+  const cards = next
+    ? [...existingCards.filter((entry) => entry?.archetypeId !== archetypeId), card]
+    : existingCards.filter((entry) => entry?.archetypeId !== archetypeId);
   await updateDoc(ref, { accomplishment: next, pinned: next, updatedAt: now });
   try {
     await updateDoc(userRef, {
       accomplishments: increment(next ? 1 : -1),
-      pinnedAccomplishment: next ? pinnedAccomplishment : (oldId === archetypeId ? null : userData?.pinnedAccomplishment ?? null),
+      accomplishmentCards: cards,
+      // Keep this compact compatibility field for existing home/profile surfaces.
+      pinnedAccomplishment: cards[cards.length - 1] ?? null,
     });
   } catch {}
   return normalizeSolution(snap.id, { ...data, accomplishment: next, pinned: next });
 }
 
+/** Legacy API retained for callers: an accomplishment card is now pinned per puzzle. */
 export async function pinAccomplishment(profile, archetypeId, pinned) {
-  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to pin an accomplishment.");
-  const solution = await getSavedSolution(profile.uid, archetypeId);
-  if (!solution?.accomplishment) throw new Error("Mark this completed solution as an accomplishment first.");
-  const userRef = doc(db, "users", profile.uid);
-  if (!pinned) {
-    await updateDoc(solutionRef(profile.uid, archetypeId), { pinned: false, updatedAt: Date.now() });
-    await updateDoc(userRef, { pinnedAccomplishment: null });
-    return { ...solution, pinned: false };
-  }
-  const oldId = profile.pinnedAccomplishment?.archetypeId;
-  if (oldId && oldId !== archetypeId) {
-    try { await updateDoc(solutionRef(profile.uid, oldId), { pinned: false, updatedAt: Date.now() }); } catch {}
-  }
-  const status = {
-    archetypeId: solution.archetypeId,
-    title: solution.title,
-    difficulty: solution.difficulty,
-    category: solution.category ?? null,
-    pinnedAt: Date.now(),
-  };
-  await updateDoc(solutionRef(profile.uid, archetypeId), { pinned: true, updatedAt: Date.now() });
-  await updateDoc(userRef, { pinnedAccomplishment: status });
-  return { ...solution, pinned: true };
+  return toggleAccomplishment(profile, archetypeId, !!pinned);
 }
 
 const publicShareId = (uid, archetypeId) => `${uid}__${encodeURIComponent(archetypeId)}`;

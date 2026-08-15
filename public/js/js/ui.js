@@ -76,7 +76,7 @@ export function toast(msg, kind = "", ms = 3800) {
 // ── Modal ───────────────────────────────────────────────────────────────────
 // Returns { close }. `onClose` fires for backdrop / Escape / X dismissals.
 export function modal(content, opts = {}) {
-  const box = h("div", { class: `modal ${opts.wide ? "modal-wide" : ""}` });
+  const box = h("div", { class: `modal ${opts.wide ? "modal-wide" : ""} ${opts.className || ""}`.trim() });
   if (opts.closable !== false) {
     box.append(h("button", { class: "modal-x", "aria-label": "Close", onClick: () => close() }, "×"));
   }
@@ -245,6 +245,7 @@ const ICONS = {
   plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
   x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
   pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V4h6v2"/>',
   send: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
   users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',

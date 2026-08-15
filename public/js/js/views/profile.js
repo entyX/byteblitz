@@ -251,13 +251,6 @@ export async function renderProfile(params, root) {
             h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted)" } },
               p.isGuest ? "Guest profile — saved on this device" : `Joined ${joined}${p.emailVisible && p.publicEmail ? ` · ${p.publicEmail}` : ""}`),
             p.bio ? h("p", { class: "profile-bio mt-3" }, p.bio) : null,
-            p.pinnedAccomplishment?.title
-              ? h("div", { class: "profile-pinned-accomplishment mt-3", title: "Pinned accomplishment" },
-                  h("span", { class: "profile-pinned-star" }, "★"),
-                  h("span", {},
-                    h("span", { class: "label" }, "Pinned accomplishment"),
-                    h("span", { class: "mono" }, p.pinnedAccomplishment.title)))
-              : null,
             h("p", { class: "mono mt-2", style: { fontSize: "11.5px", color: "var(--muted-fg)" } },
               `${countryFor(p.country).flag} ${countryFor(p.country).name}`))),
         actions),
@@ -309,6 +302,7 @@ export async function renderProfile(params, root) {
     bestTimesPanel(p),
     discoveryPanel(p),
     historyPanel(p),
+    accomplishmentCardsPanel(p),
   );
 
   // Your own avatar is a button that opens the picker; everyone else's is just
@@ -384,6 +378,21 @@ export async function renderProfile(params, root) {
     return h("div", { class: "stat" },
       h("div", { class: "v", style: color ? { color } : {} }, v),
       h("div", { class: "k" }, k));
+  }
+
+  function accomplishmentCardsPanel(prof) {
+    const legacy = prof.pinnedAccomplishment?.title ? [prof.pinnedAccomplishment] : [];
+    const cards = Array.isArray(prof.accomplishmentCards) ? prof.accomplishmentCards : legacy;
+    if (!cards.length) return null;
+    return h("section", { class: "profile-accomplishments mt-8" },
+      h("div", { class: "section-title" }, "// Accomplishment badges"),
+      h("div", { class: "profile-accomplishment-cards" },
+        ...cards.map((card) => h("article", { class: "profile-accomplishment-card" },
+          h("span", { class: "profile-pinned-star" }, "★"),
+          h("div", { style: { minWidth: "0" } },
+            h("div", { class: "label" }, card.difficulty || "Accomplishment"),
+            h("h3", { class: "mono" }, card.title || card.archetypeId),
+            h("p", { class: "mono" }, card.bestTimeMs != null && Number.isFinite(Number(card.bestTimeMs)) ? `Solve time · ${fmtTime(Number(card.bestTimeMs))}` : "Completed puzzle")))));
   }
 
   function bestTimesPanel(prof) {
