@@ -6,9 +6,21 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.3 [C1 BETA]",
+    version: "v1.3 [C2 BETA]",
     date: "August 15, 2026",
     current: true,
+    items: [
+      "Chunk 2 turns every Ranked and Casual duel result into a fuller post-match event, including the outcome, problem, opponent, solve times, tests passed, ELO movement, submissions, test runtime, and browser memory delta when the browser exposes it.",
+      "After a duel, both participants can open a side-by-side comparison of the code they submitted during the match. The latest submitted source and performance summary are preserved only on the private duel record.",
+      "The existing rematch, player challenge, and profile match-history flows remain available from this release.",
+      "Rating-history charts now include a gradient area fill and accessible hover/focus tooltips for exact ELO and match date.",
+      "Training Grounds now uses an icon-bearing View solutions control to list every explicitly public solution shared for a puzzle, while keeping a separate Mine control for private solution history.",
+    ],
+  },
+  {
+    version: "v1.3 [C1 BETA]",
+    date: "August 15, 2026",
+    current: false,
     items: [
       "Chunk 1 beta introduces a dedicated My Solutions workspace in Training Grounds. After Training, Unranked, or Ranked runs, players can visibly save an accepted solution or an incomplete draft with source, language, mode, result, time, tests, and history.",
       "My Solutions includes difficulty side navigation plus completed, incomplete, accomplishment, public, and category filters. Each card can view code, reopen its exact puzzle, mark an accomplishment, or pin it to the player profile.",

@@ -539,6 +539,10 @@ export async function enterDuel(duelId, identity = null) {
         onExit: () => { setBattlePresence(false); cleanup(); navigate("/"); },
 
     onTestProgress: (n) => mm.reportTestProgress(duelId, playerNum, n),
+    onSubmission: (r) => {
+      latestSubmission = r;
+      mm.recordSubmission(duelId, playerNum, r);
+    },
     onOfferDraw: async () => {
       try { await mm.offerDraw(duelId, profile.uid); toast("Draw offered.", "", 2200); }
       catch { toast("Couldn't send the draw offer.", "err"); }
@@ -549,7 +553,7 @@ export async function enterDuel(duelId, identity = null) {
         if (profile && !profile.isGuest && !profile.isAnonymous) {
           await recordPuzzleTime(profile, problem, r.timeMs, true);
         }
-        await mm.submitSolve(duelId, playerNum, r.timeMs / 1000, latest);
+        await mm.submitSolve(duelId, playerNum, r.timeMs / 1000, r);
       } catch (e) { console.error(e); }
     },
     onFailed: async (r) => {
@@ -638,6 +642,9 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
           puzzleTitle: problem.title, category: problem.category ?? null, winBy,
           testsPassed: myTests, totalTests,
           timeMs: myTime ? Math.round(myTime * 1000) : null,
+          submissions: Number(submission?.submissionCount || 0),
+          runtimeMs: Number.isFinite(Number(submission?.runtimeMs)) ? Math.round(Number(submission.runtimeMs)) : null,
+          memoryBytes: Number.isFinite(Number(submission?.memoryBytes)) ? Math.round(Number(submission.memoryBytes)) : null,
         }
       );
     } catch (e) {
@@ -652,7 +659,7 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
 
     arena.showResult(duelResultScreen({
     result, winBy, res, me, opponent, myTime, oppTime, problem, duelMode,
-    submission,
+    submission, duel: d, playerNum,
     saveAction: () => saveAttempt(profile, problem, submission, {
       mode: "ranked", completed: !!submission && submission.passed >= (problem.testCases?.length ?? TESTS_PER_PROBLEM),
     }),
@@ -672,16 +679,20 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
 }
 
 function duelResultScreen(o) {
-  const { result, winBy, res, me, opponent, myTime, oppTime, duelMode, submission } = o;
+  const { result, winBy, res, me, opponent, myTime, oppTime, duelMode, submission, duel, playerNum, problem } = o;
   const delta = res?.delta ?? (res ? Math.round(res.rating) - res.before : 0);
+  const mineFromDuel = playerNum === 1 ? duel?.p1Submission : duel?.p2Submission;
+  const opponentSubmission = playerNum === 1 ? duel?.p2Submission : duel?.p1Submission;
+  const mine = { ...(mineFromDuel || {}), ...(submission || {}) };
+  const totalTests = problem?.testCases?.length ?? TESTS_PER_PROBLEM;
+  const myTests = Number(mine.passed ?? (playerNum === 1 ? duel?.p1BestTests : duel?.p2BestTests) ?? 0);
+  const opponentTests = Number(opponentSubmission?.passed ?? (playerNum === 1 ? duel?.p2BestTests : duel?.p1BestTests) ?? 0);
 
   const headline = result === "draw" ? "Draw"
     : result === "win" ? (winBy === "forfeit" ? "Opponent resigned" : "Victory")
     : (winBy === "forfeit" ? "You resigned" : "Defeat");
-
   const color = result === "draw" ? "var(--warn)"
     : result === "win" ? "var(--ok)" : "var(--primary)";
-
   const byline = {
     solve: "First to pass every test.",
     testcases: "Decided on hidden tests passed when the clock ran out.",
@@ -689,25 +700,33 @@ function duelResultScreen(o) {
     draw: "Agreed draw.",
     tiebreak: "Neither player pulled ahead.",
   }[winBy] ?? "";
+  const compare = h("button", {
+    class: "btn",
+    disabled: !String(mine.code || "").trim() && !String(opponentSubmission?.code || "").trim(),
+    title: opponentSubmission?.code ? "View both submitted solutions" : "No opponent submission was saved",
+    onClick: () => openDuelCodeComparison(me, opponent, mine, opponentSubmission),
+  }, "Compare code");
 
-  return h("div", { style: { maxWidth: "560px", width: "100%" } },
-    h("div", { class: "eyebrow mb-2" }, duelMode === "rated" ? "// Rated duel" : "// Casual duel"),
+  return h("div", { class: "postmatch-result" },
+    h("div", { class: "eyebrow mb-2" }, duelMode === "rated" ? "// Rated duel complete" : "// Casual duel complete"),
     h("h1", { class: "head mb-2", style: { color } }, headline),
-    h("p", { class: "mono mb-6", style: { fontSize: "12.5px", color: "var(--muted-fg)" } }, byline),
-
-    h("div", { class: "panel mb-6" },
-      h("div", { class: "lb-row", style: { gridTemplateColumns: "1fr auto auto" } },
-        h("span", { class: "nm" }, me.username, " ", h("span", { class: "label" }, "(you)")),
-        h("span", { class: "tnum dim" }, myTime != null ? fmtTime(myTime * 1000) : "—"),
-        h("span", { class: "tnum" }, Math.round(me.rating))),
-      h("div", { class: "lb-row", style: { gridTemplateColumns: "1fr auto auto", borderTop: "1px solid var(--border)" } },
-        h("span", { class: "nm" }, opponent.username),
-        h("span", { class: "tnum dim" }, oppTime != null ? fmtTime(oppTime * 1000) : "—"),
-        h("span", { class: "tnum" }, Math.round(opponent.rating)))),
-
+    h("p", { class: "mono mb-5", style: { fontSize: "12.5px", color: "var(--muted-fg)" } }, byline),
+    h("div", { class: "postmatch-problem mb-5" },
+      h("span", { class: "label" }, "Problem"),
+      h("span", { class: "mono" }, problem?.title || "Match problem"),
+      h("span", { class: "label" }, problem?.difficulty || "")),
+    h("div", { class: "postmatch-scoreboard mb-5" },
+      postmatchPlayer(me.username, "You", myTime, myTests, totalTests, me.rating, true),
+      postmatchPlayer(opponent.username, "Opponent", oppTime, opponentTests, totalTests, opponent.rating, false)),
+    h("div", { class: "stats postmatch-metrics mb-5" },
+      stat(myTime != null ? fmtTime(myTime * 1000) : "—", "Time to solve"),
+      stat(String(mine.submissionCount || 0), "Submissions"),
+      stat(formatRuntime(mine.runtimeMs), "Test runtime"),
+      stat(formatMemory(mine.memoryBytes), "Memory delta"),
+      stat(`${myTests}/${totalTests}`, "Tests passed")),
     res
-      ? h("div", { class: "center mb-6" },
-          h("div", { class: "label mb-2" }, "// Your rating"),
+      ? h("div", { class: "center postmatch-elo mb-5" },
+          h("div", { class: "label mb-2" }, "// ELO change"),
           h("div", { class: "row gap-3", style: { justifyContent: "center", alignItems: "baseline" } },
             h("span", { class: "mono dim tnum", style: { fontSize: "20px" } }, res.before),
             h("span", { class: "dim" }, "→"),
@@ -718,17 +737,47 @@ function duelResultScreen(o) {
             ? h("p", { class: "mono mt-3", style: { fontSize: "11px", color: "var(--muted)" } },
                 "The ? means your rating is still provisional — it settles as you play.")
             : null)
-      : duelMode === "casual"
-        ? h("p", { class: "mono center mb-6", style: { fontSize: "12px", color: "var(--muted-fg)" } },
-            "Casual duel — no ELO was changed.")
-        : null,
-
+      : h("p", { class: "mono center mb-5", style: { fontSize: "12px", color: "var(--muted-fg)" } },
+          "Casual duel — no ELO was changed."),
     h("div", { class: "row gap-3 wrapflex" },
-      submission ? saveAttemptButton(o.saveAction, false, submission.passed >=  (o.problem?.testCases?.length ?? TESTS_PER_PROBLEM)) : null,
+      submission ? saveAttemptButton(o.saveAction, false, submission.passed >= totalTests) : null,
+      compare,
       h("button", { class: "btn btn-primary", onClick: o.onRematch }, "Rematch ▸"),
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena"),
     ),
   );
+}
+
+function postmatchPlayer(username, label, solveSecs, passed, total, rating, isMe) {
+  return h("div", { class: "postmatch-player" + (isMe ? " me" : "") },
+    h("span", { class: "label" }, label),
+    h("strong", { class: "mono" }, username || "Player"),
+    h("span", { class: "mono tnum" }, solveSecs != null ? fmtTime(solveSecs * 1000) : "—"),
+    h("span", { class: "label" }, `${passed}/${total} tests · ${Math.round(rating ?? 0)} ELO`));
+}
+
+function formatRuntime(ms) {
+  return Number.isFinite(Number(ms)) ? `${Math.round(Number(ms))} ms` : "—";
+}
+
+function formatMemory(bytes) {
+  if (!Number.isFinite(Number(bytes))) return "N/A";
+  const value = Number(bytes);
+  return value < 1024 * 1024 ? `${Math.round(value / 1024)} KB` : `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function openDuelCodeComparison(me, opponent, mine = {}, theirs = {}) {
+  const codePane = (label, player, data, accent) => h("section", { class: "postmatch-code-pane" },
+    h("div", { class: "between gap-2 postmatch-code-head" },
+      h("div", {}, h("span", { class: "label" }, label), h("div", { class: "mono mt-1", style: { fontWeight: "700", fontSize: "13px" } }, player.username || "Player")),
+      h("span", { class: "pill", style: { color: accent } }, data.language || "—")),
+    h("pre", { class: "solution-code postmatch-code" }, data.code || "// No submitted code was saved for this player."));
+  modal(h("div", { class: "postmatch-comparison" },
+    h("div", { class: "eyebrow mb-2" }, "// Post-match code comparison"),
+    h("h2", { class: "head mb-4" }, "Compare submissions"),
+    h("div", { class: "postmatch-code-grid" },
+      codePane("Your submission", me, mine, "var(--ok)"),
+      codePane("Opponent submission", opponent, theirs || {}, "var(--primary)"))), { wide: true });
 }
 
 function simpleEnd(title, body, onBack) {

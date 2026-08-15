@@ -57,10 +57,11 @@ assert.match(share, /PUBLIC SOLUTION/, "the public share route needs a dedicated
 assert.match(app, /route\("\/share\/:id", renderPublicSolution\)/, "the public share route must be registered");
 assert.match(rules, /match \/users\/\{uid\}\/solutions\/\{archetypeId\}/, "private solution documents need explicit rules");
 assert.match(rules, /match \/sharedSolutions\/\{shareId\}/, "public share snapshots need explicit rules");
-assert.match(index, /v1\.3 \[C1 BETA\]/, "page metadata must identify the Chunk 1 beta");
-assert.match(app, /v1\.3 \[C1 BETA\]/, "navigation must identify the Chunk 1 beta");
-assert.match(arena, /v1\.3 \[C1 BETA\]/, "arena boot copy must identify the Chunk 1 beta");
-assert.match(changelog, /version: "v1\.3 \[C1 BETA\]"/, "changelog must identify the Chunk 1 beta");
-assert.match(changelog, /date: "August 15, 2026"/, "C1 beta must carry the requested August 15 release date");
+assert.match(index, /v1\.3 \[C2 BETA\]/, "page metadata must identify the active Chunk 2 beta");
+assert.match(app, /v1\.3 \[C2 BETA\]/, "navigation must identify the active Chunk 2 beta");
+assert.match(arena, /v1\.3 \[C2 BETA\]/, "arena boot copy must identify the active Chunk 2 beta");
+assert.match(changelog, /version: "v1\.3 \[C2 BETA\]"/, "changelog must identify the active Chunk 2 beta");
+assert.match(changelog, /version: "v1\.3 \[C1 BETA\]"/, "changelog must retain the prior Chunk 1 beta history");
+assert.match(changelog, /date: "August 15, 2026"/, "C2 beta must carry the requested August 15 release date");
 
 console.log("v1.3 chunk 1 checks passed");

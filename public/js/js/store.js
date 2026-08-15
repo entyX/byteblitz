@@ -394,6 +394,10 @@ export async function applyDuelResult(uid, profile, opponent, score, result, his
       ratingBefore: Math.round(profile.rating), ratingAfter: Math.round(next.rating),
       delta: Math.round(next.rating) - Math.round(profile.rating),
       testsPassed: Number(history.testsPassed) || 0, totalTests: Number(history.totalTests) || 0,
+      timeMs: Number.isFinite(Number(history.timeMs)) ? Number(history.timeMs) : null,
+      submissions: Math.max(0, Number(history.submissions) || 0),
+      runtimeMs: Number.isFinite(Number(history.runtimeMs)) ? Number(history.runtimeMs) : null,
+      memoryBytes: Number.isFinite(Number(history.memoryBytes)) ? Number(history.memoryBytes) : null,
       lossMitigation: Math.round(mitigation * 100), createdAt: Date.now(),
     });
   }
@@ -963,6 +967,15 @@ export async function getPublicSolutionShare(id) {
 
 export async function getPublicPuzzleSolution(uid, archetypeId) {
   return getPublicSolutionShare(publicShareId(uid, archetypeId));
+}
+
+/** Return every explicitly public solution shared for one Training Grounds puzzle. */
+export async function getPublicPuzzleSolutions(archetypeId, n = 50) {
+  if (!archetypeId) return [];
+  const snap = await getDocs(query(collection(db, "sharedSolutions"), where("archetypeId", "==", archetypeId)));
+  return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }))
+    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+    .slice(0, n);
 }
 
 /**

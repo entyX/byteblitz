@@ -15,7 +15,7 @@ import { loadPool } from "../problems.js";
 import {
   getMyPuzzleRecords, puzzleLeaderboard, puzzleLeaderboardDetailed, puzzleLeaderboardIds,
   getSavedSolution, getAccomplishableSolution, getSavedSolutions, getSolutionHistory, toggleAccomplishment,
-  setSolutionVisibility, getPublicPuzzleSolution, syncSavedSolutionsToPuzzleRecords,
+  setSolutionVisibility, getPublicPuzzleSolution, getPublicPuzzleSolutions, syncSavedSolutionsToPuzzleRecords,
   seenMap, isPermissionDenied, isRevealed, starterCount,
 } from "../store.js";
 import { startTraining } from "../game.js";
@@ -388,12 +388,41 @@ export async function renderTraining(params, root) {
               completed ? `${solution.completedSubmits || 1} accepted submit${(solution.completedSubmits || 1) === 1 ? "" : "s"} · best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete save${(solution.incompleteSaves || 1) === 1 ? "" : "s"}`)),
           h("span", { class: "pill" + (completed ? " pill-ok" : "") }, solution.language)),
         h("div", { class: "row gap-2 wrapflex mt-3" },
-          h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openSavedSolution(pz, solution) }, "View solution"),
+          h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openPuzzleSolutions(pz) },
+            icon("users", 14), "View solutions"),
+          h("button", { class: "btn btn-sm", onClick: () => openSavedSolution(pz, solution) }, icon("pencil", 14), "Mine"),
           accomplishment, visibility),
         publicLinkHost,
       );
     }).catch(() => {
       clear(solutionHost).append(h("div", { class: "solution-library-empty" }, "Your solution library is temporarily unavailable."));
+    });
+  }
+
+  function openPuzzleSolutions(pz) {
+    const host = h("div", { class: "solution-history-list mt-5" }, h("div", { class: "label" }, "// Loading shared solutions…"));
+    const m = modal(h("div", { class: "solution-modal" },
+      h("div", { class: "eyebrow mb-2" }, "// Training Grounds"),
+      h("h2", { class: "head mb-2" }, "Solutions for ", pz.title),
+      h("p", { class: "body-text" }, "Browse every solution its author has explicitly shared for this puzzle."),
+      host,
+    ), { wide: true });
+    getPublicPuzzleSolutions(pz.archetypeId).then((solutions) => {
+      clear(host);
+      if (!solutions.length) {
+        host.append(h("div", { class: "solution-library-empty" }, "No public solutions have been shared for this puzzle yet."));
+        return;
+      }
+      host.append(...solutions.map((share) => h("button", { class: "solution-history-row", onClick: () => {
+        m.close();
+        navigate("/share/" + share.id);
+      } },
+        h("span", { class: "row gap-2", style: { minWidth: "0" } },
+          icon("pencil", 14),
+          h("span", { class: "mono", style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, share.ownerUsername || "ByteBlitz player")),
+        h("span", { class: "label" }, `${share.language || "code"}${share.bestTimeMs ? ` · ${fmtTime(share.bestTimeMs)}` : ""}`))));
+    }).catch(() => {
+      clear(host).append(h("div", { class: "solution-library-empty" }, "Shared solutions are temporarily unavailable."));
     });
   }
 
@@ -633,7 +662,8 @@ export async function renderTraining(params, root) {
         h("span", {}, completed ? `Best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete ${solution.incompleteSaves === 1 ? "draft" : "drafts"}`),
         h("span", {}, `${solution.saveCount || 1} saved`)),
       h("div", { class: "row gap-2 wrapflex mt-5" },
-        h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openSavedSolution(solution, solution) }, "View solution")),
+        h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openPuzzleSolutions(solution) },
+          icon("users", 14), "View solutions")),
       h("div", { class: "row gap-2 wrapflex mt-3" }, accomplishment, visibility),
       publicLink ? h("div", { class: "solution-public-url mt-3" }, h("span", { class: "label" }, "Public link"), publicLink) : null);
   }

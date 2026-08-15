@@ -238,6 +238,7 @@ export async function createDuel(a, b, duelId, fromLobby, mode = "rated") {
     status: fromLobby ? "waiting" : "ready",
     p1Ready: !fromLobby, p2Ready: !fromLobby,
     p1SolveTime: null, p2SolveTime: null,
+    p1Submission: null, p2Submission: null,
     p1BestTests: 0, p2BestTests: 0,
     winner: null, winBy: null, forfeit: null,
     drawRequestBy: null, rematchReqBy: null, newDuelId: null, abortedBy: null,
@@ -291,17 +292,46 @@ export async function getDuel(duelId) {
 }
 
 // ── In-match writes ─────────────────────────────────────────────────────────
-export async function submitSolve(duelId, playerNum, solveSecs, duel) {
+export async function submitSolve(duelId, playerNum, solveSecs, submission = {}) {
   const duelRef = doc(db, "duels", duelId);
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(duelRef);
     if (!snap.exists()) return;
     const latest = snap.data();
     if (latest.status !== "ready" || latest.winner != null) return;
-    const field = playerNum === 1 ? "p1SolveTime" : "p2SolveTime";
+    const timeField = playerNum === 1 ? "p1SolveTime" : "p2SolveTime";
+    const submissionField = playerNum === 1 ? "p1Submission" : "p2Submission";
     const myUid = playerNum === 1 ? latest.player1.uid : latest.player2.uid;
-    tx.update(duelRef, { [field]: solveSecs, winner: myUid, winBy: "solve", status: "complete", completedAt: Date.now() });
+    tx.update(duelRef, {
+      [timeField]: solveSecs,
+      [submissionField]: sanitizeSubmission(submission),
+      winner: myUid,
+      winBy: "solve",
+      status: "complete",
+      completedAt: Date.now(),
+    });
   });
+}
+
+/** Keep post-match snapshots compact, safe to render, and bounded within Firestore documents. */
+function sanitizeSubmission(submission = {}) {
+  return {
+    code: String(submission.code || "").slice(0, 100000),
+    language: String(submission.language || "python").slice(0, 32),
+    passed: Math.max(0, Number(submission.passed) || 0),
+    submissionCount: Math.max(0, Number(submission.submissionCount) || 0),
+    runtimeMs: Number.isFinite(Number(submission.runtimeMs)) ? Math.max(0, Math.round(Number(submission.runtimeMs))) : null,
+    memoryBytes: Number.isFinite(Number(submission.memoryBytes)) ? Math.max(0, Math.round(Number(submission.memoryBytes))) : null,
+    timeMs: Number.isFinite(Number(submission.timeMs)) ? Math.max(0, Math.round(Number(submission.timeMs))) : null,
+  };
+}
+
+export async function recordSubmission(duelId, playerNum, submission = {}) {
+  const duelRef = doc(db, "duels", duelId);
+  const submissionField = playerNum === 1 ? "p1Submission" : "p2Submission";
+  try {
+    await updateDoc(duelRef, { [submissionField]: sanitizeSubmission(submission) });
+  } catch { /* Post-match telemetry is best effort and must not interrupt play. */ }
 }
 
 export async function reportTestProgress(duelId, playerNum, passed) {

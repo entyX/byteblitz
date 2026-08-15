@@ -443,21 +443,53 @@ export async function renderProfile(params, root) {
       const coords = values.map((value, index) => {
         const x = pad + (index * (width - pad * 2)) / Math.max(1, values.length - 1);
         const y = height - pad - ((value - min) * (height - pad * 2)) / spread;
-        return { x, y };
+        return { x, y, entry: series[index] };
       });
       const points = coords.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
       const trendStroke = "#ff3b30";
+      const gradientId = `history-gradient-${String(prof.uid).replace(/[^a-zA-Z0-9_-]/g, "")}`;
+      const areaPoints = `${points} ${coords[coords.length - 1].x.toFixed(1)},${height - pad} ${coords[0].x.toFixed(1)},${height - pad}`;
       const chart = svgNode("svg", { viewBox: `0 0 ${width} ${height}`, class: "history-chart", role: "img", "aria-label": "Rating history graph" });
+      const tooltip = h("div", { class: "history-chart-tooltip", role: "status" });
+      const chartWrap = h("div", { class: "history-chart-wrap" }, chart, tooltip);
+      const hideTooltip = () => { tooltip.classList.remove("active"); };
+      const dots = coords.map(({ x, y, entry }, index) => {
+        const point = svgNode("circle", {
+          cx: x, cy: y, r: index === coords.length - 1 ? "4.8" : "3", fill: trendStroke,
+          stroke: "#09090b", "stroke-width": "2", tabindex: "0",
+          "aria-label": `${Math.round(entry.value)} ELO on ${formatHistoryDate(entry.row.createdAt)}`,
+        });
+        const showTooltip = () => {
+          tooltip.textContent = `${Math.round(entry.value)} ELO · ${formatHistoryDate(entry.row.createdAt)}`;
+          tooltip.style.left = `${(x / width) * 100}%`;
+          tooltip.style.top = `${(y / height) * 100}%`;
+          tooltip.classList.add("active");
+        };
+        point.addEventListener("mouseenter", showTooltip);
+        point.addEventListener("focus", showTooltip);
+        point.addEventListener("mouseleave", hideTooltip);
+        point.addEventListener("blur", hideTooltip);
+        return point;
+      });
+      const gradient = svgNode("linearGradient", { id: gradientId, x1: "0", y1: "0", x2: "0", y2: "1" });
+      gradient.append(
+        svgNode("stop", { offset: "0%", "stop-color": trendStroke, "stop-opacity": ".36" }),
+        svgNode("stop", { offset: "100%", "stop-color": trendStroke, "stop-opacity": "0" }),
+      );
+      const defs = svgNode("defs");
+      defs.append(gradient);
       chart.append(
+        defs,
         svgNode("line", { x1: pad, y1: height - pad, x2: width - pad, y2: height - pad, stroke: "#34343d", "stroke-width": "1" }),
+        svgNode("polygon", { points: areaPoints, fill: `url(#${gradientId})`, "pointer-events": "none" }),
         svgNode("polyline", { points, fill: "none", stroke: trendStroke, "stroke-width": "3.5", "stroke-linecap": "round", "stroke-linejoin": "round" }),
-        ...coords.map(({ x, y }, index) => svgNode("circle", { cx: x, cy: y, r: index === coords.length - 1 ? "4.8" : "3", fill: trendStroke, stroke: "#09090b", "stroke-width": "2" })),
+        ...dots,
       );
       panel.append(
         h("div", { class: "between mb-3" },
           h("span", { class: "label" }, "// Rating trend · last " + series.length),
           h("span", { class: "label" }, `${Math.round(min)}–${Math.round(max)}`)),
-        chart,
+        chartWrap,
         h("div", { class: "divide mt-4" }, ...rows.map((row) => {
           const won = row.result === "win" || row.result === "solved";
           const delta = Number(row.delta ?? 0);
@@ -481,6 +513,12 @@ export async function renderProfile(params, root) {
       clear(panel).append(h("div", { class: "empty", style: { border: "none" } }, "Match history is temporarily unavailable."));
     });
     return host;
+  }
+
+  function formatHistoryDate(value) {
+    const millis = typeof value?.toMillis === "function" ? value.toMillis() : Number(value);
+    const date = new Date(Number.isFinite(millis) ? millis : Date.now());
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   }
 
   function openProfileSettings() {

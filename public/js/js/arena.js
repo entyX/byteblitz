@@ -26,6 +26,7 @@ export function arenaIsOpen() { return !!activeArena; }
  *  startAtMs   (duel) absolute epoch ms the clock starts
  *  me / opponent (duel) { uid, username, rating, rd }
  *  hooks: onSolved({timeMs, passed}), onFailed({reason, passed, timeMs}),
+ *         onSubmission({code, language, passed, submissionCount, runtimeMs, memoryBytes}),
  *         onTestProgress(passedCount), onExit()
  *  externalEnd() -> optional; arena calls it to ask "has the duel already ended?"
  */
@@ -50,6 +51,9 @@ class Arena {
     this.started = false;
     this.enteringFs = false;
     this.bestPassed = 0;
+    this.submissionCount = 0;
+    this.lastRuntimeMs = null;
+    this.lastMemoryBytes = null;
     this.submitting = false;
     this.timer = null;
     this.timeLeft = cfg.timeLimit;
@@ -213,7 +217,7 @@ class Arena {
               h("div", { class: "bar" }, bar))))),
     );
 
-        push("BYTEBLITZ // CODE BURST v1.3 [C1 BETA]");
+        push("BYTEBLITZ // CODE BURST v1.3 [C2 BETA]");
 
     await wait(180); push("> Establishing secure session…"); bump(15);
     await wait(220); push("> Session authenticated. ✓"); bump(30);
@@ -668,12 +672,17 @@ class Arena {
     rows.forEach((r) => this.resultsHost.append(r));
 
     let passed = 0;
+    let runtimeMs = 0;
+    const memoryBefore = Number(performance.memory?.usedJSHeapSize) || null;
+    this.submissionCount += 1;
 
     for (let i = 0; i < this.problem.testCases.length; i++) {
       const tc = this.problem.testCases[i];
     // Use the live code captured above so we're always running what the
     // textarea currently contains (protects against any DOM races).
-    const res = await runCode(this.lang, codeNow, tc.input, getRunTimeout(this.lang));
+      const startedAt = performance.now();
+      const res = await runCode(this.lang, codeNow, tc.input, getRunTimeout(this.lang));
+      runtimeMs += performance.now() - startedAt;
       const ok = !res.error && outputMatches(res.output, tc.expected);
       if (ok) passed++;
 
@@ -707,6 +716,18 @@ class Arena {
     }
 
     this.bestPassed = Math.max(this.bestPassed, passed);
+    this.lastRuntimeMs = Math.round(runtimeMs);
+    const memoryAfter = Number(performance.memory?.usedJSHeapSize) || null;
+    this.lastMemoryBytes = memoryBefore && memoryAfter ? Math.max(0, memoryAfter - memoryBefore) : null;
+    this.cfg.onSubmission?.({
+      code: codeNow,
+      language: this.lang,
+      passed,
+      submissionCount: this.submissionCount,
+      runtimeMs: this.lastRuntimeMs,
+      memoryBytes: this.lastMemoryBytes,
+      timeMs: this.elapsedMs(),
+    });
     this.cfg.onTestProgress?.(this.bestPassed);
 
     this.submitting = false;
@@ -734,6 +755,9 @@ class Arena {
       message,
       code: this.ta?.value ?? this.code ?? "",
       language: this.lang,
+      submissionCount: this.submissionCount,
+      runtimeMs: this.lastRuntimeMs,
+      memoryBytes: this.lastMemoryBytes,
     };
     if (reason === "solved") {
       this.cfg.onSolved?.(submission);
