@@ -239,7 +239,8 @@ export function placementLeft(profile) {
  * update therefore treats a solve as strong positive evidence and a miss as
  * strong negative evidence. Each of the seven runs can move the rating by
  * hundreds early on, with shrinking caps as confidence rises. The onboarding
- * selection remains a broad ±500 benchmark guard rail, not a hard destination.
+ * selection is a starting hypothesis only: seven consistent failures must be
+ * able to move a player across the full rating scale.
  */
 export function placementCalibration(profile, solved, solveTimeSecs, difficulty) {
   const priorGames = placementGamesPlayed(profile);
@@ -247,15 +248,27 @@ export function placementCalibration(profile, solved, solveTimeSecs, difficulty)
     || skillLevel(profile?.skillLevel)?.rating
     || Number(profile?.soloRating)
     || DEFAULT_RATING;
-  const current = Number(profile?.soloRating) || base;
+  const savedRating = Number(profile?.soloRating);
+  // Zero is a valid placement estimate, not a missing value. Treat only an
+  // absent or non-finite rating as a reason to fall back to onboarding.
+  const current = Number.isFinite(savedRating) ? savedRating : base;
   const par = PAR_TIME[difficulty] || 150;
   const speed = solved ? Math.max(0, Math.min(1, (2 - (solveTimeSecs / par)) / 2)) : 0;
-  const performance = solved ? 0.85 + 0.13 * speed : 0.10;
-  // Strong first impressions are valuable, but each subsequent placement game
-  // should refine rather than completely replace the evidence already gathered.
-  const cap = Math.max(108, 240 - Math.min(priorGames, PLACEMENT_GAMES - 1) * 22);
+  const performance = solved ? 0.84 + 0.15 * speed : 0.05;
+  // A placement selection is a hypothesis, not a floor. Losses intentionally
+  // carry more corrective weight than solves because persistent failure is the
+  // clearest signal of a dramatically overestimated starting level.
+  const winCap = Math.max(120, 270 - Math.min(priorGames, PLACEMENT_GAMES - 1) * 25);
+  const lossCap = Math.max(150, 330 - Math.min(priorGames, PLACEMENT_GAMES - 1) * 30);
+  const difficultyTier = TIERS.find((tier) => tier.name === difficulty) || tierFor(current);
+  const estimatedTier = tierFor(current);
+  const easyGap = Math.max(0, (estimatedTier.min - difficultyTier.min) / 500);
+  const easyLossMultiplier = 1 + Math.min(0.35, easyGap * 0.12);
+  const cap = solved ? winCap : lossCap * easyLossMultiplier;
   const delta = Math.round((performance - 0.5) * 2 * cap);
-  const rating = Math.max(base - 500, Math.min(base + 500, current + delta));
+  // Keep a low nonzero floor so a fully corrected estimate remains readable
+  // while still allowing seven failed placements to land in the 100–200 range.
+  const rating = Math.max(100, Math.min(3000, current + delta));
   const games = Math.min(PLACEMENT_GAMES, priorGames + 1);
   const rd = Math.max(PROVISIONAL_RD + 25, DEFAULT_RD - games * 30);
   return {

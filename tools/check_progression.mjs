@@ -46,11 +46,16 @@ const bWin2 = placementCalibration({ ...beginner, soloRating: bWin1.rating, plac
 const bWin3 = placementCalibration({ ...beginner, soloRating: bWin2.rating, placementGames: 2 }, true, 110, "Bronze");
 const bLoss = placementCalibration({ ...beginner, soloRating: bWin3.rating, placementGames: 3 }, false, 300, "Bronze");
 assert.ok(bWin1.delta >= 100 && bWin1.delta <= 240, "a first placement win should move by hundreds within its cap");
-assert.ok(bLoss.delta <= -100 && Math.abs(bLoss.delta) <= 240, "a placement loss should move by hundreds within its cap");
+assert.ok(bLoss.delta <= -100 && Math.abs(bLoss.delta) <= 330, "a placement loss should move by hundreds within its cap");
 assert.ok(bLoss.rating >= 0 && bLoss.rating <= 900, "beginner placement stays within its broad base-rating guard rail");
 
-const masterLoss = placementCalibration({ skillLevel: "master", placementBaseRating: 1600, soloRating: 1600, soloVol: 0.06, placementGames: 0 }, false, 300, "Master");
-assert.ok(masterLoss.rating >= 1100, "master placement cannot crash below the base-rating guard rail");
+let masterEstimate = { skillLevel: "master", placementBaseRating: 1600, soloRating: 1600, soloVol: 0.06, placementGames: 0 };
+for (let game = 0; game < PLACEMENT_GAMES; game += 1) {
+  const result = placementCalibration(masterEstimate, false, 300, "Bronze");
+  masterEstimate = { ...masterEstimate, soloRating: result.rating, placementGames: result.games };
+}
+assert.ok(masterEstimate.soloRating >= 100 && masterEstimate.soloRating <= 300,
+  "seven Bronze-level placement failures must sharply correct a Master starting estimate");
 
 assert.equal(partialTestLossMitigation(0, 12, 0.55), 0, "zero tests earns no Unranked mitigation");
 assert.equal(partialTestLossMitigation(11, 12, 0.55), 0.55, "11/12 tests caps Unranked mitigation at 55%");

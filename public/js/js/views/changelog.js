@@ -6,9 +6,18 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.6",
+    version: "v1.2.7",
     date: "August 14, 2026",
     current: true,
+    items: [
+      "Profile cards and the hero now scale, stack, and preserve division labels at high browser zoom and on narrow screens instead of dropping rank copy onto an unintended line.",
+      "Placement now treats onboarding as a starting hypothesis rather than a rating floor. Seven consistent failures—including easy Bronze problems—can correct a Master selection all the way into the low-rating range.",
+    ],
+  },
+  {
+    version: "v1.2.6",
+    date: "August 14, 2026",
+    current: false,
     items: [
       "Losses now preserve a bounded amount of demonstrated test-case progress: at 11/12 or more tests, an Unranked loss can be softened by up to 55% and a Ranked loss by up to 28%. Wins, draws, and low-progress losses are unchanged.",
       "Ranked standings now foreground division with colored, bold, softly glowing ELO and a Bronze, Silver, Gold, or higher division label.",
