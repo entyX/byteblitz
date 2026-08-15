@@ -241,9 +241,10 @@ export async function deleteAccountData(profile) {
   return { deletedDocuments: allMessages.length + allRefs.length };
 }
 
-export function watchProfile(uid, cb) {
+export function watchProfile(uid, cb, onMissing) {
   return onSnapshot(doc(db, "users", uid), (s) => {
     if (s.exists()) cb({ uid, ...s.data() });
+    else if (typeof onMissing === "function") onMissing();
   });
 }
 

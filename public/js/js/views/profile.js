@@ -6,7 +6,7 @@
 // ============================================================================
 
 import { h, add, clear, emptyState, toast, fmtTime, icon, avatar, modal, confirmModal, fmtAgo } from "../ui.js";
-import { session, requireAccount, openAuthModal, refreshGuest } from "../session.js";
+import { session, requireAccount, openAuthModal, refreshGuest, markVoluntaryAccountDeletion } from "../session.js";
 import {
   auth, googleProvider, deleteUser, EmailAuthProvider,
   reauthenticateWithCredential, reauthenticateWithPopup,
@@ -214,12 +214,14 @@ export async function renderProfile(params, root) {
       error.style.display = "none";
       try {
         await reauthenticateForDeletion(password?.value || "");
+        markVoluntaryAccountDeletion(auth.currentUser?.uid);
         await deleteAccountData(p);
         await deleteUser(auth.currentUser);
         m.close();
         toast("Your account and associated data have been permanently deleted.", "ok");
         navigate("/");
       } catch (err) {
+        markVoluntaryAccountDeletion(null);
         console.error("account deletion failed", err);
         error.textContent = err?.message || "Account deletion could not be completed. Please try again.";
         error.style.display = "block";

@@ -13,6 +13,8 @@ const RELEASES = [
       "New email-password accounts now receive a verification link at sign-up and remain inactive until the inbox owner confirms it.",
       "The account activation screen can resend the verification email and refresh Firebase after the link is opened. Unverified accounts cannot reserve usernames, create profiles, complete onboarding, enter Ranked, use friends or chat, or appear on public boards.",
       "Signed-out visitors can still use local Unranked practice without creating an account.",
+      "Returning to ByteBlitz after switching tabs now refreshes the non-arena page. Active arenas retain their existing focus lock, which resolves the run before any navigation can interfere.",
+      "If an account is removed from Firebase, the open session detects it immediately from the profile record or within seconds from Firebase Authentication, then shows an unskippable account-removal notice and signs the player out.",
     ],
   },
   {

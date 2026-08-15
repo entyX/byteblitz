@@ -38,5 +38,21 @@ assert.match(rules, /match \/matchmaking_lobby\/\{uid\}[\s\S]*allow create: if i
   "matchmaking must reject unverified accounts at the backend");
 assert.doesNotMatch(home, /anonymous Ranked match/,
   "the signed-out home copy must no longer promise anonymous ranked access");
+assert.match(session, /export function markVoluntaryAccountDeletion/,
+  "voluntary self-deletion must be distinguishable from external removal");
+assert.match(session, /function showRemovedAccountScreen/,
+  "a removed account needs an unskippable notice");
+assert.match(session, /Your ByteBlitz account has been banned/,
+  "the removal notice must clearly explain the account state");
+assert.match(session, /closable: false/,
+  "the removal notice must not be dismissible");
+assert.match(session, /setInterval\(check, 5000\)/,
+  "Firebase Authentication removal must be checked promptly");
+assert.match(session, /function installRefreshOnReturn/,
+  "returning from a backgrounded tab must trigger the refresh lifecycle");
+assert.match(session, /window\.location\.reload\(\)/,
+  "the background-return lifecycle must reload the page");
+assert.match(store, /else if \(typeof onMissing === "function"\) onMissing\(\)/,
+  "profile deletion must be observable immediately through Firestore");
 
-console.log("email verification checks passed");
+console.log("email verification and lifecycle checks passed");

@@ -30,6 +30,11 @@ let presenceInterval = null;
 let unloadHandler = null;
 let authEpoch = 0;
 let verificationModalUid = null;
+let accountCheckInterval = null;
+let removedAccountUid = null;
+let voluntaryRemovalUid = null;
+let backgrounded = false;
+let refreshQueued = false;
 
 /**
  * Email/password identities remain inactive until Firebase confirms that the
@@ -125,11 +130,79 @@ export function openEmailVerificationModal(user = auth.currentUser) {
 function stopRealtimeSession() {
   profileUnsub?.();
   profileUnsub = null;
+  if (accountCheckInterval) { clearInterval(accountCheckInterval); accountCheckInterval = null; }
   if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; }
   if (unloadHandler) {
     window.removeEventListener("beforeunload", unloadHandler);
     unloadHandler = null;
   }
+}
+
+/** Mark a confirmed self-deletion so its data cleanup is not shown as moderation. */
+export function markVoluntaryAccountDeletion(uid = session.user?.uid) {
+  voluntaryRemovalUid = uid || null;
+}
+
+function isRemovedAuthError(error) {
+  return ["auth/user-not-found", "auth/user-disabled", "auth/user-token-expired"].includes(error?.code);
+}
+
+function showRemovedAccountScreen(uid) {
+  if (!uid || removedAccountUid === uid) return;
+  removedAccountUid = uid;
+  stopRealtimeSession();
+  session.profile = null;
+  session.ready = true;
+  emit();
+
+  const returnHome = async () => {
+    try { await signOut(auth); } catch {}
+    window.location.replace(`${window.location.origin}${window.location.pathname}#/`);
+  };
+  modal(h("div", { class: "center", style: { maxWidth: "500px" } },
+    h("div", { class: "eyebrow mb-3", style: { color: "var(--primary)" } }, "// Account removed"),
+    h("h2", { class: "head mb-3" }, "Your ByteBlitz account has been banned"),
+    h("p", { class: "mono", style: { fontSize: "13px", color: "var(--muted-fg)", lineHeight: "1.7" } },
+      "This account is no longer available and has been signed out. Account removal may follow cheating, inappropriate messages or conduct, bot-like behavior, attempts to bypass arena rules, or other violations of the platform rules."),
+    h("p", { class: "label mt-4", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.55" } },
+      "If you believe this was an error, contact the ByteBlitz administrator."),
+    h("button", { class: "btn btn-primary btn-block mt-6", type: "button", onClick: returnHome }, "Return to sign in"),
+  ), { closable: false });
+}
+
+function monitorAccountValidity(user, epoch) {
+  if (!user || user.isAnonymous) return;
+  const check = async () => {
+    if (epoch !== authEpoch || auth.currentUser?.uid !== user.uid || removedAccountUid === user.uid) return;
+    try {
+      await reload(user);
+    } catch (error) {
+      if (isRemovedAuthError(error)) showRemovedAccountScreen(user.uid);
+      else console.warn("account validity check failed", error);
+    }
+  };
+  check();
+  // Authentication deletion has no client push event, so poll its authoritative
+  // reload endpoint frequently while a real account is open.
+  accountCheckInterval = setInterval(check, 5000);
+}
+
+function installRefreshOnReturn() {
+  if (installRefreshOnReturn.installed) return;
+  installRefreshOnReturn.installed = true;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      backgrounded = true;
+      return;
+    }
+    if (!backgrounded || refreshQueued || removedAccountUid) return;
+    backgrounded = false;
+    // An active arena already has a stricter focus lock that resolves or exits
+    // the run. Avoid interrupting its result write with a second navigation.
+    if (document.querySelector(".arena")) return;
+    refreshQueued = true;
+    window.setTimeout(() => window.location.reload(), 150);
+  });
 }
 
 export function onSession(fn) {
@@ -157,6 +230,7 @@ export function beginGuest() {
 }
 
 export function startSession() {
+  installRefreshOnReturn();
   return new Promise((resolve) => {
     let first = true;
     onAuthStateChanged(auth, async (user) => {
@@ -197,7 +271,12 @@ export function startSession() {
             if (epoch !== authEpoch) return;
             session.profile = p;
             emit();
+          }, () => {
+            if (epoch !== authEpoch) return;
+            if (voluntaryRemovalUid === user.uid) return;
+            showRemovedAccountScreen(user.uid);
           });
+          monitorAccountValidity(user, epoch);
 
           // Presence heartbeat: best-effort online indicator. Update immediately
           // and then every 25s while the tab is active.
