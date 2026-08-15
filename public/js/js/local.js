@@ -33,6 +33,8 @@ function blankGuest() {
 
     soloRating: g.rating, soloRd: g.rd, soloVol: g.vol,
     soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
+    placementGames: 0, placementConfidence: 0,
+    tutorialCompleted: false,
 
     totalMatches: 0,
     puzzlesSolved: 0,

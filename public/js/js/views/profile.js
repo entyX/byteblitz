@@ -8,8 +8,8 @@
 import { h, add, clear, emptyState, toast, fmtTime, icon, avatar, modal } from "../ui.js";
 import { session, requireAccount, openAuthModal, refreshGuest } from "../session.js";
 import {
-  rankFor, nextTier, tierProgress, displayRating, isProvisional,
-  placementLeft, PLACEMENT_GAMES, TIERS,
+  rankFor, nextTier, tierProgress, displayPlacementRating,
+  placementLeft, placementGamesPlayed, placementConfidence, isPlaced, PLACEMENT_GAMES, TIERS,
 } from "../glicko.js";
 import {
   getProfile, getFriends, sendFriendRequest, getSentRequests, removeFriend,
@@ -46,8 +46,8 @@ export async function renderProfile(params, root) {
     return;
   }
 
-  const rank = rankFor(p.rating, p.gamesPlayed);
-  const placed = placementLeft(p.gamesPlayed) === 0;
+  const rank = rankFor(p.rating, p);
+  const placed = isPlaced(p);
   const nxt = nextTier(p.rating);
   const prog = tierProgress(p.rating);
 
@@ -144,12 +144,10 @@ export async function renderProfile(params, root) {
         h("div", { class: "head", style: { fontSize: "clamp(1.6rem,3.4vw,2.3rem)", color: rank.color } },
           rank.name),
         h("div", { class: "rating-num mt-2", style: { color: rank.color } },
-          (p.gamesPlayed ?? 0) > 0 ? displayRating(p.rating, p.rd) : "—"),
+          displayPlacementRating(p.rating, p.rd, p)),
         !placed
           ? h("p", { class: "mono mt-3", style: { fontSize: "11.5px", color: "var(--muted-fg)", lineHeight: "1.6", maxWidth: "220px", marginLeft: "auto" } },
-              (p.gamesPlayed ?? 0) === 0
-                ? `No ranked matches yet — ${PLACEMENT_GAMES} are needed for a rank.`
-                : `${placementLeft(p.gamesPlayed)} more ranked ${placementLeft(p.gamesPlayed) === 1 ? "match" : "matches"} for a rank.`)
+              `${placementLeft(p)} Unranked placement ${placementLeft(p) === 1 ? "game" : "games"} remaining — ${placementGamesPlayed(p)}/${PLACEMENT_GAMES} complete, Confidence ${placementConfidence(p)}/10.`)
           : nxt
             ? h("div", { class: "mt-4", style: { marginLeft: "auto", maxWidth: "210px" } },
                 h("div", { class: "between mb-2" },
@@ -158,14 +156,14 @@ export async function renderProfile(params, root) {
                 h("div", { class: "bar" }, h("i", { style: { width: prog + "%", background: rank.color } })),
                 h("div", { class: "label mt-2" }, prog + "% to " + nxt.name))
             : null,
-        isProvisional(p.rd) && (p.gamesPlayed ?? 0) > 0
-          ? h("p", { class: "mono mt-3", style: { fontSize: "11px", color: "var(--muted)" } }, "Provisional (?)")
+        !placed
+          ? h("p", { class: "mono mt-3", style: { fontSize: "11px", color: "var(--muted)" } }, "Provisional (?) — ranked unlocks when placement completes.")
           : null),
     ),
 
     // ── Record ─────────────────────────────────────────────────────────────
     h("div", { class: "mt-6" },
-      h("div", { class: "section-title" }, isMe ? "// Your record" : "// Ranked record"),
+      h("div", { class: "section-title" }, isMe ? "// Your rated record" : "// Rated record"),
       h("div", { class: "stats" },
         stat(String(w), "Wins", "var(--ok)"),
         stat(String(l), "Losses", "var(--primary)"),
@@ -174,7 +172,7 @@ export async function renderProfile(params, root) {
 
     h("div", { class: "mt-4" },
       h("div", { class: "stats" },
-        stat(String(p.gamesPlayed ?? 0), "Ranked matches"),
+        stat(String(p.gamesPlayed ?? 0), "Rated matches"),
         stat(String(p.streak ?? 0), "Current streak"),
         stat(String(p.bestStreak ?? 0), "Best streak"),
         rankHost())),
@@ -183,7 +181,9 @@ export async function renderProfile(params, root) {
     h("div", { class: "mt-8" },
       h("div", { class: "section-title" }, "// Unranked"),
       h("div", { class: "stats" },
-        stat(displayRating(p.soloRating, p.soloRd), "Unranked ELO", "var(--primary)"),
+        stat(displayPlacementRating(p.soloRating, p.soloRd, p), "Unranked ELO", "var(--primary)"),
+        stat(`${placementGamesPlayed(p)}/${PLACEMENT_GAMES}`, "Placement"),
+        stat(`${placementConfidence(p)}/10`, "Confidence"),
         stat(String(p.soloRuns ?? 0), "Runs"),
         stat(String(p.soloSolved ?? 0), "Solved"),
         stat(String(p.puzzlesSolved ?? 0), "Puzzles cleared"))),
@@ -227,7 +227,7 @@ export async function renderProfile(params, root) {
     const cell = h("div", { class: "stat" },
       h("div", { class: "v" }, "—"),
       h("div", { class: "k" }, "Board position"));
-    if (!p.isGuest && placed) {
+    if (!p.isGuest) {
       rankedPosition(uid).then((n) => {
         if (n) cell.querySelector(".v").textContent = "#" + n;
       }).catch(() => {});

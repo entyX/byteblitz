@@ -181,7 +181,7 @@ export function watchLobbyForOpponent(me, onFound) {
   return () => { stopped = true; clearInterval(poll); unsub(); };
 }
 
-export async function createDuel(a, b, duelId, fromLobby) {
+export async function createDuel(a, b, duelId, fromLobby, mode = "rated") {
   const [p1, p2] = a.uid < b.uid ? [a, b] : [b, a];
   const seed = Math.floor(Math.random() * 1_000_000_000);
   const difficulty = tierFor(Math.min(a.rating ?? 1500, b.rating ?? 1500)).name;
@@ -191,6 +191,7 @@ export async function createDuel(a, b, duelId, fromLobby) {
     player1: stripPlayer(p1),
     player2: stripPlayer(p2),
     difficulty,
+    mode,
     problemSeed: seed,
     timeLimit: TIME_LIMITS[difficulty] ?? 300,
     startTime: Date.now() + COUNTDOWN_MS,
@@ -303,9 +304,9 @@ export async function requestRematch(duelId, uid) {
   await updateDoc(doc(db, "duels", duelId), { rematchReqBy: uid });
 }
 
-export async function acceptRematch(oldDuelId, me, opp) {
+export async function acceptRematch(oldDuelId, me, opp, mode = "rated") {
   const newId = `${[me.uid, opp.uid].sort().join("__")}__r${Date.now()}`;
-  await createDuel(me, opp, newId, false);
+  await createDuel(me, opp, newId, false, mode);
   try { await updateDoc(doc(db, "duels", oldDuelId), { newDuelId: newId }); } catch {}
   return newId;
 }

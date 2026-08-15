@@ -320,7 +320,14 @@ select.input { cursor: pointer; }
   text-transform: uppercase; font-style: italic; letter-spacing: -0.05em;
   color: var(--foreground); white-space: nowrap;
 }
-.nav-links { display: flex; align-items: center; gap: 26px; position: absolute; left: 50%; transform: translateX(-50%); }
+.nav-links {
+  display: flex; align-items: center; gap: 26px; position: absolute;
+  left: 50%; transform: translateX(-50%);
+  transition: left .22s ease;
+}
+/* The search control grows from the right; move the center links left instead
+   of allowing the two controls to overlap on wide navigation bars. */
+.nav.search-open .nav-links { left: calc(50% - clamp(108px, 13vw, 150px)); }
 .nav-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 .logo-version { font-size: 11px; margin-left: 8px; color: var(--muted-fg); font-weight: 500; display: inline-block; vertical-align: middle; }
 
@@ -1136,9 +1143,10 @@ select.input { cursor: pointer; }
 @media (max-width: 1080px) {
   .nav-inner { flex-wrap: wrap; row-gap: 10px; column-gap: 16px; padding: 10px 16px; }
   .nav-links {
-    order: 3; width: 100%; gap: 22px;
+    order: 3; width: 100%; gap: 22px; left: auto; transform: none;
     overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
   }
+  .nav.search-open .nav-links { left: auto; }
   .nav-links::-webkit-scrollbar { display: none; }
   .nav-right { gap: 8px; }
   .nav-search.open { width: 200px; }

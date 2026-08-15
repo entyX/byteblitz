@@ -4,7 +4,7 @@
 
 import { h, clear, emptyState, avatar } from "../ui.js";
 import { session } from "../session.js";
-import { displayRating, isProvisional } from "../glicko.js";
+import { displayPlacementRating, isPlaced, placementGamesPlayed } from "../glicko.js";
 import { rankedLeaderboard, soloLeaderboard, isPermissionDenied } from "../store.js";
 import { navigate } from "../router.js";
 import { countryFor } from "../countries.js";
@@ -53,8 +53,8 @@ export async function renderLeaderboard(params, root) {
 
   function paintIntro() {
     introCopy.textContent = board === "ranked"
-      ? "Ranked is head-to-head, Glicko-rated competition. Your record includes every win, loss, and draw."
-      : "Unranked is the solo race against the clock. Solve more, improve your rating, and chase the top spot.";
+      ? "Ranked is head-to-head, Glicko-rated competition. Provisional ratings appear here while players complete Unranked placement."
+      : "Unranked is the solo race against the clock. Your first seven runs are placement games that calibrate both ELO tracks.";
   }
 
   async function paint() {
@@ -62,7 +62,7 @@ export async function renderLeaderboard(params, root) {
     clear(bodyHost).append(h("div", { class: "empty", style: { margin: "18px" } }, "Loading standings…"));
     try {
       const rows = board === "ranked"
-        ? (await rankedLeaderboard(100)).filter((u) => (u.gamesPlayed ?? 0) > 0)
+        ? (await rankedLeaderboard(100)).filter((u) => placementGamesPlayed(u) > 0 || (u.gamesPlayed ?? 0) > 0)
         : (await soloLeaderboard(100)).filter((u) => (u.soloRuns ?? 0) > 0);
       paintBoard(rows);
     } catch (error) {
@@ -79,7 +79,7 @@ export async function renderLeaderboard(params, root) {
     const isRanked = board === "ranked";
     if (!rows.length) {
       bodyHost.append(h("div", { class: "empty", style: { margin: "18px" } },
-        isRanked ? "No ranked matches have been played yet. Win one and you're #1." : "No unranked runs recorded yet. Play one and you're #1."));
+        isRanked ? "No provisional or rated players have been recorded yet. Finish an Unranked placement game to be #1." : "No unranked runs recorded yet. Play one and you're #1."));
       return;
     }
 
@@ -117,14 +117,14 @@ export async function renderLeaderboard(params, root) {
             h("span", { class: "country-flag" }, country.flag),
             h("span", { class: "country-name mono", style: { fontSize: "10.5px", color: "var(--muted-fg)" } }, country.name))),
         record,
-        h("span", { class: "lb-elo" }, displayRating(rating, rd), h("small", {}, isProvisional(rd) ? "Provisional" : "Rating"))));
+        h("span", { class: "lb-elo" }, displayPlacementRating(rating, rd, player), h("small", {}, isPlaced(player) ? "Rating" : "Placement"))));
     });
 
     bodyHost.append(table,
       h("p", { class: "lb-mode-note" },
         isRanked
-          ? "Draws count on every ranked record. A ? beside ELO means the rating is still provisional and will settle as that player completes more matches."
-          : "Unranked ratings are for solo runs only. They are shown without tiers, so the focus stays on your speed and improvement."));
+          ? "Players enter this board during Unranked placement. A ? beside ELO means they still need to finish seven Unranked placement games before Ranked unlocks."
+          : "Unranked ratings are for solo runs only. The first seven runs calibrate both tracks and raise confidence from 0/10 to 10/10."));
   }
 
   paintTabs();

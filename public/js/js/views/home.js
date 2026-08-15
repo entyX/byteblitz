@@ -8,11 +8,14 @@
 
 import { h, add, clear, toast, icon, fmtTime, fmtClock, modal, avatar } from "../ui.js";
 import { session, onSession, requireAccount, openAuthModal } from "../session.js";
-import { tierFor, rankFor, displayRating, placementLeft, TIME_LIMITS } from "../glicko.js";
+import {
+  tierFor, rankFor, displayPlacementRating, placementLeft, placementGamesPlayed,
+  placementConfidence, isPlaced, PLACEMENT_GAMES, TIME_LIMITS,
+} from "../glicko.js";
 import {
   watchFriends, ensureConversation, rankedPosition, getFriends, watchPresenceCounts, watchTotalUsers, watchPresence, watchProfile,
 } from "../store.js";
-import { startSolo, findRankedMatch, challengeFriend, RANKED_ELO_WINDOW } from "../game.js";
+import { startSolo, startTutorial, findRankedMatch, challengeFriend, RANKED_ELO_WINDOW } from "../game.js";
 import { watchLobbyCount } from "../matchmaking.js";
 import { navigate } from "../router.js";
 
@@ -153,9 +156,11 @@ export async function renderHome(params, root) {
     add(eloHost,
       h("div", { class: "label" }, "Your unranked ELO"),
       h("div", { class: "elo-value mt-2", style: { color: p ? "var(--primary)" : "var(--muted)" } },
-        p ? displayRating(p.soloRating, p.soloRd) : "—"),
-      // Unranked deliberately carries no rank: it's a rating and a clock, not a ladder.
-      h("div", { class: "label mt-2" }, "No ranks in unranked"),
+        p ? displayPlacementRating(p.soloRating, p.soloRd, p) : "—"),
+      p && !isPlaced(p)
+        ? h("div", { class: "label mt-2", style: { color: "var(--primary)" } },
+            `Placement ${placementGamesPlayed(p)}/${PLACEMENT_GAMES} · Confidence ${placementConfidence(p)}/10`)
+        : h("div", { class: "label mt-2" }, "No ranks in Unranked"),
 
       h("div", { class: "elo-facts" },
         fact("Fight against", "The clock"),
@@ -165,36 +170,41 @@ export async function renderHome(params, root) {
         fact("Best time", p?.soloBest?.[tier.name] != null ? fmtTime(p.soloBest[tier.name]) : "—"),
       ),
 
-      h("button", { class: "play-btn mt-6", onClick: onPlayUnranked },
-        "Play", icon("play", 20)),
+      h("div", { class: "row gap-3 mt-6 wrapflex" },
+        h("button", { class: "play-btn grow", onClick: onPlayUnranked },
+          p && !isPlaced(p) ? "Play placement" : "Play", icon("play", 20)),
+        h("button", { class: "btn", title: "Play the optional tutorial", onClick: () => startTutorial() },
+          "Tutorial")),
     );
   }
 
   function paintRankedElo(p) {
-    const locked = !p || p.isAnonymous;
-    const placed = !locked && placementLeft(p.gamesPlayed) === 0;
-    const rank = rankFor(p?.rating, p?.gamesPlayed);
+    const accountLocked = !p || p.isAnonymous;
+    const placementLocked = !accountLocked && !isPlaced(p);
+    const locked = accountLocked || placementLocked;
+    const placed = !accountLocked && isPlaced(p);
+    const rank = rankFor(p?.rating, p);
 
     add(eloHost,
       h("div", { class: "elo-rank-badge" },
         h("div", { class: "label" }, "Rank"),
-        h("div", { class: "n", style: { color: placed && myRank ? rank.color : "var(--muted)" } },
+          h("div", { class: "n", style: { color: placed && myRank ? rank.color : "var(--muted)" } },
           placed && myRank ? "#" + myRank : "—")),
 
       h("div", { class: "label" }, "Your ranked ELO"),
-      h("div", { class: "elo-value mt-2", style: { color: locked ? "var(--muted)" : rank.color } },
-        locked ? "—" : displayRating(p.rating, p.rd)),
+      h("div", { class: "elo-value mt-2", style: { color: accountLocked ? "var(--muted)" : rank.color } },
+        accountLocked ? "—" : displayPlacementRating(p.rating, p.rd, p)),
       h("div", { class: "head mt-2", style: { fontSize: "24px", color: rank.color } },
-        rank.placement ? "Unranked" : rank.name),
+        placementLocked ? "Placement" : rank.name),
 
-      locked
+      accountLocked
         ? h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
             p?.isGuest
-              ? "Ranked needs an account — guests play unranked only."
-              : "Sign in to get a ranked ELO.")
-        : rank.placement
+              ? "Ranked needs an account — guests play Unranked and the tutorial only."
+              : "Sign in to begin placement and unlock Ranked.")
+        : placementLocked
           ? h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
-              `${placementLeft(p.gamesPlayed)} more ranked ${placementLeft(p.gamesPlayed) === 1 ? "match" : "matches"} to earn a rank.`)
+              `${placementLeft(p)} Unranked placement ${placementLeft(p) === 1 ? "game" : "games"} remaining. Finish at Confidence 10/10 to unlock Ranked.`)
           : null,
 
       h("div", { class: "elo-facts" },
@@ -204,7 +214,8 @@ export async function renderHome(params, root) {
       ),
 
       h("button", { class: "play-btn mt-6", onClick: onPlayRanked },
-        locked ? (p?.isGuest ? "Create account" : "Sign in to play") : "Play", icon("play", 20)),
+        accountLocked ? (p?.isGuest ? "Create account" : "Sign in to play")
+          : placementLocked ? "Complete placement" : "Play", icon("play", 20)),
     );
   }
 
@@ -224,6 +235,13 @@ export async function renderHome(params, root) {
     if (!p || p.isAnonymous) {
       const u = await requireAccount("play");
       if (!u) return;
+    }
+    if (session.profile && !isPlaced(session.profile)) {
+      mode = "unranked";
+      sessionStorage.setItem(LS_MODE, mode);
+      paintModes();
+      toast("Complete your Unranked placement games to unlock Ranked.", "err");
+      return;
     }
     findRankedMatch();
   }

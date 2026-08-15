@@ -15,6 +15,7 @@ import { SKILL_LEVELS, tierFor } from "./glicko.js";
 import { applySkillLevel, saveAvatar, saveCountry, needsOnboarding } from "./store.js";
 import { countryOptions } from "./countries.js";
 import { session, refreshGuest } from "./session.js";
+import { offerTutorial } from "./game.js";
 
 let open = false;
 
@@ -38,7 +39,8 @@ export function runOnboarding(profile) {
         refreshGuest();
         m.close();
         open = false;
-        toast(`Starting at ${level.rating}. Play to settle it.`, "ok");
+        toast(`Starting at ${level.rating}. Complete seven Unranked placement games to unlock Ranked.`, "ok");
+        offerTutorial(session.profile ?? { ...profile, ...{ skillLevel: level.id, rating: level.rating, soloRating: level.rating } });
         resolve(level);
       } catch (e) {
         console.error(e);
@@ -65,14 +67,14 @@ export function runOnboarding(profile) {
       h("div", { class: "eyebrow mb-2" }, "// Welcome"),
       h("h2", { class: "head mb-3" }, "How strong are ", h("span", { class: "accent" }, "you"), "?"),
       h("p", { class: "body-text mb-5" },
-        "This sets where both your ratings start — Ranked and Unranked. It's only a starting point: your rating moves fast for the first few games until it finds your real level, so pick the closest one and get playing."),
+        "This sets the base for both your Unranked and Ranked ratings. Then complete seven Unranked placement games: your ELO moves quickly while confidence grows from 0/10 to 10/10, and Ranked unlocks once placement is complete."),
       h("label", { class: "label mb-2", style: { display: "block" } }, "// Country / region"),
       country,
       h("p", { class: "label mt-2 mb-4", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.5" } },
         "This flag appears on the leaderboard. You can change it later from your profile."),
       h("div", { class: "stack gap-2" }, ...options),
       h("p", { class: "label mt-5", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.6" } },
-        "Not sure? Pick Intermediate — being wrong costs you a handful of games, nothing more."),
+        "Not sure? Pick Intermediate. Your first seven Unranked placement games are designed to correct a rough starting estimate quickly."),
     ), { wide: true, closable: false });
   });
 }

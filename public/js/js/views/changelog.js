@@ -6,9 +6,20 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.2",
+    version: "v1.3.0",
     date: "August 14, 2026",
     current: true,
+    items: [
+      "New accounts now complete seven Unranked placement games before Ranked unlocks. Confidence climbs from 0/10 to 10/10 while both ELO tracks calibrate quickly.",
+      "Placement players now appear on the Ranked leaderboard with a provisional rating, while ranked matchmaking remains locked until placement completes.",
+      "Friend challenges now begin with a casual-versus-rated choice. Casual duels never affect ELO; rated duels require both players to have completed placement.",
+      "A skippable no-ELO tutorial game now appears after onboarding and remains available from the Unranked home panel.",
+      "The navbar now shifts its links left on desktop while player search is open, giving the expanded search field room to breathe.",
+    ],
+  },
+  {
+    version: "v1.2.2",
+    date: "August 14, 2026",
     items: [
       "Puzzle leaderboard trophies now use a clear visual status: grey when no times exist and yellow when a puzzle has recorded clears.",
       "Hovering or keyboard-focusing any puzzle leaderboard trophy now uses the red ByteBlitz action treatment.",

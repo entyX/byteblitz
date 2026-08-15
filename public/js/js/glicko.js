@@ -183,54 +183,66 @@ export function tierProgress(rating) {
   return Math.max(0, Math.min(100, Math.round(((rating - t.min) / span) * 100)));
 }
 
-// ── Ranked placement ────────────────────────────────────────────────────────
-// A rank is a claim about where you sit against everyone else, and ten games is
-// the earliest that claim means anything. Until then you have a rating but no
-// rank: the ladder shows you as "Unranked" rather than handing out a Gold badge
-// for one lucky win.
-export const PLACEMENT_GAMES = 10;
+// ── Unranked placement ─────────────────────────────────────────────────────
+// Every new player starts with seven Unranked placement games. Those solo runs
+// calibrate both rating tracks before ranked duels unlock, so a newcomer cannot
+// be thrown into the ladder on a one-game estimate.
+export const PLACEMENT_GAMES = 7;
+export const CONFIDENCE_MAX = 10;
 
 export const UNRANKED_TIER = {
   name: "Unranked", code: "?", color: "#8E93A6", min: 0, max: Infinity,
   placement: true,
 };
 
-export function isPlaced(gamesPlayed) {
-  return (gamesPlayed ?? 0) >= PLACEMENT_GAMES;
+/** Support old profiles by treating their recorded solo runs as placement play. */
+export function placementGamesPlayed(profile) {
+  if (typeof profile === "number") return Math.max(0, Math.min(PLACEMENT_GAMES, profile));
+  const saved = Number(profile?.placementGames);
+  if (Number.isFinite(saved)) return Math.max(0, Math.min(PLACEMENT_GAMES, saved));
+  return Math.max(0, Math.min(PLACEMENT_GAMES, Number(profile?.soloRuns) || 0));
 }
 
-/**
- * Hold the deviation up while a player is still placing.
- *
- * Plain Glicko-2 collapses rd very fast — 350 → 259 → 209 → 181 in three games
- * — so by game four a "provisional" player is only moving ±15, which makes the
- * provisional label a lie and leaves a badly-placed player grinding. During
- * placement the deviation is floored on a straight line from DEFAULT_RD down to
- * PROVISIONAL_RD, so the first ten games all swing hard and the rating lands
- * near the truth quickly. After that it's ordinary Glicko-2.
- *
- * @param rd           the deviation Glicko-2 just produced
- * @param gamesPlayed  rated games *including* the one just played
- */
-export function placementRd(rd, gamesPlayed) {
-  const n = Math.max(0, gamesPlayed ?? 0);
-  if (n >= PLACEMENT_GAMES) return rd;
-  const t = n / PLACEMENT_GAMES;
+export function placementConfidence(profile) {
+  const saved = Number(profile?.placementConfidence);
+  if (Number.isFinite(saved)) return Math.max(0, Math.min(CONFIDENCE_MAX, saved));
+  return 0;
+}
+
+export function confidenceForPlacementGames(games) {
+  return Math.min(CONFIDENCE_MAX, Math.ceil((Math.max(0, games) / PLACEMENT_GAMES) * CONFIDENCE_MAX));
+}
+
+export function isPlaced(profile) {
+  return placementGamesPlayed(profile) >= PLACEMENT_GAMES;
+}
+
+/** Hold the deviation high while the seven Unranked placement games settle. */
+export function placementRd(rd, profile) {
+  const games = placementGamesPlayed(profile);
+  if (games >= PLACEMENT_GAMES) return rd;
+  const t = games / PLACEMENT_GAMES;
   const floor = DEFAULT_RD + (PROVISIONAL_RD - DEFAULT_RD) * t;
   return Math.max(rd, Math.round(floor * 100) / 100);
 }
 
-export function placementLeft(gamesPlayed) {
-  return Math.max(0, PLACEMENT_GAMES - (gamesPlayed ?? 0));
+export function placementLeft(profile) {
+  return Math.max(0, PLACEMENT_GAMES - placementGamesPlayed(profile));
+}
+
+/** Show a question mark only until the required Unranked placements are done. */
+export function displayPlacementRating(rating, rd, profile) {
+  if (rating == null) return "—";
+  return Math.round(rating) + (!isPlaced(profile) ? "?" : "");
 }
 
 /**
- * The rank to *show* for a ranked player: their tier once placed, the Unranked
- * placeholder before that. `tierFor` stays the raw rating→tier map and is what
- * problem difficulty and matchmaking keep using.
+ * The rank to show for a player: their tier once placement completes, otherwise
+ * the Unranked placeholder. `tierFor` remains the raw rating→tier map for
+ * problem selection and matchmaking.
  */
-export function rankFor(rating, gamesPlayed) {
-  return isPlaced(gamesPlayed) ? tierFor(rating) : UNRANKED_TIER;
+export function rankFor(rating, profile) {
+  return isPlaced(profile) ? tierFor(rating) : UNRANKED_TIER;
 }
 
 // ── Starting rating ─────────────────────────────────────────────────────────
@@ -239,20 +251,24 @@ export function rankFor(rating, gamesPlayed) {
 // these are provisional ("600?") and move fast until the system agrees.
 export const SKILL_LEVELS = [
   {
-    id: "beginner", name: "Beginner", rating: 600,
+    id: "beginner", name: "Beginner", rating: 400,
     desc: "New to this. Loops, strings and simple maths are where you're comfortable.",
   },
   {
-    id: "intermediate", name: "Intermediate", rating: 1200,
-    desc: "You know hashmaps, sorting and two pointers, and recursion doesn't scare you.",
+    id: "intermediate", name: "Intermediate", rating: 700,
+    desc: "You know the basics and are building confidence with common patterns.",
   },
   {
-    id: "advanced", name: "Advanced", rating: 1800,
-    desc: "Binary search, greedy, graphs and dynamic programming are familiar ground.",
+    id: "advanced", name: "Advanced", rating: 1000,
+    desc: "Hashmaps, sorting, two pointers and recursion are familiar ground.",
   },
   {
-    id: "master", name: "Master", rating: 2400,
-    desc: "Suffix structures, flows and heavy graph theory. You've done contests.",
+    id: "expert", name: "Expert", rating: 1300,
+    desc: "Binary search, greedy methods, graphs and dynamic programming are comfortable.",
+  },
+  {
+    id: "master", name: "Master", rating: 1600,
+    desc: "You have strong contest experience and enjoy difficult algorithmic problems.",
   },
 ];
 
@@ -282,14 +298,14 @@ export const PAR_TIME = {
  * positive evidence. The previous curve gave every slow solve exactly 0.5 —
  * equal to the virtual opponent — so a provisional player could finish with a
  * visible +0. v1.2.0 adds a completion floor that is intentionally stronger
- * during the first ten placement runs, then continues to reward speed above it.
+ * during the seven placement runs, then continues to reward speed above it.
  */
-export function soloScore(solved, solveTimeSecs, difficulty, soloRd = null) {
+export function soloScore(solved, solveTimeSecs, difficulty, profile = null) {
   if (!solved) return 0;
 
   const par = PAR_TIME[difficulty] || 150;
   const ratio = Math.max(0, solveTimeSecs / par);
-  const provisional = (soloRd ?? DEFAULT_RD) > PROVISIONAL_RD;
+  const provisional = !isPlaced(profile);
 
   // `speed` is 0 at twice par or slower, 0.5 at par, and reaches 1 for
   // exceptional clears. It keeps a visible gap between a near-limit solve and

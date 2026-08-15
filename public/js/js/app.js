@@ -38,10 +38,10 @@ const outlet = h("main", { id: "outlet" });
 function buildShell() {
   const nav = h("nav", { class: "nav" },
     h("div", { class: "nav-inner" },
-      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.2.2")),
+      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.3.0")),
       navLinks,
       h("div", { class: "nav-right" },
-        playerSearchBox(),
+        playerSearchBox({ onExpandedChange: (open) => nav.classList.toggle("search-open", open) }),
         bellWrap,
         authArea)));
 
@@ -83,7 +83,7 @@ function paintAuth() {
     return;
   }
 
-  const rank = rankFor(p.rating, p.gamesPlayed);
+  const rank = rankFor(p.rating, p);
   // `add` rather than `append`: a bare null would be inserted as the text
   // "null" next to the username.
   add(authArea,
@@ -204,9 +204,11 @@ function popChallenge(c) {
     h("div", { class: "eyebrow mb-3" }, "// Incoming challenge"),
     h("h2", { class: "head mb-3" }, h("span", { class: "accent" }, c.fromUsername), " wants to duel"),
     h("p", { class: "mono mb-6", style: { fontSize: "12px", color: "var(--muted-fg)", lineHeight: "1.6" } },
-      "A ranked Burst duel. Same rules, same rating stakes as matchmaking."),
+      c.mode === "rated"
+        ? "A rated Burst duel. The result changes Ranked ELO for both players."
+        : "A casual Burst duel. Same arena rules, with no ELO at stake."),
     h("div", { class: "row gap-3", style: { justifyContent: "center" } },
-      h("button", { class: "btn btn-primary", onClick: () => { m.close(); acceptChallenge(c.id); } }, "Accept ▸"),
+      h("button", { class: "btn btn-primary", onClick: () => { m.close(); acceptChallenge(c.id); } }, c.mode === "rated" ? "Accept rated ▸" : "Accept casual ▸"),
       h("button", { class: "btn", onClick: () => { m.close(); declineChallenge(c.id); } }, "Decline")),
   ), { closable: false });
 }

@@ -10,7 +10,7 @@
 
 import { h, add, clear, emptyState, icon, fmtTime, fmtClock, modal, debounce, avatar } from "../ui.js";
 import { session, onSession } from "../session.js";
-import { TIERS, TIME_LIMITS, displayRating, rankFor } from "../glicko.js";
+import { TIERS, TIME_LIMITS, displayPlacementRating, rankFor } from "../glicko.js";
 import { loadPool } from "../problems.js";
 import {
   getMyPuzzleRecords, puzzleLeaderboard, puzzleLeaderboardDetailed, puzzleLeaderboardIds,
@@ -284,7 +284,7 @@ export async function renderTraining(params, root) {
       const list = h("div", { class: "divide" });
       rows.forEach((r, i) => {
         const isMe = r.uid === session.profile?.uid;
-        const rank = rankFor(r.rating, r.gamesPlayed);
+        const rank = rankFor(r.rating, r);
         list.append(h("div", {
           class: "lb-row" + (isMe ? " me" : "") + (i < 3 ? " podium" : ""),
           style: { gridTemplateColumns: "52px 1fr 92px 92px 88px", cursor: "pointer" },
@@ -296,9 +296,9 @@ export async function renderTraining(params, root) {
 
             h("span", { class: "nm" }, r.username)),
           h("span", { class: "tnum", style: { color: "var(--primary)" } },
-            r.soloRuns > 0 ? displayRating(r.soloRating, r.soloRd) : "—"),
+            r.soloRuns > 0 ? displayPlacementRating(r.soloRating, r.soloRd, r) : "—"),
           h("span", { class: "tnum", style: { color: rank.color } },
-            rank.placement ? "Unranked" : displayRating(r.rating, r.rd)),
+            rank.placement ? "Unranked" : displayPlacementRating(r.rating, r.rd, r)),
           h("span", { class: "tnum", style: { fontWeight: "700" } }, fmtTime(r.timeMs))));
       });
 
@@ -306,7 +306,7 @@ export async function renderTraining(params, root) {
       host.append(box,
         h("p", { class: "label mt-4", style: { lineHeight: "1.7", textTransform: "none", letterSpacing: "0" } },
 
-          "Unranked and Ranked are that player's two ELO tracks. Ranked reads \"Unranked\" until they have played 10 ranked matches."));
+          "Unranked and Ranked are that player's two ELO tracks. Ranked unlocks after seven Unranked placement games."));
     }).catch((e) => {
       console.error(e);
       clear(host).append(h("div", { class: "empty" },

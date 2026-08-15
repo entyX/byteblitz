@@ -10,6 +10,7 @@ import {
 } from "./firebase.js";
 import {
   defaultRating, rate, decayRd, soloScore, soloOpponent, placementRd,
+  placementGamesPlayed, confidenceForPlacementGames, PLACEMENT_GAMES,
 } from "./glicko.js";
 import {
   isGuestProfile, patchGuest, markGuestSeen, guestSeen,
@@ -40,6 +41,8 @@ export function blankProfile(uid, username, isAnon) {
 
     soloRating: g.rating, soloRd: g.rd, soloVol: g.vol,
     soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
+    placementGames: 0, placementConfidence: 0,
+    tutorialCompleted: false,
 
     totalMatches: 0,
     puzzlesSolved: 0,
@@ -70,6 +73,11 @@ export async function applySkillLevel(profile, level) {
     skillLevel: level.id,
     rating: level.rating,
     soloRating: level.rating,
+    placementGames: 0,
+    placementConfidence: 0,
+    tutorialCompleted: false,
+    lbRating: level.rating,
+    lbSolo: level.rating,
   };
   if (isGuestProfile(profile)) { patchGuest(patch); return patch; }
   await updateDoc(doc(db, "users", profile.uid), patch);
@@ -173,9 +181,7 @@ export async function applyDuelResult(uid, profile, opponent, score, result) {
     rd: decayRd(profile.rd, profile.vol, profile.lastPlayedAt),
     vol: profile.vol,
   };
-  const next = rate(me, opponent, score);
-  // Keep placement swings large — see placementRd.
-  next.rd = placementRd(next.rd, (profile.gamesPlayed ?? 0) + 1);
+    const next = rate(me, opponent, score);
 
   const streak = result === "win" ? (profile.streak ?? 0) + 1 : 0;
   const updates = {
@@ -213,10 +219,14 @@ export async function applySoloResult(uid, profile, opts) {
     vol: profile.soloVol,
   };
 
-  // Pass the decayed RD into soloScore so it can grant provisional boosts.
-  const score = soloScore(solved, secs, difficulty, me.rd);
+  // Placement runs deliberately move quickly while both tracks calibrate.
+  const score = soloScore(solved, secs, difficulty, profile);
   const next = rate(me, soloOpponent(difficulty, me.rating), score);
-  next.rd = placementRd(next.rd, (profile.soloRuns ?? 0) + 1);
+  const priorPlacementGames = placementGamesPlayed(profile);
+  const placementGames = Math.min(PLACEMENT_GAMES, priorPlacementGames + 1);
+  next.rd = placementRd(next.rd, { ...profile, placementGames });
+  const placementConfidence = confidenceForPlacementGames(placementGames);
+  const calibrating = priorPlacementGames < PLACEMENT_GAMES;
 
   const best = { ...(profile.soloBest || {}) };
   let newRecord = false;
@@ -237,21 +247,40 @@ export async function applySoloResult(uid, profile, opts) {
       soloRuns: (profile.soloRuns ?? 0) + 1,
       soloSolved: (profile.soloSolved ?? 0) + (solved ? 1 : 0),
       totalMatches: (profile.totalMatches ?? 0) + 1,
+      placementGames,
+      placementConfidence,
+      ...(calibrating ? {
+        rating: next.rating, rd: next.rd, vol: next.vol,
+        lbRating: next.rating,
+      } : {}),
     });
   } else {
-    await updateDoc(doc(db, "users", uid), {
+    const updates = {
       ...common,
       lbSolo: next.rating,
       soloRuns: increment(1),
       soloSolved: increment(solved ? 1 : 0),
       totalMatches: increment(1),
+      placementGames,
+      placementConfidence,
       updatedAt: serverTimestamp(),
-    });
+    };
+    if (calibrating) {
+      updates.rating = next.rating;
+      updates.rd = next.rd;
+      updates.vol = next.vol;
+      updates.lbRating = next.rating;
+    }
+    await updateDoc(doc(db, "users", uid), updates);
   }
 
-    markDailyActivity(profile);
+  markDailyActivity(profile);
   const ratingDelta = Math.round((next.rating - (profile.soloRating ?? next.rating)) * 10) / 10;
-  return { ...next, before: Math.round(profile.soloRating), delta: ratingDelta, score, newRecord };
+  return {
+    ...next, before: Math.round(profile.soloRating), delta: ratingDelta, score, newRecord,
+    placementGames, placementConfidence, rankedRating: calibrating ? next.rating : profile.rating,
+    placementComplete: placementGames >= PLACEMENT_GAMES,
+  };
 
 }
 
@@ -264,6 +293,13 @@ export async function markProblemSeen(profile, archetypeId) {
   if (profile.seen?.[archetypeId]) return;
   try { await updateDoc(doc(db, "users", profile.uid), { [`seen.${archetypeId}`]: true }); }
   catch { /* discovery is a nicety — never fail a match over it */ }
+}
+
+/** Persist whether the optional introductory tutorial has been completed or skipped. */
+export async function markTutorialComplete(profile) {
+  if (!profile) return;
+  if (isGuestProfile(profile)) { patchGuest({ tutorialCompleted: true }); return; }
+  await updateDoc(doc(db, "users", profile.uid), { tutorialCompleted: true });
 }
 
 /** The set of puzzles this player has met, as an { archetypeId: true } map. */
@@ -750,16 +786,17 @@ export async function deleteMessage(convId, msgId, me) {
 }
 
 // ── Friend challenges ───────────────────────────────────────────────────────
-export async function createChallenge(me, target) {
+export async function createChallenge(me, target, mode = "casual") {
   const ref = await addDoc(collection(db, "challenges"), {
     fromUid: me.uid, fromUsername: me.username,
     fromRating: me.rating, fromRd: me.rd,
     toUid: target.uid, toUsername: target.username,
-    status: "pending", duelId: null, createdAt: Date.now(),
+    mode, status: "pending", duelId: null, createdAt: Date.now(),
   });
   await notify(target.uid, {
     type: "challenge", fromUid: me.uid, fromUsername: me.username,
-    challengeId: ref.id, text: `${me.username} challenged you to a Burst duel`,
+    challengeId: ref.id,
+    text: `${me.username} challenged you to a ${mode === "rated" ? "rated" : "casual"} Burst duel`,
   });
   return ref.id;
 }

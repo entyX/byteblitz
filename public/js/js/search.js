@@ -7,7 +7,7 @@
 
 import { h, clear, icon, debounce, avatar, toast } from "./ui.js";
 import { session } from "./session.js";
-import { displayRating, rankFor } from "./glicko.js";
+import { displayPlacementRating, rankFor } from "./glicko.js";
 import { searchPlayers, sendFriendRequest, getSentRequests, getFriends } from "./store.js";
 import { navigate } from "./router.js";
 
@@ -67,8 +67,8 @@ export function playerSearchBox(opts = {}) {
   }, 240);
 
   function resultRow(u) {
-    const rank = rankFor(u.rating, u.gamesPlayed);
-    const go = () => { close(); input.value = ""; navigate("/profile/" + u.uid); };
+    const rank = rankFor(u.rating, u);
+    const go = () => { close(); input.value = ""; setExpanded(false); navigate("/profile/" + u.uid); };
 
     const action = friends.has(u.uid)
       ? h("span", { class: "pill pill-ok" }, "Friends")
@@ -97,8 +97,8 @@ export function playerSearchBox(opts = {}) {
         h("div", { class: "row gap-3 mt-1" },
           h("span", { class: "label", style: { color: rank.color } },
             rank.placement ? "Unranked" : rank.name),
-          h("span", { class: "label" }, "R " + displayRating(u.rating, u.rd)),
-          h("span", { class: "label" }, "U " + displayRating(u.soloRating, u.soloRd)))),
+          h("span", { class: "label" }, "R " + displayPlacementRating(u.rating, u.rd, u)),
+          h("span", { class: "label" }, "U " + displayPlacementRating(u.soloRating, u.soloRd, u)))),
       action);
     return row;
   }
@@ -114,8 +114,13 @@ export function playerSearchBox(opts = {}) {
 
   const wrap = h("div", { class: "nav-search" }, toggle, input, pop);
 
+  function setExpanded(open) {
+    wrap.classList.toggle("open", open);
+    opts.onExpandedChange?.(open);
+  }
+
   function expand() {
-    wrap.classList.add("open");
+    setExpanded(true);
     input.focus();
     loadRelations();
   }
@@ -123,7 +128,7 @@ export function playerSearchBox(opts = {}) {
   function collapse() {
     close();
     if (input.value.trim()) return;   // keep an in-progress search visible
-    wrap.classList.remove("open");
+    setExpanded(false);
   }
 
   input.addEventListener("input", run);
@@ -135,7 +140,7 @@ export function playerSearchBox(opts = {}) {
     if (e.key !== "Escape") return;
     input.value = "";
     close();
-    wrap.classList.remove("open");
+    setExpanded(false);
     input.blur();
   });
 

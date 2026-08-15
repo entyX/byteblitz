@@ -11,11 +11,12 @@ import {
   randomProblem, problemForSeed, problemById, TESTS_PER_PROBLEM,
 } from "./problems.js";
 import {
-  TIME_LIMITS, tierFor, scoresFor, displayRating, PAR_TIME,
+  TIME_LIMITS, tierFor, scoresFor, displayRating, displayPlacementRating, PAR_TIME,
+  isPlaced, placementLeft, PLACEMENT_GAMES,
 } from "./glicko.js";
 import {
-    applySoloResult, applyDuelResult, recordPuzzleTime, puzzleLeaderboard,
-  getProfile, setChallengeStatus, markProblemSeen, setPresence,
+  applySoloResult, applyDuelResult, recordPuzzleTime, puzzleLeaderboard,
+  getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence,
 
 } from "./store.js";
 import { session, requireAccount, requireAnySession, refreshGuest } from "./session.js";
@@ -44,6 +45,7 @@ export async function startSolo(preset) {
   // how hard the thing measuring you is. The tier comes from your unranked
   // rating, the same way a duel's tier comes from the players' ratings.
   const difficulty = preset || tierFor(session.profile?.soloRating ?? 1500).name;
+  const placing = !isPlaced(player);
 
   let problem;
   try {
@@ -61,7 +63,7 @@ export async function startSolo(preset) {
 
   const arena = openArena({
     mode: "solo",
-    title: "Code Burst · Unranked",
+    title: placing ? "Code Burst · Unranked Placement" : "Code Burst · Unranked",
     problem,
         timeLimit: limit,
     onStarted: () => setBattlePresence(true),
@@ -85,6 +87,13 @@ export async function startSolo(preset) {
         timeMs: solved ? r.timeMs : limit * 1000,
         difficulty,
       });
+      if (res && session.profile) {
+        Object.assign(session.profile, {
+          soloRating: res.rating, soloRd: res.rd, soloVol: res.vol,
+          rating: res.rankedRating, placementGames: res.placementGames,
+          placementConfidence: res.placementConfidence,
+        });
+      }
       refreshGuest();
     } catch (e) {
       console.error(e);
@@ -93,19 +102,20 @@ export async function startSolo(preset) {
 
     arena.showResult(soloResultScreen({
       solved, reason: r.reason, timeMs: r.timeMs, limit, difficulty, problem, res,
-      onAgain: () => { arena.destroy(); startSolo(difficulty); },
+      placement: placing,
+      onAgain: () => { arena.destroy(); startSolo(); },
       onHome: () => arena.exit(),
     }));
   }
 }
 
 function soloResultScreen(o) {
-  const { solved, reason, timeMs, difficulty, problem, res } = o;
+  const { solved, reason, timeMs, difficulty, problem, res, placement } = o;
   const delta = res ? Math.round(res.rating) - res.before : 0;
   const par = PAR_TIME[difficulty];
 
   return h("div", { style: { maxWidth: "560px", width: "100%" } },
-    h("div", { class: "eyebrow mb-2" }, "// Unranked run complete"),
+    h("div", { class: "eyebrow mb-2" }, placement ? "// Unranked placement complete" : "// Unranked run complete"),
     h("h1", { class: "head mb-2" },
       solved ? h("span", { style: { color: "var(--ok)" } }, "Solved")
              : h("span", { class: "accent" }, reason === "left" ? "Resigned" : reason === "resigned" ? "Resigned" : "Time up")),
@@ -117,9 +127,18 @@ function soloResultScreen(o) {
     h("div", { class: "stats mb-6" },
       stat(solved ? fmtTime(timeMs) : "—", "Your time"),
       stat(par ? par + "s" : "—", "Par time"),
-      stat(res ? displayRating(res.rating, res.rd) : "—", "Unranked ELO"),
+      stat(res ? displayPlacementRating(res.rating, res.rd, { placementGames: res.placementGames }) : "—", "Unranked ELO"),
       stat((delta >= 0 ? "+" : "") + delta, "Change", delta >= 0 ? "var(--ok)" : "var(--primary)"),
     ),
+
+    placement && res
+      ? h("div", { class: "panel mb-6", style: { padding: "12px 16px", borderColor: "hsl(var(--primary-raw) / .45)" } },
+          h("div", { class: "between gap-3" },
+            h("span", { class: "mono", style: { fontSize: "12px", color: "var(--muted-fg)" } },
+              res.placementComplete ? "Placement complete — Ranked is unlocked." : `${PLACEMENT_GAMES - res.placementGames} placement ${PLACEMENT_GAMES - res.placementGames === 1 ? "game" : "games"} remaining.`),
+            h("span", { class: "label", style: { color: "var(--primary)" } }, `Confidence ${res.placementConfidence}/10`)),
+          h("div", { class: "bar mt-3" }, h("i", { style: { width: `${res.placementConfidence * 10}%`, background: "var(--primary)" } })))
+      : null,
 
     res?.newRecord
       ? h("div", { class: "panel mb-6", style: { padding: "12px 16px", borderColor: "hsl(140 70% 50% / .4)" } },
@@ -138,6 +157,72 @@ function stat(v, k, color) {
   return h("div", { class: "stat" },
     h("div", { class: "v", style: color ? { color } : {} }, v),
     h("div", { class: "k" }, k));
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TUTORIAL — an optional guided first puzzle that never affects ELO
+// ════════════════════════════════════════════════════════════════════════════
+const TUTORIAL_PUZZLE_ID = "B-001-1";
+
+export function offerTutorial(profile = session.profile) {
+  if (!profile) return;
+  let decided = false;
+  const finish = async (start) => {
+    if (decided) return;
+    decided = true;
+    try { await markTutorialComplete(profile); refreshGuest(); } catch {}
+    m.close();
+    if (start) startTutorial();
+  };
+  const m = modal(h("div", {},
+    h("div", { class: "eyebrow mb-2" }, "// Optional tutorial"),
+    h("h2", { class: "head mb-3" }, "Learn the arena in one easy puzzle"),
+    h("p", { class: "body-text mb-5" },
+      "Try a short Bronze problem with no ELO at stake. You can run code, inspect tests, and submit a solution before starting your placement games."),
+    h("div", { class: "row gap-3 wrapflex" },
+      h("button", { class: "btn btn-primary grow", onClick: () => finish(true) }, "Start tutorial ▸"),
+      h("button", { class: "btn grow", onClick: () => finish(false) }, "Skip for now")),
+  ), { wide: true, onClose: () => { if (!decided) finish(false); } });
+}
+
+export async function startTutorial() {
+  const player = await requireAnySession("play");
+  if (!player) return;
+  let problem;
+  try { problem = await problemById("Bronze", TUTORIAL_PUZZLE_ID); }
+  catch (error) { console.error(error); }
+  if (!problem) { toast("The tutorial puzzle could not be loaded.", "err"); return; }
+
+  let settled = false;
+  const arena = openArena({
+    mode: "tutorial",
+    title: "ByteBlitz · Tutorial",
+    problem,
+    timeLimit: TIME_LIMITS.Bronze ?? 300,
+    onStarted: () => setBattlePresence(true),
+    onExit: () => { setBattlePresence(false); navigate("/"); },
+    onSolved: (result) => finish(true, result),
+    onFailed: (result) => finish(false, result),
+  });
+
+  async function finish(solved, result) {
+    if (settled) return;
+    settled = true;
+    setBattlePresence(false);
+    try { await markTutorialComplete(session.profile); refreshGuest(); } catch {}
+    arena.showResult(h("div", { style: { maxWidth: "520px", width: "100%" } },
+      h("div", { class: "eyebrow mb-2" }, "// Tutorial complete"),
+      h("h1", { class: "head mb-3", style: { color: solved ? "var(--ok)" : "var(--foreground)" } },
+        solved ? "Nice work" : "Tutorial paused"),
+      h("p", { class: "mono mb-6", style: { fontSize: "13px", color: "var(--muted-fg)", lineHeight: "1.65" } },
+        solved
+          ? "You have used the editor, test runner, and judge. Your seven Unranked placement games are ready when you are."
+          : "You can return to this tutorial at any time from the arena home."),
+      h("div", { class: "row gap-3 wrapflex" },
+        h("button", { class: "btn btn-primary", onClick: () => { arena.destroy(); startSolo(); } }, "Start placement ▸"),
+        h("button", { class: "btn", onClick: () => arena.exit() }, "Back to arena")),
+    ));
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -250,6 +335,10 @@ export async function findRankedMatch() {
   if (!user) return;
   const profile = session.profile;
   if (!profile) return;
+  if (!isPlaced(profile)) {
+    toast(`${placementLeft(profile)} Unranked placement ${placementLeft(profile) === 1 ? "game" : "games"} remaining before Ranked unlocks.`, "err");
+    return;
+  }
 
   const me = mm.lobbyPlayer(profile);
   let unsubLobby = null, unsubSelf = null, unsubCount = null;
@@ -352,6 +441,7 @@ export async function enterDuel(duelId) {
   const playerNum = duel.player1.uid === profile.uid ? 1 : 2;
   const me = playerNum === 1 ? duel.player1 : duel.player2;
   const opponent = playerNum === 1 ? duel.player2 : duel.player1;
+  const duelMode = duel.mode === "casual" ? "casual" : "rated";
 
   let problem;
   try {
@@ -375,7 +465,7 @@ export async function enterDuel(duelId) {
 
   arena = openArena({
     mode: "duel",
-    title: "Ranked Duel",
+    title: duelMode === "rated" ? "Rated Duel" : "Casual Duel",
     problem,
     timeLimit: duel.timeLimit ?? TIME_LIMITS[duel.difficulty] ?? 300,
         startAtMs: duel.startTime,
@@ -435,7 +525,7 @@ export async function enterDuel(duelId) {
       cleanup();
       arena.forceEnd?.("complete", "");
 
-      await settleDuel(d, profile, playerNum, me, opponent, arena, problem);
+      await settleDuel(d, profile, playerNum, me, opponent, arena, problem, duelMode);
     }
 
     if (d.newDuelId && d.newDuelId !== duelId) {
@@ -446,14 +536,14 @@ export async function enterDuel(duelId) {
   });
 }
 
-async function settleDuel(d, profile, playerNum, me, opponent, arena, problem) {
+async function settleDuel(d, profile, playerNum, me, opponent, arena, problem, duelMode) {
   const iWon = d.winner === profile.uid;
   const isDraw = d.winner === null;
   const result = isDraw ? "draw" : iWon ? "win" : "loss";
   const winBy = d.winBy ?? "solve";
 
   let res = null;
-  if (!applied.has(d.id)) {
+  if (duelMode === "rated" && !applied.has(d.id)) {
     applied.add(d.id);
     const [myScore] = scoresFor(winBy, iWon);
     const score = isDraw ? 0.5 : myScore;
@@ -473,11 +563,11 @@ async function settleDuel(d, profile, playerNum, me, opponent, arena, problem) {
   const oppTime = playerNum === 1 ? d.p2SolveTime : d.p1SolveTime;
 
   arena.showResult(duelResultScreen({
-    result, winBy, res, me, opponent, myTime, oppTime, problem,
+    result, winBy, res, me, opponent, myTime, oppTime, problem, duelMode,
     onRematch: async () => {
       try {
         const meP = mm.lobbyPlayer(session.profile);
-        const newId = await mm.acceptRematch(d.id, meP, opponent);
+        const newId = await mm.acceptRematch(d.id, meP, opponent, duelMode);
         arena.destroy();
         enterDuel(newId);
       } catch (e) {
@@ -490,7 +580,7 @@ async function settleDuel(d, profile, playerNum, me, opponent, arena, problem) {
 }
 
 function duelResultScreen(o) {
-  const { result, winBy, res, me, opponent, myTime, oppTime } = o;
+  const { result, winBy, res, me, opponent, myTime, oppTime, duelMode } = o;
   const delta = res?.delta ?? (res ? Math.round(res.rating) - res.before : 0);
 
   const headline = result === "draw" ? "Draw"
@@ -509,7 +599,7 @@ function duelResultScreen(o) {
   }[winBy] ?? "";
 
   return h("div", { style: { maxWidth: "560px", width: "100%" } },
-    h("div", { class: "eyebrow mb-2" }, "// Ranked duel"),
+    h("div", { class: "eyebrow mb-2" }, duelMode === "rated" ? "// Rated duel" : "// Casual duel"),
     h("h1", { class: "head mb-2", style: { color } }, headline),
     h("p", { class: "mono mb-6", style: { fontSize: "12.5px", color: "var(--muted-fg)" } }, byline),
 
@@ -536,7 +626,10 @@ function duelResultScreen(o) {
             ? h("p", { class: "mono mt-3", style: { fontSize: "11px", color: "var(--muted)" } },
                 "The ? means your rating is still provisional — it settles as you play.")
             : null)
-      : null,
+      : duelMode === "casual"
+        ? h("p", { class: "mono center mb-6", style: { fontSize: "12px", color: "var(--muted-fg)" } },
+            "Casual duel — no ELO was changed.")
+        : null,
 
     h("div", { class: "row gap-3 wrapflex" },
       h("button", { class: "btn btn-primary", onClick: o.onRematch }, "Rematch ▸"),
@@ -554,14 +647,47 @@ function simpleEnd(title, body, onBack) {
 }
 
 // ── Friend duels ────────────────────────────────────────────────────────────
+function chooseDuelMode(profile, friend) {
+  return new Promise((resolve) => {
+    let decided = false;
+    const placed = isPlaced(profile);
+    const finish = (mode) => {
+      if (decided) return;
+      decided = true;
+      m.close();
+      resolve(mode);
+    };
+    const m = modal(h("div", {},
+      h("div", { class: "eyebrow mb-2" }, "// Challenge ", friend.username),
+      h("h2", { class: "head mb-3" }, "Choose duel type"),
+      h("p", { class: "body-text mb-5" },
+        "Casual duels are always available and never change ELO. Rated duels use the Ranked ladder and require completed Unranked placement."),
+      h("div", { class: "stack gap-3" },
+        h("button", { class: "btn btn-primary btn-block", onClick: () => finish("casual") },
+          "Casual duel", h("span", { class: "label", style: { marginLeft: "8px" } }, "NO ELO")),
+        h("button", {
+          class: "btn btn-block", disabled: !placed,
+          title: placed ? "Rated duel" : `${placementLeft(profile)} placement games remaining`,
+          onClick: () => finish("rated"),
+        }, "Rated duel", h("span", { class: "label", style: { marginLeft: "8px" } }, placed ? "RANKED ELO" : "LOCKED"))),
+      !placed
+        ? h("p", { class: "label mt-4", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.55" } },
+            `${placementLeft(profile)} Unranked placement ${placementLeft(profile) === 1 ? "game" : "games"} remaining before Rated unlocks.`)
+        : null,
+    ), { wide: true, onClose: () => { if (!decided) resolve(null); } });
+  });
+}
+
 export async function challengeFriend(friend) {
   const user = await requireAccount("gate");
   if (!user) return;
   const profile = session.profile;
+  const mode = await chooseDuelMode(profile, friend);
+  if (!mode) return;
 
   let challengeId;
   try {
-    challengeId = await (await import("./store.js")).createChallenge(profile, friend);
+    challengeId = await (await import("./store.js")).createChallenge(profile, friend, mode);
   } catch (e) {
     console.error(e);
     toast("Couldn't send the challenge.", "err");
@@ -572,10 +698,10 @@ export async function challengeFriend(friend) {
   let done = false;
 
   const m = modal(h("div", { class: "center" },
-    h("div", { class: "eyebrow mb-3" }, "// Friend duel"),
+    h("div", { class: "eyebrow mb-3" }, `// ${mode === "rated" ? "Rated" : "Casual"} friend duel`),
     h("h2", { class: "head mb-2" }, "Waiting for ", h("span", { class: "accent" }, friend.username)),
     h("p", { class: "mono mb-6", style: { fontSize: "12px", color: "var(--muted-fg)" } },
-      "They'll get a notification. The duel starts the moment they accept."),
+      `They'll get a notification. This ${mode} duel starts the moment they accept.`),
     h("div", { class: "row gap-3", style: { justifyContent: "center" } }, h("span", { class: "spinner" })),
     h("button", { class: "btn mt-6", onClick: () => cancel() }, "Cancel challenge"),
   ), { closable: false });
@@ -612,9 +738,15 @@ export async function acceptChallenge(challengeId) {
   const from = await getProfile(c.fromUid);
   if (!from) { toast("That player is no longer available.", "err"); return; }
 
+  const mode = c.mode === "rated" ? "rated" : "casual";
+  if (mode === "rated" && (!isPlaced(profile) || !isPlaced(from))) {
+    toast("Rated duels unlock only after both players finish Unranked placement.", "err");
+    return;
+  }
+
   const duelId = `${[profile.uid, from.uid].sort().join("__")}__c${Date.now()}`;
   try {
-    await mm.createDuel(mm.lobbyPlayer(profile), mm.lobbyPlayer(from), duelId, false);
+    await mm.createDuel(mm.lobbyPlayer(profile), mm.lobbyPlayer(from), duelId, false, mode);
     await setChallengeStatus(challengeId, "accepted", duelId);
     enterDuel(duelId);
   } catch (e) {
