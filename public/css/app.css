@@ -1277,7 +1277,9 @@ select.input { cursor: pointer; }
 .lb-tabs .tab { border: 1px solid transparent; background: transparent; padding: 9px 13px; color: var(--muted); font-family: var(--font-mono); font-weight: 700; text-transform: uppercase; letter-spacing: .12em; font-size: 10.5px; border-radius: 0; }
 .lb-tabs .tab.active { border-color: var(--primary); background: hsl(var(--primary-raw) / .14); color: var(--foreground); }
 .lb-table { padding: 0 12px 12px; }
-.lb-row.lb-v12 { grid-template-columns: 64px minmax(200px, 1fr) 128px 140px 108px; margin-top: 10px; gap: 14px; min-height: 72px; padding: 11px 16px; border: 1px solid hsl(240 5% 17%); background: hsl(240 7% 8% / .72); }
+.lb-row.lb-v12 { grid-template-columns: 64px minmax(200px, 1fr) 128px 140px 108px; margin-top: 10px; gap: 14px; min-height: 72px; padding: 11px 16px; border: 1px solid hsl(240 5% 17%); background: hsl(240 7% 8% / .72); will-change: transform; }
+.lb-live-list { position: relative; }
+.lb-row.lb-v12.lb-rank-moving { position: relative; z-index: 3; border-color: hsl(var(--primary-raw) / .72); box-shadow: 0 8px 26px hsl(var(--primary-raw) / .18), inset 3px 0 0 var(--primary); }
 .lb-row.lb-v12:hover { border-color: hsl(var(--primary-raw) / .56); background: hsl(var(--primary-raw) / .08); }
 .lb-row.lb-v12.lb-head { min-height: auto; margin: 0; padding: 12px 16px; border-width: 0 0 1px; background: transparent; }
 .lb-row.lb-v12.me { border-color: hsl(var(--primary-raw) / .68); box-shadow: inset 3px 0 0 var(--primary), 0 0 22px hsl(var(--primary-raw) / .1); }
@@ -1297,6 +1299,9 @@ select.input { cursor: pointer; }
 .lb-record i { color: var(--primary-bright); font-style: normal; }
 .lb-record em { color: var(--warn); font-style: normal; }
 .lb-mode-note { margin: 14px 22px 10px; font-family: var(--font-mono); font-size: 10.5px; line-height: 1.6; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) {
+  .lb-row.lb-v12 { will-change: auto; }
+}
 @media (max-width: 720px) {
   .streak-bar { grid-template-columns: 1fr; gap: 14px; }
   .lb-intro { align-items: flex-start; flex-direction: column; }

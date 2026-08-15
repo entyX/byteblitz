@@ -681,6 +681,23 @@ export async function soloLeaderboard(n = 100) {
   return snap.docs.map((d) => ({ uid: d.id, ...d.data() })).filter((u) => !u.isAnonymous);
 }
 
+/** Subscribe to the public Ranked standings; unsubscribe when the view closes. */
+export function watchRankedLeaderboard(n, cb, onError) {
+  const q = query(collection(db, "users"), orderBy("lbRating", "desc"), limit(n));
+  return onSnapshot(q, (snap) => {
+    cb(snap.docs.map((d) => ({ uid: d.id, ...d.data() }))
+      .filter((u) => !u.isAnonymous && (u.rankedUnlocked === true || isPlaced(u))));
+  }, onError);
+}
+
+/** Subscribe to the public Unranked standings; unsubscribe when the view closes. */
+export function watchSoloLeaderboard(n, cb, onError) {
+  const q = query(collection(db, "users"), orderBy("lbSolo", "desc"), limit(n));
+  return onSnapshot(q, (snap) => {
+    cb(snap.docs.map((d) => ({ uid: d.id, ...d.data() })).filter((u) => !u.isAnonymous));
+  }, onError);
+}
+
 /**
  * Where a player sits on the ranked board, 1-based, or null if they aren't on
  * it. Reads the top slice rather than counting the whole collection — outside

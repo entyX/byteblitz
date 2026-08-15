@@ -15,6 +15,7 @@ const RELEASES = [
       "Signed-out visitors can still use local Unranked practice without creating an account.",
       "Returning to ByteBlitz after switching tabs now refreshes the non-arena page. Active arenas retain their existing focus lock, which resolves the run before any navigation can interfere.",
       "If an account is removed from Firebase, the open session detects it immediately from the profile record or within seconds from Firebase Authentication, then shows an unskippable account-removal notice and signs the player out.",
+      "Ranked and Unranked leaderboards now stream live standings. When a new result changes positions, affected rows slide past each other to make overtakes clear.",
     ],
   },
   {

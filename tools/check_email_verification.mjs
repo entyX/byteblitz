@@ -4,13 +4,14 @@ import { readFile } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 const read = (relative) => readFile(new URL(relative, root), "utf8");
 
-const [firebase, session, store, game, rules, home] = await Promise.all([
+const [firebase, session, store, game, rules, home, leaderboard] = await Promise.all([
   read("public/js/js/firebase.js"),
   read("public/js/js/session.js"),
   read("public/js/js/store.js"),
   read("public/js/js/game.js"),
   read("firestore.rules"),
   read("public/js/js/views/home.js"),
+  read("public/js/js/views/leaderboard.js"),
 ]);
 
 assert.match(firebase, /sendEmailVerification, reload/, "Firebase verification SDK functions must be re-exported");
@@ -54,5 +55,19 @@ assert.match(session, /window\.location\.reload\(\)/,
   "the background-return lifecycle must reload the page");
 assert.match(store, /else if \(typeof onMissing === "function"\) onMissing\(\)/,
   "profile deletion must be observable immediately through Firestore");
+assert.match(store, /export function watchRankedLeaderboard/,
+  "Ranked standings must have a real-time subscription");
+assert.match(store, /export function watchSoloLeaderboard/,
+  "Unranked standings must have a real-time subscription");
+assert.match(leaderboard, /watchRankedLeaderboard\(ROWS, receive, fail\)/,
+  "the leaderboard view must subscribe to Ranked snapshots");
+assert.match(leaderboard, /watchSoloLeaderboard\(ROWS, receive, fail\)/,
+  "the leaderboard view must subscribe to Unranked snapshots");
+assert.match(leaderboard, /getBoundingClientRect\(\)/,
+  "live row positions must be measured before a re-order");
+assert.match(leaderboard, /row\.animate\(/,
+  "a rank overtake must animate the moving row");
+assert.match(leaderboard, /boardUnsub\?\.\(\)/,
+  "the live leaderboard subscription must be cleaned up on navigation");
 
-console.log("email verification and lifecycle checks passed");
+console.log("email verification, lifecycle, and live leaderboard checks passed");
