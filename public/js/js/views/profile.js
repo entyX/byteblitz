@@ -392,7 +392,7 @@ export async function renderProfile(params, root) {
           h("div", { style: { minWidth: "0" } },
             h("div", { class: "label" }, card.difficulty || "Accomplishment"),
             h("h3", { class: "mono" }, card.title || card.archetypeId),
-            h("p", { class: "mono" }, card.bestTimeMs != null && Number.isFinite(Number(card.bestTimeMs)) ? `Solve time · ${fmtTime(Number(card.bestTimeMs))}` : "Completed puzzle")))));
+            h("p", { class: "mono" }, card.bestTimeMs != null && Number.isFinite(Number(card.bestTimeMs)) ? `Solve time · ${fmtTime(Number(card.bestTimeMs))}` : "Completed puzzle"))))));
   }
 
   function bestTimesPanel(prof) {
