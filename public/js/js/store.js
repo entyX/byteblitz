@@ -10,7 +10,7 @@ import {
 } from "./firebase.js";
 import {
   defaultRating, rate, decayRd, soloScore, soloOpponent, placementRd, placementCalibration,
-  placementGamesPlayed, confidenceForPlacementGames, PLACEMENT_GAMES, skillLevel,
+  placementGamesPlayed, confidenceForPlacementGames, PLACEMENT_GAMES, skillLevel, isPlaced,
 } from "./glicko.js";
 import {
   isGuestProfile, patchGuest, markGuestSeen, guestSeen,
@@ -41,7 +41,7 @@ export function blankProfile(uid, username, isAnon) {
 
     soloRating: g.rating, soloRd: g.rd, soloVol: g.vol,
     soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
-    placementGames: 0, placementConfidence: 0, placementBaseRating: null,
+    placementGames: 0, placementConfidence: 0, placementBaseRating: null, rankedUnlocked: false,
     tutorialCompleted: false,
 
     totalMatches: 0,
@@ -76,6 +76,7 @@ export async function applySkillLevel(profile, level) {
     placementGames: 0,
     placementConfidence: 0,
     placementBaseRating: level.rating,
+    rankedUnlocked: false,
     tutorialCompleted: false,
     lbRating: level.rating,
     lbSolo: level.rating,
@@ -258,7 +259,9 @@ export async function resetAccountProgress(profile) {
     soloRating: base, soloRd: g.rd, soloVol: g.vol, lbSolo: base,
     wins: 0, losses: 0, draws: 0, gamesPlayed: 0, lastPlayedAt: null,
     soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
-    placementGames: 0, placementConfidence: 0, placementBaseRating: base,
+    placementGames: 0, placementConfidence: 0, placementBaseRating: null, rankedUnlocked: false,
+    // Clearing the selected skill forces onboarding to establish a new base.
+    skillLevel: null,
     totalMatches: 0, puzzlesSolved: 0, bestStreak: 0, streak: 0,
     seen: {}, activityDays: {}, tutorialCompleted: false, updatedAt: serverTimestamp(),
   };
@@ -414,6 +417,7 @@ export async function applySoloResult(uid, profile, opts) {
       totalMatches: increment(1),
       placementGames,
       placementConfidence,
+      ...(placementGames >= PLACEMENT_GAMES ? { rankedUnlocked: true } : {}),
       updatedAt: serverTimestamp(),
     };
     if (calibrating) {
@@ -615,7 +619,8 @@ export async function puzzleLeaderboardDetailed(archetypeId, n = 25) {
 export async function rankedLeaderboard(n = 100) {
   const q = query(collection(db, "users"), orderBy("lbRating", "desc"), limit(n));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ uid: d.id, ...d.data() })).filter((u) => !u.isAnonymous);
+  return snap.docs.map((d) => ({ uid: d.id, ...d.data() }))
+    .filter((u) => !u.isAnonymous && (u.rankedUnlocked === true || isPlaced(u)));
 }
 
 export async function soloLeaderboard(n = 100) {

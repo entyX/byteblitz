@@ -1323,3 +1323,22 @@ select.input { cursor: pointer; }
 .change-date { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .16em; color: var(--muted); }
 .change-items { margin: 14px 0 0; padding-left: 19px; color: var(--muted-fg); font-family: var(--font-mono); font-size: 12.5px; line-height: 1.72; }
 .change-items li + li { margin-top: 5px; }
+
+/* ── Changelog series ────────────────────────────────────────────────────── */
+.change-series {
+  border: 1px solid var(--border); background: hsl(240 6% 8% / .6);
+  margin-bottom: 12px;
+}
+.change-series > summary {
+  cursor: pointer; list-style: none; padding: 18px 20px;
+  color: var(--foreground); user-select: none;
+}
+.change-series > summary::-webkit-details-marker { display: none; }
+.change-series > summary::after {
+  content: "+"; color: var(--primary); font-family: var(--font-mono);
+  font-size: 20px; margin-left: 12px;
+}
+.change-series[open] > summary { border-bottom: 1px solid var(--border); }
+.change-series[open] > summary::after { content: "−"; }
+.change-series-body { padding: 14px; display: grid; gap: 12px; }
+.change-series .change-card { margin: 0; }

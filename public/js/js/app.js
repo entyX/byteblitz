@@ -38,7 +38,7 @@ const outlet = h("main", { id: "outlet" });
 function buildShell() {
   const nav = h("nav", { class: "nav" },
     h("div", { class: "nav-inner" },
-      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.2.4")),
+      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.2.5")),
       navLinks,
       h("div", { class: "nav-right" },
         playerSearchBox({ onExpandedChange: (open) => nav.classList.toggle("search-open", open) }),
@@ -251,6 +251,7 @@ route("/duel/:id", async (params, root) => {
 
 // ── Boot ────────────────────────────────────────────────────────────────────
 let lastUid = undefined;
+let onboardingPendingFor = null;
 
 (async function boot() {
   buildShell();
@@ -261,13 +262,20 @@ let lastUid = undefined;
 
   onSession(() => {
     paintAuth();
-    const uid = session.profile?.uid ?? null;
+    const profile = session.profile;
+    const uid = profile?.uid ?? null;
     if (uid !== lastUid) {
       lastUid = uid;
       wireUserStreams();
-      // A profile with no skill level has never been through the first-run
-      // flow, so ask before they play anything rated.
+    }
+    // Resetting progress clears skillLevel on the same profile UID. Track the
+    // pending modal separately from the UID so that transition opens onboarding
+    // again, without stacking duplicate modals during profile snapshots.
+    if (profile?.uid && !profile.skillLevel && onboardingPendingFor !== profile.uid) {
+      onboardingPendingFor = profile.uid;
       maybeOnboard();
+    } else if (profile?.skillLevel) {
+      onboardingPendingFor = null;
     }
   });
 

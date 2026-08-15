@@ -236,9 +236,10 @@ export function placementLeft(profile) {
 /**
  * A bounded placement update. Placement needs to adapt faster than a settled
  * rating, but a solo loss is much noisier than a head-to-head forfeit. This
- * update therefore rewards a solve by 0.75–0.95 performance, records a miss as
- * 0.30 rather than a full zero, and uses equal-sized decreasing caps for either
- * direction. The base selected during onboarding remains a ±200 guard rail.
+ * update therefore treats a solve as strong positive evidence and a miss as
+ * strong negative evidence. Each of the seven runs can move the rating by
+ * hundreds early on, with shrinking caps as confidence rises. The onboarding
+ * selection remains a broad ±500 benchmark guard rail, not a hard destination.
  */
 export function placementCalibration(profile, solved, solveTimeSecs, difficulty) {
   const priorGames = placementGamesPlayed(profile);
@@ -249,10 +250,12 @@ export function placementCalibration(profile, solved, solveTimeSecs, difficulty)
   const current = Number(profile?.soloRating) || base;
   const par = PAR_TIME[difficulty] || 150;
   const speed = solved ? Math.max(0, Math.min(1, (2 - (solveTimeSecs / par)) / 2)) : 0;
-  const performance = solved ? 0.75 + 0.20 * speed : 0.30;
-  const cap = Math.max(28, 56 - Math.min(priorGames, PLACEMENT_GAMES - 1) * 4);
+  const performance = solved ? 0.85 + 0.13 * speed : 0.10;
+  // Strong first impressions are valuable, but each subsequent placement game
+  // should refine rather than completely replace the evidence already gathered.
+  const cap = Math.max(108, 240 - Math.min(priorGames, PLACEMENT_GAMES - 1) * 22);
   const delta = Math.round((performance - 0.5) * 2 * cap);
-  const rating = Math.max(base - 200, Math.min(base + 200, current + delta));
+  const rating = Math.max(base - 500, Math.min(base + 500, current + delta));
   const games = Math.min(PLACEMENT_GAMES, priorGames + 1);
   const rd = Math.max(PROVISIONAL_RD + 25, DEFAULT_RD - games * 30);
   return {

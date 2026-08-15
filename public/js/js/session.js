@@ -153,6 +153,8 @@ export function openAuthModal(opts = {}) {
   const err = h("p", { class: "mono mt-3", style: { fontSize: "11.5px", color: "var(--primary)", display: "none" } });
   const email = h("input", { class: "input", type: "email", placeholder: "Email", autocomplete: "email" });
   const pass = h("input", { class: "input", type: "password", placeholder: "Password", autocomplete: "current-password" });
+  const passHint = h("p", { class: "label", style: { display: "none", textTransform: "none", letterSpacing: "0", lineHeight: "1.5" } },
+    "Use 12+ characters with uppercase, lowercase, a number, and a symbol. Spaces are not allowed.");
   const uname = h("input", { class: "input", type: "text", placeholder: "Username (3–16 chars)", autocomplete: "username" });
   const unameRow = h("div", { style: { display: "none" } }, uname);
 
@@ -174,7 +176,7 @@ export function openAuthModal(opts = {}) {
   const anonLine = null; // Signed-out play is sessionless; no guest account is created.
 
   const form = h("form", { onSubmit: onSubmit },
-    h("div", { class: "stack gap-3" }, unameRow, email, pass),
+    h("div", { class: "stack gap-3" }, unameRow, email, pass, passHint),
     err,
     h("div", { class: "mt-5 stack gap-3" }, submitBtn, googleBtn),
     h("div", { class: "between mt-4" }, toggle, forgot),
@@ -204,6 +206,8 @@ export function openAuthModal(opts = {}) {
     unameRow.style.display = mode === "signup" ? "block" : "none";
     forgot.style.display = mode === "signin" ? "inline" : "none";
     pass.setAttribute("autocomplete", mode === "signin" ? "current-password" : "new-password");
+    pass.setAttribute("placeholder", mode === "signin" ? "Password" : "Strong password");
+    passHint.style.display = mode === "signup" ? "block" : "none";
   }
 
   async function onSubmit(e) {
@@ -218,6 +222,8 @@ export function openAuthModal(opts = {}) {
     setBusy(true);
     try {
       if (mode === "signup") {
+        const passwordError = strongPasswordError(pw);
+        if (passwordError) throw new Error(passwordError);
         const name = uname.value.trim();
         if (!NAME_RE.test(name)) throw new Error("Username must be 3–16 characters: letters, numbers, underscore.");
         if (!(await usernameAvailable(name))) throw new Error("That username is taken.");
@@ -263,6 +269,16 @@ export function openAuthModal(opts = {}) {
   }
 
   return m;
+}
+
+function strongPasswordError(password) {
+  if (password.length < 12) return "Password must be at least 12 characters.";
+  if (/\s/.test(password)) return "Password cannot contain spaces or other whitespace.";
+  if (!/[a-z]/.test(password)) return "Password needs at least one lowercase letter.";
+  if (!/[A-Z]/.test(password)) return "Password needs at least one uppercase letter.";
+  if (!/\d/.test(password)) return "Password needs at least one number.";
+  if (!/[^A-Za-z0-9]/.test(password)) return "Password needs at least one symbol.";
+  return null;
 }
 
 function authMessage(e) {

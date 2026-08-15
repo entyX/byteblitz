@@ -53,7 +53,7 @@ export async function renderLeaderboard(params, root) {
 
   function paintIntro() {
     introCopy.textContent = board === "ranked"
-      ? "Ranked is head-to-head, Glicko-rated competition. Provisional ratings appear here while players complete Unranked placement."
+      ? "Ranked is head-to-head, Glicko-rated competition. Complete all seven Unranked placement games to unlock Ranked and appear here."
       : "Unranked is the solo race against the clock. Your first seven runs are placement games that calibrate both ELO tracks.";
   }
 
@@ -62,7 +62,7 @@ export async function renderLeaderboard(params, root) {
     clear(bodyHost).append(h("div", { class: "empty", style: { margin: "18px" } }, "Loading standings…"));
     try {
       const rows = board === "ranked"
-        ? (await rankedLeaderboard(100)).filter((u) => placementGamesPlayed(u) > 0 || (u.gamesPlayed ?? 0) > 0)
+        ? (await rankedLeaderboard(100)).filter((u) => isPlaced(u))
         : (await soloLeaderboard(100)).filter((u) => (u.soloRuns ?? 0) > 0);
       paintBoard(rows);
     } catch (error) {
@@ -79,7 +79,7 @@ export async function renderLeaderboard(params, root) {
     const isRanked = board === "ranked";
     if (!rows.length) {
       bodyHost.append(h("div", { class: "empty", style: { margin: "18px" } },
-        isRanked ? "No provisional or rated players have been recorded yet. Finish an Unranked placement game to be #1." : "No unranked runs recorded yet. Play one and you're #1."));
+        isRanked ? "No Ranked players have been recorded yet. Complete all seven Unranked placement games to claim #1." : "No unranked runs recorded yet. Play one and you're #1."));
       return;
     }
 
@@ -123,7 +123,7 @@ export async function renderLeaderboard(params, root) {
     bodyHost.append(table,
       h("p", { class: "lb-mode-note" },
         isRanked
-          ? "Players enter this board during Unranked placement. A ? beside ELO means they still need to finish seven Unranked placement games before Ranked unlocks."
+          ? "Only players who have completed all seven Unranked placement games appear on the Ranked board."
           : "Unranked ratings are for solo runs only. The first seven runs calibrate both tracks and raise confidence from 0/10 to 10/10."));
   }
 

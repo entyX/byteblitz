@@ -6,23 +6,23 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.4",
+    version: "v1.2.5",
     date: "August 14, 2026",
     current: true,
     items: [
-      "New accounts now complete seven Unranked placement games before Ranked unlocks. Confidence climbs from 0/10 to 10/10 while both ELO tracks calibrate quickly.",
-      "Placement players now appear on the Ranked leaderboard with a provisional rating, while ranked matchmaking remains locked until placement completes.",
-      "Friend challenges now begin with a casual-versus-rated choice. Casual duels never affect ELO; rated duels require both players to have completed placement.",
-      "A skippable no-ELO tutorial game now appears after onboarding and remains available from the welcome header.",
-      "The navbar now shifts its links left on desktop while player search is open, giving the expanded search field room to breathe.",
-      "The tutorial action now lives in the welcome header, while Ranked is visibly disabled until Unranked placement is complete.",
-      "Player search now combines exact username reservations with case-insensitive prefix lookup for more reliable results.",
-      "Accounts can now be permanently deleted from their profile after explicit confirmation and fresh authentication; associated public records and social references are removed with the account.",
-      "Placement calibration is now bounded and symmetric: fast adjustment remains, while one resignation cannot erase multiple completed runs or push a base rating hundreds of points away.",
-      "Profiles now include a recent Unranked and Ranked match list with a rating-trend graph, plus a confirmed reset-progress action that keeps your account, friends, messages, username, avatar, and country.",
-      "Signed-out visitors can practice Unranked or join anonymous matchmaking. Anonymous pairings are always casual, prefer other anonymous players, and never change either player's ELO.",
-      "Ranked matchmaking now waits for both players to explicitly accept the same duel before a shared start time is set; stale queue entries and completed duels cannot be reused.",
-      "Arena indentation now unindents by level with Backspace, Unranked focus exits are ELO-neutral, and chat messages keep their timestamps grouped with their bubbles.",
+      "Placement calibration now uses high-signal, shrinking per-game swings. Early placement games can move ELO by hundreds while the selected onboarding level remains a broad benchmark guard rail.",
+      "Reset Progress now clears the selected skill level and automatically reopens onboarding, so a reset begins with a fresh self-assessment and new placement benchmark.",
+      "Only players who have completed all seven Unranked placement games can appear on the Ranked leaderboard or receive a Ranked board position.",
+      "New email-password accounts now require at least 12 characters with uppercase, lowercase, a number, and a symbol. Whitespace is rejected.",
+      "Release history is now organized into expandable minor-version series such as v1.2, with each patch release inside its series.",
+    ],
+  },
+  {
+    version: "v1.2.4",
+    date: "August 14, 2026",
+    items: [
+      "Bounded placement calibration, profile match-history graphs, progression reset, anonymous matchmaking, transactional duel readiness, indentation-aware Backspace, and corrected chat message grouping were introduced.",
+      "Signed-out visitors can practice without a guest account or join anonymous no-ELO matchmaking.",
     ],
   },
   {
@@ -63,6 +63,21 @@ const RELEASES = [
   },
 ];
 
+function seriesFor(version) {
+  const match = /^v(\d+)\.(\d+)/.exec(version);
+  return match ? `v${match[1]}.${match[2]}` : version;
+}
+
+function groupedReleases() {
+  const groups = new Map();
+  RELEASES.forEach((release) => {
+    const series = seriesFor(release.version);
+    if (!groups.has(series)) groups.set(series, []);
+    groups.get(series).push(release);
+  });
+  return [...groups.entries()];
+}
+
 export function renderChangelog(params, root) {
   const page = h("div", { class: "wrap", style: { paddingTop: "32px", paddingBottom: "72px", maxWidth: "980px" } });
 
@@ -70,20 +85,32 @@ export function renderChangelog(params, root) {
   header.append(
     h("div", { class: "eyebrow mb-2" }, "// Release history"),
     h("h1", { class: "head mb-3" }, "ByteBlitz ", h("span", { class: "accent" }, "changelog")),
-    h("p", { class: "body-text mb-8", style: { maxWidth: "700px" } }, "A player-focused record of what has changed in each public ByteBlitz version.")
+    h("p", { class: "body-text mb-8", style: { maxWidth: "700px" } }, "Patch releases are grouped by minor version. Open a series to review every public update in that line.")
   );
 
   const list = h("div", { class: "change-list" });
-  RELEASES.forEach((release) => {
-    const article = h("article", { class: "change-card" + (release.current ? " current" : "") });
-    article.append(
-      h("div", { class: "between gap-3 wrapflex" },
-        h("h2", { class: "head", style: { fontSize: "clamp(1.45rem, 3vw, 2rem)" } }, release.version),
-        h("span", { class: "change-date" }, release.date)
-      ),
-      h("ul", { class: "change-items" }, release.items.map((item) => h("li", {}, item)))
-    );
-    list.append(article);
+  groupedReleases().forEach(([series, releases]) => {
+    const current = releases.some((release) => release.current);
+    const group = h("details", { class: "change-series", open: current ? true : null });
+    const summary = h("summary", { class: "between gap-3 wrapflex" },
+      h("span", { class: "head", style: { fontSize: "clamp(1.35rem, 2.8vw, 1.85rem)" } }, series, " series"),
+      h("span", { class: "label" }, `${releases.length} ${releases.length === 1 ? "release" : "releases"} · ${current ? "CURRENT" : "ARCHIVE"}`));
+    const entries = h("div", { class: "change-series-body" });
+
+    releases.forEach((release) => {
+      const article = h("article", { class: "change-card" + (release.current ? " current" : "") });
+      article.append(
+        h("div", { class: "between gap-3 wrapflex" },
+          h("h2", { class: "head", style: { fontSize: "clamp(1.2rem, 2.5vw, 1.65rem)" } }, release.version),
+          h("span", { class: "change-date" }, release.date)
+        ),
+        h("ul", { class: "change-items" }, release.items.map((item) => h("li", {}, item)))
+      );
+      entries.append(article);
+    });
+
+    group.append(summary, entries);
+    list.append(group);
   });
 
   page.append(header, list);
