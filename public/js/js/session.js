@@ -33,8 +33,6 @@ let verificationModalUid = null;
 let accountCheckInterval = null;
 let removedAccountUid = null;
 let voluntaryRemovalUid = null;
-let backgrounded = false;
-let refreshQueued = false;
 
 /**
  * Email/password identities remain inactive until Firebase confirms that the
@@ -68,7 +66,7 @@ export function openEmailVerificationModal(user = auth.currentUser) {
     h("div", { class: "eyebrow mb-3" }, "// Email verification required"),
     h("h2", { class: "head mb-3" }, "Check your inbox"),
     h("p", { class: "mono", style: { fontSize: "13px", color: "var(--muted-fg)", lineHeight: "1.65" } },
-      "We sent a verification link to ", h("strong", { style: { color: "var(--fg)" } }, user.email || "your email address"), ". Open it to activate ByteBlitz."),
+      "We sent a verification link to ", h("strong", { style: { color: "var(--fg)" } }, user.email || "your email address"), ". It will most likely be in your Spam or Junk folder, so check there first and mark it as not spam before opening it to activate ByteBlitz."),
     status,
     h("div", { class: "stack gap-3 mt-5" }, confirm, resend),
     signOutBtn,
@@ -187,24 +185,6 @@ function monitorAccountValidity(user, epoch) {
   accountCheckInterval = setInterval(check, 5000);
 }
 
-function installRefreshOnReturn() {
-  if (installRefreshOnReturn.installed) return;
-  installRefreshOnReturn.installed = true;
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      backgrounded = true;
-      return;
-    }
-    if (!backgrounded || refreshQueued || removedAccountUid) return;
-    backgrounded = false;
-    // An active arena already has a stricter focus lock that resolves or exits
-    // the run. Avoid interrupting its result write with a second navigation.
-    if (document.querySelector(".arena")) return;
-    refreshQueued = true;
-    window.setTimeout(() => window.location.reload(), 150);
-  });
-}
-
 export function onSession(fn) {
   listeners.add(fn);
   if (session.ready) fn(session);
@@ -230,7 +210,6 @@ export function beginGuest() {
 }
 
 export function startSession() {
-  installRefreshOnReturn();
   return new Promise((resolve) => {
     let first = true;
     onAuthStateChanged(auth, async (user) => {

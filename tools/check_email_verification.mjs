@@ -49,10 +49,12 @@ assert.match(session, /closable: false/,
   "the removal notice must not be dismissible");
 assert.match(session, /setInterval\(check, 5000\)/,
   "Firebase Authentication removal must be checked promptly");
-assert.match(session, /function installRefreshOnReturn/,
-  "returning from a backgrounded tab must trigger the refresh lifecycle");
-assert.match(session, /window\.location\.reload\(\)/,
-  "the background-return lifecycle must reload the page");
+assert.doesNotMatch(session, /function installRefreshOnReturn/,
+  "switching tabs must not trigger an automatic page reload");
+assert.doesNotMatch(session, /visibilitychange/,
+  "the session layer must not reload the page when a tab becomes visible");
+assert.match(session, /most likely be in your Spam or Junk folder/,
+  "the verification dialog must direct players to the likely Spam or Junk location");
 assert.match(store, /else if \(typeof onMissing === "function"\) onMissing\(\)/,
   "profile deletion must be observable immediately through Firestore");
 assert.match(store, /export function watchRankedLeaderboard/,
