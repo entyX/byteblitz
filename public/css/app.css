@@ -1490,7 +1490,8 @@ select.input { cursor: pointer; }
 
 /* ── v1.3 Training Ground navigation refinement ─────────────────────────── */
 .training-primary-nav { display: flex; align-items: stretch; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); }
-.training-tier-nav { display: inline-flex; min-width: 0; overflow-x: auto; }
+.training-tier-nav { display: inline-flex; min-width: 0; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.training-tier-nav::-webkit-scrollbar { display: none; }
 .training-primary-nav .tab { flex: none; }
 .training-solutions-tab { display: inline-flex; flex: none; align-items: center; gap: 7px; padding: 0 14px; border: 1px solid transparent; border-bottom: 0; background: hsl(240 7% 7% / .66); color: var(--muted-fg); font: 700 10.5px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
 .training-solutions-tab:hover, .training-solutions-tab.active { color: var(--foreground); border-color: hsl(var(--primary-raw) / .58); background: hsl(var(--primary-raw) / .1); }

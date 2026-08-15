@@ -6,6 +6,35 @@ import { h, clear, emptyState, fmtTime, toast, avatar } from "../ui.js";
 import { getPublicSolutionShare } from "../store.js";
 import { navigate } from "../router.js";
 
+function setShareMetadata(share, id) {
+  const owner = share.ownerUsername || "A ByteBlitz player";
+  const title = share.title || "a coding problem";
+  const pageTitle = `View ${owner}'s solution to ${title} | ByteBlitz`;
+  const description = `View ${owner}'s solution to ${title} on ByteBlitz.`;
+  document.title = pageTitle;
+  const tags = {
+    description,
+    "og:title": pageTitle,
+    "og:description": description,
+    "og:type": "article",
+    "og:url": `${window.location.origin}/share/${encodeURIComponent(id)}`,
+    "twitter:card": "summary",
+    "twitter:title": pageTitle,
+    "twitter:description": description,
+  };
+  Object.entries(tags).forEach(([key, content]) => {
+    const social = key.startsWith("og:") || key.startsWith("twitter:");
+    const selector = social ? `meta[property="${key}"]` : `meta[name="${key}"]`;
+    let meta = document.head.querySelector(selector);
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute(social ? "property" : "name", key);
+      document.head.append(meta);
+    }
+    meta.content = content;
+  });
+}
+
 export async function renderPublicSolution(params, root) {
   const page = h("div", { class: "wrap", style: { paddingTop: "42px", paddingBottom: "72px", maxWidth: "980px" } });
   root.append(page);
@@ -22,6 +51,7 @@ export async function renderPublicSolution(params, root) {
     return;
   }
 
+  setShareMetadata(share, params.id);
   const copy = h("button", { class: "btn btn-sm", type: "button", onClick: async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);

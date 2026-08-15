@@ -629,8 +629,21 @@ export async function syncSavedSolutionsToPuzzleRecords(profile) {
   const saved = await getSavedSolutions(profile.uid, 250);
   let repaired = 0;
   for (const solution of saved) {
-    if (!solution.completed || !Number.isFinite(solution.bestTimeMs) || solution.bestTimeMs <= 0) continue;
     const existing = await getPuzzleRecord(solution.archetypeId, profile.uid);
+    if (existing?.solved && !solution.completed) {
+      const completedAt = Number(existing.updatedAt) || Date.now();
+      await updateDoc(solutionRef(profile.uid, solution.archetypeId), {
+        completed: true,
+        lastStatus: "completed",
+        completedSubmits: Math.max(Number(solution.completedSubmits || 0), 1),
+        bestTimeMs: Number.isFinite(solution.bestTimeMs) ? Math.min(solution.bestTimeMs, existing.timeMs) : existing.timeMs,
+        lastSavedAt: solution.lastSavedAt || completedAt,
+        updatedAt: Date.now(),
+      });
+      repaired += 1;
+      continue;
+    }
+    if (!solution.completed || !Number.isFinite(solution.bestTimeMs) || solution.bestTimeMs <= 0) continue;
     if (existing?.solved) continue;
     await recordPuzzleTime(profile, {
       archetypeId: solution.archetypeId,
@@ -749,8 +762,25 @@ export async function getSavedSolution(uid, archetypeId) {
 export async function getAccomplishableSolution(profile, archetypeId) {
   if (!profile || isGuestProfile(profile) || !archetypeId) return null;
   const existing = await getSavedSolution(profile.uid, archetypeId);
-  if (existing) return existing;
   const record = await getPuzzleRecord(archetypeId, profile.uid);
+  if (existing && (!record?.solved || existing.completed)) return existing;
+  if (existing && record?.solved) {
+    const repaired = {
+      ...existing,
+      completed: true,
+      lastStatus: "completed",
+      completedSubmits: Math.max(Number(existing.completedSubmits || 0), 1),
+      bestTimeMs: Number.isFinite(existing.bestTimeMs) ? Math.min(existing.bestTimeMs, record.timeMs) : record.timeMs,
+    };
+    await updateDoc(solutionRef(profile.uid, archetypeId), {
+      completed: true,
+      lastStatus: "completed",
+      completedSubmits: repaired.completedSubmits,
+      bestTimeMs: repaired.bestTimeMs,
+      updatedAt: Date.now(),
+    });
+    return normalizeSolution(archetypeId, repaired);
+  }
   if (!record?.solved) return null;
   const now = Number(record.updatedAt) || Date.now();
   const payload = {
@@ -810,7 +840,22 @@ export async function toggleAccomplishment(profile, archetypeId, accomplished) {
     await getAccomplishableSolution(profile, archetypeId);
     snap = await getDoc(ref);
   }
-  const data = snap.exists() ? snap.data() : null;
+  let data = snap.exists() ? snap.data() : null;
+  if (!data?.completed) {
+    const record = await getPuzzleRecord(archetypeId, profile.uid);
+    if (record?.solved) {
+      const bestTimeMs = Number.isFinite(data?.bestTimeMs) ? Math.min(data.bestTimeMs, record.timeMs) : record.timeMs;
+      await updateDoc(ref, {
+        completed: true,
+        lastStatus: "completed",
+        completedSubmits: Math.max(Number(data?.completedSubmits || 0), 1),
+        bestTimeMs,
+        updatedAt: Date.now(),
+      });
+      snap = await getDoc(ref);
+      data = snap.exists() ? snap.data() : null;
+    }
+  }
   if (!data?.completed) throw new Error("Complete this problem before marking it as an accomplishment.");
   const before = !!data.accomplishment;
   const next = !!accomplished;

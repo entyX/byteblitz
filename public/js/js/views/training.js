@@ -322,7 +322,9 @@ export async function renderTraining(params, root) {
     if (!profile || profile.isGuest || profile.isAnonymous) return;
     clear(solutionHost).append(h("div", { class: "label" }, "// Loading your solution library…"));
     getSavedSolution(profile.uid, pz.archetypeId).then(async (initial) => {
-      const solution = initial || (rec?.solved ? await getAccomplishableSolution(profile, pz.archetypeId) : null);
+      const solution = rec?.solved
+        ? await getAccomplishableSolution(profile, pz.archetypeId)
+        : initial;
       clear(solutionHost);
       if (!solution) {
         solutionHost.append(h("div", { class: "solution-library-empty" },
@@ -351,8 +353,8 @@ export async function renderTraining(params, root) {
         clear(publicLinkHost);
         if (!solution.isPublic || !solution.publicShareId) return;
         publicLinkHost.append(h("span", { class: "label" }, "Public link"),
-          h("a", { class: "solution-share-link", href: `#/share/${solution.publicShareId}`, target: "_blank", rel: "noopener" },
-            `${window.location.origin}${window.location.pathname}#/share/${solution.publicShareId}`));
+          h("a", { class: "solution-share-link", href: `/share/${solution.publicShareId}`, target: "_blank", rel: "noopener" },
+            `${window.location.origin}/share/${solution.publicShareId}`));
       };
       const shareable = completed && !!String(solution.code || "").trim();
       const visibility = h("label", { class: "solution-visibility-switch", title: shareable ? "Make this completed solution public" : "A legacy clear can be an accomplishment but needs saved code before it can be shared" },
@@ -368,7 +370,7 @@ export async function renderTraining(params, root) {
           visibility.querySelector(".label").textContent = updated.isPublic ? "Public" : "Private";
           renderPublicLink();
           if (updated.isPublic) {
-            const url = `${window.location.origin}${window.location.pathname}#/share/${updated.publicShareId}`;
+            const url = `${window.location.origin}/share/${updated.publicShareId}`;
             try { await navigator.clipboard.writeText(url); toast("Public solution link copied.", "ok"); }
             catch { prompt("Copy your public solution link:", url); }
           } else toast("Solution is private again.", "ok");
@@ -603,7 +605,7 @@ export async function renderTraining(params, root) {
       try {
         Object.assign(solution, await setSolutionVisibility(profile, solution.archetypeId, toggle.checked));
         if (solution.isPublic) {
-          const url = `${window.location.origin}${window.location.pathname}#/share/${solution.publicShareId}`;
+          const url = `${window.location.origin}/share/${solution.publicShareId}`;
           try { await navigator.clipboard.writeText(url); toast("Public solution link copied.", "ok"); }
           catch { prompt("Copy your public solution link:", url); }
         } else toast("Solution is private again.", "ok");
@@ -615,8 +617,8 @@ export async function renderTraining(params, root) {
       }
     });
     const publicLink = solution.isPublic && solution.publicShareId
-      ? h("a", { class: "solution-share-link", href: `#/share/${solution.publicShareId}`, target: "_blank", rel: "noopener" },
-          `${window.location.origin}${window.location.pathname}#/share/${solution.publicShareId}`)
+      ? h("a", { class: "solution-share-link", href: `/share/${solution.publicShareId}`, target: "_blank", rel: "noopener" },
+          `${window.location.origin}/share/${solution.publicShareId}`)
       : null;
     return h("article", { class: "solution-card" + (completed ? " completed" : " incomplete") },
       h("div", { class: "between gap-3" },
