@@ -611,6 +611,16 @@ select.input { cursor: pointer; }
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
   background: linear-gradient(90deg, transparent, var(--primary) 30%, var(--ember) 70%, transparent);
 }
+.welcome-head { position: relative; min-height: 116px; }
+.welcome-tutorial {
+  position: absolute; top: 0; right: 0; z-index: 1;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 10px; border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm); background: hsl(240 7% 11% / .9);
+  color: var(--muted-fg); font-family: var(--font-mono); font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .12em; transition: all .16s ease;
+}
+.welcome-tutorial:hover { color: var(--foreground); border-color: hsl(var(--primary-raw) / .68); background: hsl(var(--primary-raw) / .12); }
 .welcome-eyebrow {
   font-family: var(--font-mono); font-size: 11.5px; text-transform: uppercase;
   letter-spacing: .34em; color: var(--muted); text-align: center;
@@ -628,6 +638,7 @@ select.input { cursor: pointer; }
 /* Short screens: shrink the header, not the cards. */
 @media (max-height: 820px) {
   .welcome { padding: 20px 24px 22px; }
+  .welcome-head { min-height: 96px; }
   .welcome-title { font-size: clamp(2rem, 4vw, 2.6rem); }
   .welcome-sub { font-size: 12.5px; margin-top: 9px; }
   .welcome-eyebrow { font-size: 10.5px; }
@@ -668,6 +679,19 @@ select.input { cursor: pointer; }
   box-shadow: inset 0 0 0 1px var(--primary), 0 0 40px hsl(var(--primary-raw) / .2);
 }
 .gm-card.gm-ranked { --gm: var(--primary); }
+.gm-card.locked,
+.gm-card:disabled {
+  cursor: not-allowed; opacity: .56; filter: saturate(.55);
+  border-color: var(--border); background: hsl(240 6% 7% / .75);
+  box-shadow: none;
+}
+.gm-card.locked:hover,
+.gm-card:disabled:hover { border-color: var(--border); background: hsl(240 6% 7% / .75); box-shadow: none; }
+.gm-card.locked .gm-check-off { width: auto; min-width: 20px; padding: 0 5px; font-size: 8px; align-items: center; justify-content: center; color: var(--muted); }
+@media (max-width: 520px) {
+  .welcome-head { min-height: 126px; }
+  .welcome-tutorial { top: -4px; right: 50%; transform: translateX(50%); }
+}
 .gm-title {
   font-weight: 900; font-style: italic; text-transform: uppercase;
   letter-spacing: -0.035em; font-size: clamp(1.8rem, 3.4vw, 2.4rem);

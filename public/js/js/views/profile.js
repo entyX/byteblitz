@@ -8,12 +8,17 @@
 import { h, add, clear, emptyState, toast, fmtTime, icon, avatar, modal } from "../ui.js";
 import { session, requireAccount, openAuthModal, refreshGuest } from "../session.js";
 import {
+  auth, googleProvider, deleteUser, EmailAuthProvider,
+  reauthenticateWithCredential, reauthenticateWithPopup,
+} from "../firebase.js";
+import {
   rankFor, nextTier, tierProgress, displayPlacementRating,
   placementLeft, placementGamesPlayed, placementConfidence, isPlaced, PLACEMENT_GAMES, TIERS,
 } from "../glicko.js";
 import {
   getProfile, getFriends, sendFriendRequest, getSentRequests, removeFriend,
   ensureConversation, rankedPosition, renameUser, saveCountry, NAME_RE, seenMap, watchPresence,
+  deleteAccountData,
 } from "../store.js";
 import { countryFor, countryOptions } from "../countries.js";
 import { challengeFriend } from "../game.js";
@@ -71,6 +76,9 @@ export async function renderProfile(params, root) {
           navigate("/profile/" + p.uid);
         }) }, icon("user", 13), "Profile picture"),
         h("button", { class: "btn", onClick: openCountry }, "Country"));
+      if (!p.isGuest) {
+        actions.append(h("button", { class: "btn btn-danger", onClick: openDeleteAccount }, "Delete account"));
+      }
       if (p.isGuest) {
         actions.append(
           h("span", { class: "pill pill-accent" }, "Guest — this device only"),
@@ -119,6 +127,79 @@ export async function renderProfile(params, root) {
           paintActions();
         } catch { toast("Couldn't send that request.", "err"); paintActions(); }
       } }, icon("userPlus", 13), "Add friend"));
+    }
+  }
+
+  async function reauthenticateForDeletion(password) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Your sign-in session has expired. Sign in again and retry.");
+    const providers = new Set(user.providerData.map((entry) => entry.providerId));
+    if (providers.has("password")) {
+      if (!password) throw new Error("Enter your password to confirm deletion.");
+      const credential = EmailAuthProvider.credential(user.email, password);
+      await reauthenticateWithCredential(user, credential);
+      return;
+    }
+    if (providers.has("google.com")) {
+      await reauthenticateWithPopup(user, googleProvider);
+      return;
+    }
+    throw new Error("Reauthenticate with your sign-in provider, then retry account deletion.");
+  }
+
+  function openDeleteAccount() {
+    const usesPassword = !!auth.currentUser?.providerData?.some((entry) => entry.providerId === "password");
+    const typed = h("input", { class: "input", type: "text", placeholder: "Type DELETE to confirm", autocomplete: "off" });
+    const password = usesPassword
+      ? h("input", { class: "input mt-3", type: "password", placeholder: "Current password", autocomplete: "current-password" })
+      : null;
+    const error = h("p", { class: "mono mt-3", style: { display: "none", fontSize: "11.5px", color: "var(--primary)", lineHeight: "1.55" } });
+    let busy = false;
+
+    const confirm = h("button", { class: "btn btn-danger grow", onClick: destroy }, "Permanently delete");
+    const cancel = h("button", { class: "btn grow", onClick: () => m.close() }, "Cancel");
+    const m = modal(h("div", {},
+      h("div", { class: "eyebrow mb-2", style: { color: "var(--primary)" } }, "// Permanent action"),
+      h("h2", { class: "head mb-3" }, "Delete your account?"),
+      h("p", { class: "body-text mb-4" },
+        "This permanently removes your profile, leaderboard entries, Unranked and Ranked records, training puzzle times, friend references, pending requests, challenges, messages, notifications, and presence. This cannot be undone."),
+      h("label", { class: "label mb-2", style: { display: "block" } }, "// Confirm deletion"),
+      typed,
+      password,
+      usesPassword
+        ? h("p", { class: "label mt-3", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.55" } }, "Your password is used only to confirm this session.")
+        : h("p", { class: "label mt-3", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.55" } }, "You will confirm this action with Google before data is removed."),
+      error,
+      h("div", { class: "row gap-3 mt-5" }, confirm, cancel),
+    ), { wide: true });
+
+    async function destroy() {
+      if (busy) return;
+      if (typed.value.trim() !== "DELETE") {
+        error.textContent = 'Type DELETE exactly to confirm.';
+        error.style.display = "block";
+        typed.focus();
+        return;
+      }
+      busy = true;
+      confirm.disabled = true;
+      cancel.disabled = true;
+      error.style.display = "none";
+      try {
+        await reauthenticateForDeletion(password?.value || "");
+        await deleteAccountData(p);
+        await deleteUser(auth.currentUser);
+        m.close();
+        toast("Your account and associated data have been permanently deleted.", "ok");
+        navigate("/");
+      } catch (err) {
+        console.error("account deletion failed", err);
+        error.textContent = err?.message || "Account deletion could not be completed. Please try again.";
+        error.style.display = "block";
+        confirm.disabled = false;
+        cancel.disabled = false;
+        busy = false;
+      }
     }
   }
 

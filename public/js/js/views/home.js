@@ -57,7 +57,10 @@ export async function renderHome(params, root) {
   function paintHead() {
     clear(headHost);
     const p = session.profile;
-    headHost.append(
+    const placing = !!p && !p.isGuest && !p.isAnonymous && !isPlaced(p);
+    headHost.append(h("div", { class: "welcome-head" },
+      h("button", { class: "welcome-tutorial", title: "Play the optional tutorial", onClick: () => startTutorial() },
+        "Tutorial", icon("play", 13)),
       h("div", { class: "welcome-eyebrow" }, "Welcome to"),
       h("h1", { class: "welcome-title gradient-text" }, "ByteBlitz"),
       h("p", { class: "welcome-sub" },
@@ -65,12 +68,20 @@ export async function renderHome(params, root) {
           ? "Log in or create an account to get started, or play as a guest!"
           : p.isGuest
             ? `Playing as ${p.username} — unranked and training only. Your progress is saved on this device.`
-            : "One problem, one clock. Pick a gamemode to get started."),
-    );
+            : placing
+              ? `Complete ${placementLeft(p)} more Unranked placement ${placementLeft(p) === 1 ? "game" : "games"} to unlock Ranked. Your current confidence is ${placementConfidence(p)}/10.`
+              : "One problem, one clock. Pick a gamemode to get started."),
+    ));
   }
 
   // ── Gamemode cards ───────────────────────────────────────────────────────
   function paintModes() {
+    const p = session.profile;
+    const rankedLocked = !p || p.isAnonymous || !isPlaced(p);
+    if (rankedLocked && mode === "ranked") {
+      mode = null;
+      sessionStorage.removeItem(LS_MODE);
+    }
     clear(gmGrid);
 
     gmGrid.append(
@@ -92,7 +103,9 @@ export async function renderHome(params, root) {
           "Enter matchmaking against someone with a similar skill level!",
           "Your RANKED ELO gets impacted.",
         ],
-        foot: "Head to head · rated",
+        foot: rankedLocked
+          ? (p && !p.isAnonymous ? `${placementLeft(p)} placement games to unlock` : "Complete placement to unlock")
+          : "Head to head · rated",
       }),
       eloHost,
     );
@@ -103,10 +116,14 @@ export async function renderHome(params, root) {
   // The selected marker is always in the layout — an empty box when unselected —
   // so picking a mode never changes the card's size.
   function modeCard({ id, cls, title, lines, foot }) {
-    const selected = mode === id;
+    const p = session.profile;
+    const disabled = id === "ranked" && (!p || p.isAnonymous || !isPlaced(p));
+    const selected = !disabled && mode === id;
     return h("button", {
-      class: `gm-card ${cls}${selected ? " selected" : ""}`,
+      class: `gm-card ${cls}${selected ? " selected" : ""}${disabled ? " locked" : ""}`,
       "aria-pressed": selected ? "true" : "false",
+      "aria-disabled": disabled ? "true" : "false",
+      disabled,
       onClick: () => selectMode(id),
     },
       h("div", { class: "gm-title" }, title),
@@ -115,11 +132,12 @@ export async function renderHome(params, root) {
         h("span", {}, selected ? "Selected" : foot),
         selected
           ? h("span", { class: "gm-check" }, icon("check", 13))
-          : h("span", { class: "gm-check-off" })),
+          : h("span", { class: "gm-check-off" }, disabled ? "LOCK" : ""))),
     );
   }
 
   function selectMode(id) {
+    if (id === "ranked" && (!session.profile || session.profile.isAnonymous || !isPlaced(session.profile))) return;
     mode = mode === id ? null : id;
     if (mode) sessionStorage.setItem(LS_MODE, mode);
     else sessionStorage.removeItem(LS_MODE);
@@ -170,11 +188,8 @@ export async function renderHome(params, root) {
         fact("Best time", p?.soloBest?.[tier.name] != null ? fmtTime(p.soloBest[tier.name]) : "—"),
       ),
 
-      h("div", { class: "row gap-3 mt-6 wrapflex" },
-        h("button", { class: "play-btn grow", onClick: onPlayUnranked },
-          p && !isPlaced(p) ? "Play placement" : "Play", icon("play", 20)),
-        h("button", { class: "btn", title: "Play the optional tutorial", onClick: () => startTutorial() },
-          "Tutorial")),
+      h("button", { class: "play-btn mt-6", onClick: onPlayUnranked },
+        p && !isPlaced(p) ? "Play placement" : "Play", icon("play", 20)),
     );
   }
 

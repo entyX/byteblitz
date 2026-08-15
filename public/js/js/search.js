@@ -22,6 +22,7 @@ export function playerSearchBox(opts = {}) {
   let sent = new Set();
   let friends = new Set();
   let loadedRelations = false;
+  let searchEpoch = 0;
 
   async function loadRelations() {
     const me = session.profile;
@@ -40,6 +41,7 @@ export function playerSearchBox(opts = {}) {
   const run = debounce(async () => {
     const term = input.value.trim();
     if (term.length < 2) { close(); return; }
+    const epoch = ++searchEpoch;
 
     const me = session.profile;
     if (!me || me.isAnonymous) {
@@ -54,8 +56,16 @@ export function playerSearchBox(opts = {}) {
 
     let results = [];
     try { results = await searchPlayers(term, me.uid); }
-    catch (e) { console.error(e); }
+    catch (e) {
+      console.error(e);
+      if (epoch === searchEpoch) {
+        open(h("div", { class: "empty", style: { border: "none" } }, "Player search is temporarily unavailable. Try again."));
+      }
+      return;
+    }
 
+    // Do not let a slower earlier query replace the results for newer text.
+    if (epoch !== searchEpoch || input.value.trim() !== term) return;
     if (!results.length) {
       open(h("div", { class: "empty", style: { border: "none" } }, `No player called "${term}".`));
       return;
@@ -139,6 +149,7 @@ export function playerSearchBox(opts = {}) {
   input.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     input.value = "";
+    searchEpoch++;
     close();
     setExpanded(false);
     input.blur();

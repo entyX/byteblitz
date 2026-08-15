@@ -5,7 +5,7 @@
 import {
   db, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc,
   collection, query, where, orderBy, limit, onSnapshot, serverTimestamp,
-  increment, writeBatch,
+  increment, writeBatch, collectionGroup,
 
 } from "./firebase.js";
 import {
@@ -121,6 +121,101 @@ export async function markDailyActivity(profile) {
 export async function getProfile(uid) {
   const snap = await getDoc(doc(db, "users", uid));
   return snap.exists() ? { uid, ...snap.data() } : null;
+}
+
+/**
+ * Remove every browser-accessible document owned by, or directly referring to,
+ * an account. All reads finish before deletion starts; writes are then committed
+ * in Firestore-safe batches. Auth identity removal happens separately only after
+ * this function succeeds.
+ */
+export async function deleteAccountData(profile) {
+  if (!profile?.uid || isGuestProfile(profile)) throw new Error("Only signed-in accounts can be deleted.");
+  const uid = profile.uid;
+  const usernameKey = String(profile.username || "").trim().toLowerCase();
+  const refs = new Map();
+  const messageRefs = new Map();
+  const add = (ref) => { if (ref) refs.set(ref.path, ref); };
+  const addSnapshot = (snap) => snap.forEach((entry) => add(entry.ref));
+  const addMessages = (snap) => snap.forEach((entry) => messageRefs.set(entry.ref.path, entry.ref));
+
+  // Fetch top-level and collection-group references while the profile is still
+  // present. Each query tracks a distinct surface where a player can appear.
+  const [
+    puzzleTimes, ownFriends, friendReferences, inboxRequests, sentRequests,
+    notifications, foreignNotifications, lobby, presence, conversations, sentChallenges, receivedChallenges,
+    firstPlayerDuels, secondPlayerDuels,
+  ] = await Promise.all([
+    getDocs(query(collection(db, "puzzleTimes"), where("uid", "==", uid))),
+    getDocs(collection(db, "friends", uid, "list")),
+    getDocs(collectionGroup(db, "list")),
+    getDocs(collection(db, "friendRequests", uid, "from")),
+    getDocs(collection(db, "friendRequests", uid, "sent")),
+    getDocs(collection(db, "notifications", uid, "items")),
+    getDocs(query(collectionGroup(db, "items"), where("fromUid", "==", uid))),
+    getDoc(doc(db, "matchmaking_lobby", uid)),
+    getDoc(doc(db, "presence", uid)),
+    getDocs(query(collection(db, "conversations"), where("participants", "array-contains", uid))),
+    getDocs(query(collection(db, "challenges"), where("fromUid", "==", uid))),
+    getDocs(query(collection(db, "challenges"), where("toUid", "==", uid))),
+    getDocs(query(collection(db, "duels"), where("player1.uid", "==", uid))),
+    getDocs(query(collection(db, "duels"), where("player2.uid", "==", uid))),
+  ]);
+
+  addSnapshot(puzzleTimes);
+  addSnapshot(ownFriends);
+  friendReferences.forEach((entry) => {
+    // The document ID has always been the friend's UID. Newer records also
+    // store `uid`, so this handles both legacy and current friend references.
+    if (entry.id === uid || entry.data()?.uid === uid) add(entry.ref);
+  });
+  addSnapshot(inboxRequests);
+  addSnapshot(sentRequests);
+  addSnapshot(notifications);
+  addSnapshot(foreignNotifications);
+  if (lobby.exists()) add(lobby.ref);
+  if (presence.exists()) add(presence.ref);
+  addSnapshot(sentChallenges);
+  addSnapshot(receivedChallenges);
+  addSnapshot(firstPlayerDuels);
+  addSnapshot(secondPlayerDuels);
+
+  // A request can appear in another player's folder. Mirror cleanup removes it
+  // even when the current user has already declined or accepted the request.
+  const requestRefs = await Promise.all([
+    getDocs(query(collectionGroup(db, "from"), where("fromUid", "==", uid))),
+    getDocs(query(collectionGroup(db, "sent"), where("toUid", "==", uid))),
+  ]);
+  requestRefs.forEach(addSnapshot);
+
+  // Remove every conversation and its message documents. A shared conversation
+  // is deleted rather than retaining one side's historical profile reference.
+  for (const conversation of conversations.docs) {
+    const messages = await getDocs(collection(db, "conversations", conversation.id, "messages"));
+    addMessages(messages);
+    add(conversation.ref);
+  }
+
+  // Current username reservation, profile document, and direct social mirrors.
+  if (usernameKey) add(doc(db, "usernames", usernameKey));
+  add(doc(db, "users", uid));
+  for (const friend of ownFriends.docs) add(doc(db, "friends", friend.id, "list", uid));
+
+  const deleteInBatches = async (items) => {
+    for (let start = 0; start < items.length; start += 450) {
+      const batch = writeBatch(db);
+      items.slice(start, start + 450).forEach((ref) => batch.delete(ref));
+      await batch.commit();
+    }
+  };
+
+  // Child messages must disappear before the parent conversation document.
+  const allMessages = [...messageRefs.values()];
+  const allRefs = [...refs.values()];
+  await deleteInBatches(allMessages);
+  await deleteInBatches(allRefs);
+
+  return { deletedDocuments: allMessages.length + allRefs.length };
 }
 
 export function watchProfile(uid, cb) {
@@ -479,20 +574,48 @@ export async function rankedPosition(uid, within = 100) {
 
 // ── Player search ───────────────────────────────────────────────────────────
 export async function searchPlayers(term, meUid) {
-  const t = term.trim().toLowerCase();
+  const t = String(term || "").trim().replace(/^@/, "").toLowerCase();
   if (t.length < 2) return [];
-  const HI = t + String.fromCharCode(0xf8ff);
-  const q = query(
-    collection(db, "users"),
-    orderBy("usernameLower"),
-    where("usernameLower", ">=", t),
-    where("usernameLower", "<=", HI),
-    limit(12)
-  );
-  const snap = await getDocs(q);
-  return snap.docs
-    .map((d) => ({ uid: d.id, ...d.data() }))
-    .filter((u) => u.uid !== meUid && !u.isAnonymous);
+
+  // The reservation document is an exact, case-insensitive username index. Look
+  // there first so a known player remains findable even if an older profile is
+  // missing `usernameLower` or a prefix query is temporarily unavailable.
+  const exact = await getDoc(doc(db, "usernames", t)).then(async (nameSnap) => {
+    const uid = nameSnap.exists() ? nameSnap.data()?.uid : null;
+    if (!uid || uid === meUid) return null;
+    const profile = await getProfile(uid);
+    return profile && !profile.isAnonymous ? profile : null;
+  }).catch(() => null);
+
+  const hi = t + String.fromCharCode(0xf8ff);
+  let prefix = [];
+  try {
+    const q = query(
+      collection(db, "users"),
+      orderBy("usernameLower"),
+      where("usernameLower", ">=", t),
+      where("usernameLower", "<=", hi),
+      limit(12),
+    );
+    const snap = await getDocs(q);
+    prefix = snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+  } catch (error) {
+    // Exact lookup above is still useful when a legacy deployment lacks the
+    // prefix-query index. Preserve that result instead of returning nothing.
+    console.warn("Player prefix search unavailable", error);
+  }
+
+  const unique = new Map();
+  if (exact) unique.set(exact.uid, exact);
+  prefix.forEach((profile) => unique.set(profile.uid, profile));
+  return [...unique.values()]
+    .filter((profile) => profile.uid !== meUid && !profile.isAnonymous)
+    .sort((a, b) => {
+      const aExact = String(a.usernameLower || a.username || "").toLowerCase() === t;
+      const bExact = String(b.usernameLower || b.username || "").toLowerCase() === t;
+      return Number(bExact) - Number(aExact) || String(a.username).localeCompare(String(b.username));
+    })
+    .slice(0, 12);
 }
 
 // ── Friends ─────────────────────────────────────────────────────────────────
@@ -541,10 +664,10 @@ export function watchIncomingFriendRequests(uid, cb) {
 export async function acceptFriendRequest(me, fromUid, fromUsername) {
   const batch = writeBatch(db);
   batch.set(doc(db, "friends", me.uid, "list", fromUid), {
-    username: fromUsername, since: Date.now(),
+    uid: fromUid, username: fromUsername, since: Date.now(),
   });
   batch.set(doc(db, "friends", fromUid, "list", me.uid), {
-    username: me.username, since: Date.now(),
+    uid: me.uid, username: me.username, since: Date.now(),
   });
   batch.delete(doc(db, "friendRequests", me.uid, "from", fromUid));
   batch.delete(doc(db, "friendRequests", fromUid, "sent", me.uid));

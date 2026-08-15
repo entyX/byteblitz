@@ -40,7 +40,8 @@ export function onSnapshot(target, next, onError) {
 // talks to Firebase (see local.js).
 export {
   signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup,
-  signOut, onAuthStateChanged, updateProfile,
+  signOut, onAuthStateChanged, updateProfile, deleteUser,
+  reauthenticateWithCredential, reauthenticateWithPopup,
   sendPasswordResetEmail, linkWithPopup, EmailAuthProvider, linkWithCredential,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
@@ -48,5 +49,5 @@ export {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection,
   query, where, orderBy, limit, serverTimestamp, increment,
   writeBatch, runTransaction, collectionGroup, arrayUnion, arrayRemove,
-  deleteField, startAfter,
+  deleteField, startAfter, documentId,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
