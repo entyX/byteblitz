@@ -54,6 +54,7 @@ export function blankProfile(uid, username, isAnon) {
     puzzlesSolved: 0,
     solutionsSaved: 0,
     accomplishments: 0,
+    pinnedAccomplishment: null,
     bestStreak: 0, streak: 0,
 
     seen: {},          // archetypeId -> true; drives Training Grounds discovery
@@ -297,7 +298,7 @@ export async function resetAccountProgress(profile) {
     placementGames: 0, placementConfidence: 0, placementBaseRating: null, rankedUnlocked: false,
     // Clearing the selected skill forces onboarding to establish a new base.
     skillLevel: null,
-    totalMatches: 0, puzzlesSolved: 0, solutionsSaved: 0, accomplishments: 0, bestStreak: 0, streak: 0,
+    totalMatches: 0, puzzlesSolved: 0, solutionsSaved: 0, accomplishments: 0, pinnedAccomplishment: null, bestStreak: 0, streak: 0,
     seen: {}, activityDays: {}, tutorialCompleted: false, updatedAt: serverTimestamp(),
   };
   await updateDoc(doc(db, "users", profile.uid), patch);
@@ -619,16 +620,20 @@ export async function recordPuzzleTime(profile, puzzle, timeMs, solved) {
 // render. Each successful submit is also preserved as a timestamped attempt.
 const solutionRef = (uid, archetypeId) => doc(db, "users", uid, "solutions", archetypeId);
 
-export async function saveCompletedSolution(profile, puzzle, { code, language, timeMs, mode }) {
+export async function saveSolution(profile, puzzle, {
+  code, language, timeMs = 0, mode = "training", completed = false,
+  reason = null, testsPassed = 0, totalTests = 0,
+}) {
   if (!profile || isGuestProfile(profile) || !String(code || "").trim()) return null;
   const ref = solutionRef(profile.uid, puzzle.archetypeId);
   const previous = await getDoc(ref);
   const before = previous.exists() ? previous.data() : null;
   const now = Date.now();
   const source = String(code).slice(0, 100000);
-  const bestTimeMs = Number.isFinite(before?.bestTimeMs)
-    ? Math.min(before.bestTimeMs, timeMs)
-    : timeMs;
+  const everCompleted = !!before?.completed || !!completed;
+  const bestTimeMs = completed
+    ? (Number.isFinite(before?.bestTimeMs) ? Math.min(before.bestTimeMs, timeMs) : timeMs)
+    : before?.bestTimeMs ?? null;
   const payload = {
     uid: profile.uid,
     username: profile.username,
@@ -638,27 +643,43 @@ export async function saveCompletedSolution(profile, puzzle, { code, language, t
     category: puzzle.category ?? null,
     code: source,
     language: language || "python",
-    lastMode: mode || "training",
-    solveCount: Number(before?.solveCount || 0) + 1,
-    firstSolvedAt: before?.firstSolvedAt ?? now,
-    lastSolvedAt: now,
+    lastMode: mode,
+    completed: everCompleted,
+    lastStatus: completed ? "completed" : "incomplete",
+    saveCount: Number(before?.saveCount || 0) + 1,
+    completedSubmits: Number(before?.completedSubmits || 0) + (completed ? 1 : 0),
+    incompleteSaves: Number(before?.incompleteSaves || 0) + (completed ? 0 : 1),
+    firstSavedAt: before?.firstSavedAt ?? now,
+    lastSavedAt: now,
     bestTimeMs,
     accomplishment: !!before?.accomplishment,
+    pinned: !!before?.pinned,
+    isPublic: !!before?.isPublic,
+    publicShareId: before?.publicShareId ?? null,
     updatedAt: now,
   };
   await setDoc(ref, payload, { merge: true });
   await addDoc(collection(db, "users", profile.uid, "solutions", puzzle.archetypeId, "history"), {
     code: source,
     language: payload.language,
-    mode: payload.lastMode,
-    timeMs,
-    solvedAt: now,
+    mode,
+    completed: !!completed,
+    reason,
+    testsPassed: Number(testsPassed || 0),
+    totalTests: Number(totalTests || 0),
+    timeMs: Number(timeMs || 0),
+    savedAt: now,
   });
   if (!before) {
     try { await updateDoc(doc(db, "users", profile.uid), { solutionsSaved: increment(1) }); } catch {}
   }
   return payload;
 }
+
+// Compatibility alias for the earlier automatic-save call sites. New interface
+// code uses saveSolution so a player chooses when to keep a draft or completion.
+export const saveCompletedSolution = (profile, puzzle, details) =>
+  saveSolution(profile, puzzle, { ...details, completed: true });
 
 export async function getSavedSolution(uid, archetypeId) {
   if (!uid || !archetypeId) return null;
@@ -670,7 +691,7 @@ export async function getSavedSolutions(uid, n = 100) {
   if (!uid) return [];
   const snap = await getDocs(query(
     collection(db, "users", uid, "solutions"),
-    orderBy("lastSolvedAt", "desc"), limit(n),
+    orderBy("lastSavedAt", "desc"), limit(n),
   ));
   return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
 }
@@ -679,7 +700,7 @@ export async function getSolutionHistory(uid, archetypeId, n = 30) {
   if (!uid || !archetypeId) return [];
   const snap = await getDocs(query(
     collection(db, "users", uid, "solutions", archetypeId, "history"),
-    orderBy("solvedAt", "desc"), limit(n),
+    orderBy("savedAt", "desc"), limit(n),
   ));
   return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
 }
@@ -688,20 +709,63 @@ export async function toggleAccomplishment(profile, archetypeId, accomplished) {
   if (!profile || isGuestProfile(profile)) throw new Error("Sign in to mark accomplishments.");
   const ref = solutionRef(profile.uid, archetypeId);
   const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("Solve this problem before marking it as an accomplishment.");
+  if (!snap.exists() || !snap.data().completed) throw new Error("Complete this problem before marking it as an accomplishment.");
   const before = !!snap.data().accomplishment;
   const next = !!accomplished;
   if (before === next) return { ...snap.data(), accomplishment: next };
-  await updateDoc(ref, { accomplishment: next, updatedAt: Date.now() });
-  try { await updateDoc(doc(db, "users", profile.uid), { accomplishments: increment(next ? 1 : -1) }); } catch {}
-  return { ...snap.data(), accomplishment: next };
+  const pinned = !next ? false : !!snap.data().pinned;
+  await updateDoc(ref, { accomplishment: next, pinned, updatedAt: Date.now() });
+  const profileRef = doc(db, "users", profile.uid);
+  try {
+    await updateDoc(profileRef, {
+      accomplishments: increment(next ? 1 : -1),
+      ...(!next && profile.pinnedAccomplishment?.archetypeId === archetypeId ? { pinnedAccomplishment: null } : {}),
+    });
+  } catch {}
+  return { ...snap.data(), accomplishment: next, pinned };
 }
 
-export async function createPublicSolutionShare(profile, archetypeId) {
-  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to share a solution.");
+export async function pinAccomplishment(profile, archetypeId, pinned) {
+  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to pin an accomplishment.");
   const solution = await getSavedSolution(profile.uid, archetypeId);
-  if (!solution) throw new Error("Save a completed solution before sharing it.");
-  const share = await addDoc(collection(db, "sharedSolutions"), {
+  if (!solution?.accomplishment) throw new Error("Mark this completed solution as an accomplishment first.");
+  const userRef = doc(db, "users", profile.uid);
+  if (!pinned) {
+    await updateDoc(solutionRef(profile.uid, archetypeId), { pinned: false, updatedAt: Date.now() });
+    await updateDoc(userRef, { pinnedAccomplishment: null });
+    return { ...solution, pinned: false };
+  }
+  const oldId = profile.pinnedAccomplishment?.archetypeId;
+  if (oldId && oldId !== archetypeId) {
+    try { await updateDoc(solutionRef(profile.uid, oldId), { pinned: false, updatedAt: Date.now() }); } catch {}
+  }
+  const status = {
+    archetypeId: solution.archetypeId,
+    title: solution.title,
+    difficulty: solution.difficulty,
+    category: solution.category ?? null,
+    pinnedAt: Date.now(),
+  };
+  await updateDoc(solutionRef(profile.uid, archetypeId), { pinned: true, updatedAt: Date.now() });
+  await updateDoc(userRef, { pinnedAccomplishment: status });
+  return { ...solution, pinned: true };
+}
+
+const publicShareId = (uid, archetypeId) => `${uid}__${encodeURIComponent(archetypeId)}`;
+
+export async function setSolutionVisibility(profile, archetypeId, isPublic) {
+  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to change solution visibility.");
+  const solution = await getSavedSolution(profile.uid, archetypeId);
+  if (!solution) throw new Error("Save a solution before changing its visibility.");
+  const ref = solutionRef(profile.uid, archetypeId);
+  const shareId = publicShareId(profile.uid, archetypeId);
+  if (!isPublic) {
+    try { await deleteDoc(doc(db, "sharedSolutions", shareId)); } catch {}
+    await updateDoc(ref, { isPublic: false, publicShareId: null, updatedAt: Date.now() });
+    return { ...solution, isPublic: false, publicShareId: null };
+  }
+  if (!solution.completed) throw new Error("Only completed solutions can be shared publicly.");
+  const share = {
     ownerUid: profile.uid,
     ownerUsername: profile.username,
     ownerAvatarIcon: profile.avatarIcon ?? null,
@@ -716,15 +780,25 @@ export async function createPublicSolutionShare(profile, archetypeId) {
     bestTimeMs: solution.bestTimeMs ?? null,
     accomplishment: !!solution.accomplishment,
     createdAt: Date.now(),
-  });
-  await updateDoc(solutionRef(profile.uid, archetypeId), { lastShareId: share.id, updatedAt: Date.now() });
-  return { id: share.id, ...solution };
+  };
+  await setDoc(doc(db, "sharedSolutions", shareId), share);
+  await updateDoc(ref, { isPublic: true, publicShareId: shareId, updatedAt: Date.now() });
+  return { ...solution, isPublic: true, publicShareId: shareId };
+}
+
+export async function createPublicSolutionShare(profile, archetypeId) {
+  const solution = await setSolutionVisibility(profile, archetypeId, true);
+  return { id: solution.publicShareId, ...solution };
 }
 
 export async function getPublicSolutionShare(id) {
   if (!id) return null;
   const snap = await getDoc(doc(db, "sharedSolutions", id));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function getPublicPuzzleSolution(uid, archetypeId) {
+  return getPublicSolutionShare(publicShareId(uid, archetypeId));
 }
 
 /**

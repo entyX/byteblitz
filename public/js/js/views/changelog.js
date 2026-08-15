@@ -10,10 +10,11 @@ const RELEASES = [
     date: "August 14, 2026",
     current: true,
     items: [
-      "Chunk 1 beta introduces a persistent Training Ground solution library. Accepted submissions now retain source code, language, mode, best time, and a per-problem history of past completed solutions.",
-      "Solved problems can be marked as accomplishments and shared through a read-only public solution page with the owner, puzzle details, accepted source, and a copyable link.",
-      "Player profiles now highlight solved puzzles, saved solutions, accomplishments, ELO, rank, win-loss record, best times, streaks, and puzzle records as one evolving player identity.",
-      "Private source and solution history remain owner-only; a code snapshot becomes public only when its owner explicitly creates a share link.",
+      "Chunk 1 beta introduces a dedicated My Solutions workspace in Training Grounds. After Training, Unranked, or Ranked runs, players can visibly save an accepted solution or an incomplete draft with source, language, mode, result, time, tests, and history.",
+      "My Solutions includes difficulty side navigation plus completed, incomplete, accomplishment, public, and category filters. Each card can view code, reopen its exact puzzle, mark an accomplishment, or pin it to the player profile.",
+      "Saved solutions are private by default. Only completed solutions can be switched public; the switch creates a copyable public page and adds View solution wherever that player appears on the matching puzzle leaderboard.",
+      "Player profiles now display solved puzzles, saved solutions, accomplishments, ELO, rank, win-loss record, best times, streaks, puzzle records, a pinned-accomplishment status badge, and a repaired visible ELO graph.",
+      "The home dashboard now includes live friend news for five-day streak milestones and pinned accomplishments.",
     ],
   },
   {

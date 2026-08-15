@@ -244,6 +244,13 @@ export async function renderProfile(params, root) {
             h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted)" } },
               p.isGuest ? "Guest profile — saved on this device" : `Joined ${joined}${p.emailVisible && p.publicEmail ? ` · ${p.publicEmail}` : ""}`),
             p.bio ? h("p", { class: "profile-bio mt-3" }, p.bio) : null,
+            p.pinnedAccomplishment?.title
+              ? h("div", { class: "profile-pinned-accomplishment mt-3", title: "Pinned accomplishment" },
+                  h("span", { class: "profile-pinned-star" }, "★"),
+                  h("span", {},
+                    h("span", { class: "label" }, "Pinned accomplishment"),
+                    h("span", { class: "mono" }, p.pinnedAccomplishment.title)))
+              : null,
             h("p", { class: "mono mt-2", style: { fontSize: "11.5px", color: "var(--muted-fg)" } },
               `${countryFor(p.country).flag} ${countryFor(p.country).name}`))),
         actions),
@@ -414,21 +421,33 @@ export async function renderProfile(params, root) {
         return;
       }
       const chronological = [...rows].reverse();
-      const values = chronological.map((row) => Number(row.ratingAfter ?? row.ratingBefore ?? 0));
+      const series = chronological.map((row) => ({
+        row,
+        value: Number(row.ratingAfter ?? row.ratingBefore ?? row.rating ?? row.soloRating ?? NaN),
+      })).filter((entry) => Number.isFinite(entry.value));
+      if (!series.length) {
+        panel.append(h("div", { class: "empty", style: { border: "none" } }, "Rating values are unavailable for these legacy matches."));
+        return;
+      }
+      const values = series.map((entry) => entry.value);
       const min = Math.min(...values), max = Math.max(...values);
-      const width = 640, height = 150, pad = 12;
+      const width = 640, height = 150, pad = 18;
       const spread = Math.max(1, max - min);
-      const points = values.map((value, index) => {
+      const coords = values.map((value, index) => {
         const x = pad + (index * (width - pad * 2)) / Math.max(1, values.length - 1);
         const y = height - pad - ((value - min) * (height - pad * 2)) / spread;
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-      }).join(" ");
+        return { x, y };
+      });
+      const points = coords.map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+      const trendStroke = "#ff3b30";
       panel.append(
         h("div", { class: "between mb-3" },
-          h("span", { class: "label" }, "// Rating trend · last " + rows.length),
+          h("span", { class: "label" }, "// Rating trend · last " + series.length),
           h("span", { class: "label" }, `${Math.round(min)}–${Math.round(max)}`)),
         h("svg", { viewBox: `0 0 ${width} ${height}`, class: "history-chart", role: "img", "aria-label": "Rating history graph" },
-          h("polyline", { points, fill: "none", stroke: "var(--primary)", "stroke-width": "3", "stroke-linecap": "round", "stroke-linejoin": "round" })),
+          h("line", { x1: pad, y1: height - pad, x2: width - pad, y2: height - pad, stroke: "#34343d", "stroke-width": "1" }),
+          h("polyline", { points, fill: "none", stroke: trendStroke, "stroke-width": "3.5", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+          ...coords.map(({ x, y }, index) => h("circle", { cx: x, cy: y, r: index === coords.length - 1 ? "4.8" : "3", fill: trendStroke, stroke: "#09090b", "stroke-width": "2" }))),
         h("div", { class: "divide mt-4" }, ...rows.map((row) => {
           const won = row.result === "win" || row.result === "solved";
           const delta = Number(row.delta ?? 0);

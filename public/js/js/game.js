@@ -16,7 +16,7 @@ import {
 } from "./glicko.js";
 import {
   applySoloResult, applyDuelResult, recordPuzzleTime, puzzleLeaderboard,
-  saveCompletedSolution, getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence,
+  saveSolution, getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence,
 
 } from "./store.js";
 import { session, requireAccount, requireAnySession, refreshGuest } from "./session.js";
@@ -96,10 +96,8 @@ export async function startSolo(preset) {
             placementConfidence: res.placementConfidence,
           });
         }
-        if (solved) {
-          await saveCompletedSolution(profile, problem, {
-            code: r.code, language: r.language, timeMs: r.timeMs, mode: "unranked",
-          });
+        if (solved && !profile.isGuest && !profile.isAnonymous) {
+          await recordPuzzleTime(profile, problem, r.timeMs, true);
         }
         refreshGuest();
       } catch (e) {
@@ -111,7 +109,8 @@ export async function startSolo(preset) {
     arena.showResult(soloResultScreen({
       solved, reason: r.reason, timeMs: r.timeMs, limit, difficulty, problem, res,
       placement: placing,
-      signedOut: !profile,
+      signedOut: !profile || profile.isGuest || profile.isAnonymous,
+      saveAction: () => saveAttempt(profile, problem, r, { mode: "unranked", completed: solved }),
       onAgain: () => { arena.destroy(); startSolo(); },
       onHome: () => arena.exit(),
     }));
@@ -160,6 +159,7 @@ function soloResultScreen(o) {
       : null,
 
     h("div", { class: "row gap-3 wrapflex" },
+      saveAttemptButton(o.saveAction, signedOut, solved),
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Run again ▸"),
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena"),
     ),
@@ -170,6 +170,39 @@ function stat(v, k, color) {
   return h("div", { class: "stat" },
     h("div", { class: "v", style: color ? { color } : {} }, v),
     h("div", { class: "k" }, k));
+}
+
+async function saveAttempt(profile, problem, submission, { mode, completed }) {
+  if (!profile || profile.isGuest || profile.isAnonymous) {
+    throw new Error("Sign in to save solutions to your profile.");
+  }
+  if (!submission?.code?.trim()) throw new Error("There is no submitted code to save.");
+  return saveSolution(profile, problem, {
+    code: submission.code,
+    language: submission.language,
+    timeMs: submission.timeMs ?? 0,
+    mode,
+    completed,
+    reason: submission.reason ?? null,
+    testsPassed: submission.passed ?? 0,
+    totalTests: problem.testCases?.length ?? 0,
+  });
+}
+
+function saveAttemptButton(action, signedOut, completed) {
+  const button = h("button", { class: "btn", onClick: async () => {
+    button.disabled = true;
+    try {
+      await action();
+      button.textContent = completed ? "Solution saved ✓" : "Incomplete solution saved ✓";
+      toast(completed ? "Solution saved to Training Grounds." : "Incomplete solution saved to Training Grounds.", "ok");
+    } catch (error) {
+      toast(error.message || "Couldn't save this solution.", "err");
+      button.disabled = false;
+    }
+  } }, signedOut ? "Sign in to save" : completed ? "Save solution" : "Save incomplete");
+  if (signedOut) button.disabled = true;
+  return button;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -279,11 +312,6 @@ export async function startTraining(difficulty, archetypeId) {
     if (profile) {
       try {
         outcome = await recordPuzzleTime(profile, problem, r.timeMs, solved);
-        if (solved) {
-          await saveCompletedSolution(profile, problem, {
-            code: r.code, language: r.language, timeMs: r.timeMs, mode: "training",
-          });
-        }
         refreshGuest();
         if (!profile.isAnonymous) board = await puzzleLeaderboard(problem.archetypeId, 10);
       } catch (e) {
@@ -293,8 +321,9 @@ export async function startTraining(difficulty, archetypeId) {
 
     arena.showResult(trainingResultScreen({
       solved, reason: r.reason, timeMs: r.timeMs, problem, outcome, board,
-      anon: !profile || profile.isAnonymous,
+      anon: !profile || profile.isGuest || profile.isAnonymous,
       meUid: profile?.uid,
+      saveAction: () => saveAttempt(profile, problem, r, { mode: "training", completed: solved }),
       onAgain: () => { arena.destroy(); startTraining(difficulty, archetypeId); },
       onBack: () => arena.exit(),
     }));
@@ -337,6 +366,7 @@ function trainingResultScreen(o) {
                   h("span", { class: "tnum" }, fmtTime(r.timeMs)))))),
 
     h("div", { class: "row gap-3 wrapflex" },
+      saveAttemptButton(o.saveAction, anon, solved),
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Try again ▸"),
       h("button", { class: "btn", onClick: o.onBack }, "Training grounds"),
     ),
@@ -489,6 +519,7 @@ export async function enterDuel(duelId, identity = null) {
   let arena = null;
   let ended = false;
   let unsub = null;
+  let latestSubmission = null;
 
   const cleanup = () => { unsub?.(); unsub = null; };
 
@@ -510,16 +541,16 @@ export async function enterDuel(duelId, identity = null) {
       catch { toast("Couldn't send the draw offer.", "err"); }
     },
     onSolved: async (r) => {
+      latestSubmission = r;
       try {
-        if (profile) {
-          await saveCompletedSolution(profile, problem, {
-            code: r.code, language: r.language, timeMs: r.timeMs, mode: "ranked",
-          });
+        if (profile && !profile.isGuest && !profile.isAnonymous) {
+          await recordPuzzleTime(profile, problem, r.timeMs, true);
         }
         await mm.submitSolve(duelId, playerNum, r.timeMs / 1000, latest);
       } catch (e) { console.error(e); }
     },
     onFailed: async (r) => {
+      latestSubmission = r;
       if (r.reason === "timeout") {
         try { await mm.resolveTimeout(duelId, latest); } catch {}
       } else {
@@ -568,7 +599,7 @@ export async function enterDuel(duelId, identity = null) {
       cleanup();
       arena.forceEnd?.("complete", "");
 
-      await settleDuel(d, profile, activeIdentity.uid, playerNum, me, opponent, arena, problem, duelMode);
+      await settleDuel(d, profile, activeIdentity.uid, playerNum, me, opponent, arena, problem, duelMode, latestSubmission);
     }
 
     if (d.newDuelId && d.newDuelId !== duelId) {
@@ -579,7 +610,7 @@ export async function enterDuel(duelId, identity = null) {
   });
 }
 
-async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, problem, duelMode) {
+async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, problem, duelMode, submission) {
   const iWon = d.winner === actorUid;
   const isDraw = d.winner === null;
   const result = isDraw ? "draw" : iWon ? "win" : "loss";
@@ -617,6 +648,10 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
 
     arena.showResult(duelResultScreen({
     result, winBy, res, me, opponent, myTime, oppTime, problem, duelMode,
+    submission,
+    saveAction: () => saveAttempt(profile, problem, submission, {
+      mode: "ranked", completed: !!submission && submission.passed >= (problem.testCases?.length ?? TESTS_PER_PROBLEM),
+    }),
     onRematch: async () => {
       try {
         const meP = session.profile ? mm.lobbyPlayer(session.profile) : activeIdentity;
@@ -633,7 +668,7 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
 }
 
 function duelResultScreen(o) {
-  const { result, winBy, res, me, opponent, myTime, oppTime, duelMode } = o;
+  const { result, winBy, res, me, opponent, myTime, oppTime, duelMode, submission } = o;
   const delta = res?.delta ?? (res ? Math.round(res.rating) - res.before : 0);
 
   const headline = result === "draw" ? "Draw"
@@ -685,6 +720,7 @@ function duelResultScreen(o) {
         : null,
 
     h("div", { class: "row gap-3 wrapflex" },
+      submission ? saveAttemptButton(o.saveAction, false, submission.passed >=  (o.problem?.testCases?.length ?? TESTS_PER_PROBLEM)) : null,
       h("button", { class: "btn btn-primary", onClick: o.onRematch }, "Rematch ▸"),
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena"),
     ),

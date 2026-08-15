@@ -14,7 +14,8 @@ import { TIERS, TIME_LIMITS, displayPlacementRating, rankFor } from "../glicko.j
 import { loadPool } from "../problems.js";
 import {
   getMyPuzzleRecords, puzzleLeaderboard, puzzleLeaderboardDetailed, puzzleLeaderboardIds,
-  getSavedSolution, getSavedSolutions, getSolutionHistory, toggleAccomplishment, createPublicSolutionShare,
+  getSavedSolution, getSavedSolutions, getSolutionHistory, toggleAccomplishment, pinAccomplishment,
+  setSolutionVisibility, createPublicSolutionShare, getPublicPuzzleSolution,
   seenMap, isPermissionDenied, isRevealed, starterCount,
 } from "../store.js";
 import { startTraining } from "../game.js";
@@ -28,6 +29,10 @@ export async function renderTraining(params, root) {
   const UNKNOWN_PREVIEW = 18;
 
   let active = sessionStorage.getItem("bb_train_tier") || "Bronze";
+  let workspace = sessionStorage.getItem("bb_train_workspace") || "puzzles";
+  let categoryFilter = sessionStorage.getItem("bb_train_category") || "all";
+  let solutionFilter = sessionStorage.getItem("bb_solution_filter") || "all";
+  let solutionDifficulty = sessionStorage.getItem("bb_solution_difficulty") || "all";
   let records = {};
   let savedSolutions = [];
   let searchTerm = "";
@@ -36,6 +41,7 @@ export async function renderTraining(params, root) {
   let paintEpoch = 0;
   let trophyButtons = new Map();
 
+  const workspaceTabsHost = h("div", { class: "training-workspace-tabs mb-5" });
   const tabsHost = h("div", { class: "tabs mb-5" });
   const bodyHost = h("div", {});
   const progressHost = h("div", { class: "mb-6" });
@@ -44,8 +50,8 @@ export async function renderTraining(params, root) {
     class: "input", type: "text", placeholder: "Filter unlocked puzzles…",
     style: { maxWidth: "300px", paddingLeft: "36px" },
   });
-  const libraryBtn = h("button", { class: "btn", onClick: openSolutionLibrary },
-    icon("target", 14), "Solution library");
+  const libraryBtn = h("button", { class: "btn", onClick: () => setWorkspace("solutions") },
+    icon("target", 14), "My solutions");
   searchInput.addEventListener("input", debounce(() => {
     searchTerm = searchInput.value.trim().toLowerCase();
     paintBody();
@@ -63,8 +69,33 @@ export async function renderTraining(params, root) {
           searchInput))),
     h("p", { class: "body-text mb-8", style: { maxWidth: "680px" } },
       "Every difficulty is open from day one and starts you with its first 10% unlocked. The rest reveal themselves as you meet them in an Unranked run or a Ranked duel — until then they stay ???. Times are recorded per puzzle and ranked on their own board. Training never moves a rating."),
-    tabsHost, progressHost, bodyHost,
+    workspaceTabsHost, tabsHost, progressHost, bodyHost,
   );
+
+  function setWorkspace(next) {
+    workspace = next;
+    sessionStorage.setItem("bb_train_workspace", workspace);
+    paintWorkspace();
+  }
+
+  function paintWorkspaceTabs() {
+    clear(workspaceTabsHost);
+    [["puzzles", "Puzzles"], ["solutions", `My solutions${savedSolutions.length ? ` · ${savedSolutions.length}` : ""}`]].forEach(([id, label]) => {
+      workspaceTabsHost.append(h("button", {
+        class: "training-workspace-tab" + (workspace === id ? " active" : ""),
+        onClick: () => setWorkspace(id),
+      }, id === "solutions" ? icon("target", 14) : icon("compass", 14), label));
+    });
+  }
+
+  function paintWorkspace() {
+    paintWorkspaceTabs();
+    if (workspace === "solutions") {
+      clear(tabsHost);
+      clear(progressHost);
+      paintSolutionsWorkspace();
+    } else { paintTabs(); paintBody(); }
+  }
 
   // ── Tabs — all difficulties, always open ─────────────────────────────────
   function paintTabs() {
@@ -88,6 +119,7 @@ export async function renderTraining(params, root) {
 
   // ── Body ─────────────────────────────────────────────────────────────────
   async function paintBody() {
+    if (workspace !== "puzzles") return;
     const epoch = ++paintEpoch;
     trophyButtons = new Map();
     clear(progressHost);
@@ -105,6 +137,7 @@ export async function renderTraining(params, root) {
     const tier = TIERS.find((t) => t.name === active);
     const starters = starterCount(pool.length);
     const revealed = pool.filter((pz, i) => isRevealed(seen, pz, i, pool.length));
+    const categories = [...new Set(revealed.map((pz) => pz.category).filter(Boolean))].sort();
     const pct = pool.length ? (revealed.length / pool.length) * 100 : 0;
 
     progressHost.append(
@@ -115,9 +148,12 @@ export async function renderTraining(params, root) {
             h("span", { class: "label label-bright" }, `${revealed.length} of ${pool.length} unlocked`),
             h("span", { class: "label" }, `${starters} free to start`),
             h("span", { class: "label" }, `${fmtClock(TIME_LIMITS[active])} limit`)),
-          h("div", { class: "row gap-2" },
+          h("div", { class: "row gap-2 wrapflex" },
             filterBtn("all", "Whole catalogue"),
             filterBtn("found", "Unlocked only"))),
+        h("div", { class: "training-category-filter mt-3" },
+          categoryBtn("all", "All categories"),
+          ...categories.map((category) => categoryBtn(category, category.replace(/_/g, " ")))),
         h("div", { class: "bar" },
           h("i", { style: { width: pct + "%", background: tier.color } }))),
     );
@@ -128,11 +164,13 @@ export async function renderTraining(params, root) {
     // A locked puzzle can't match a text filter without leaking its name, so a
     // search only ever looks at what's already unlocked.
     const known = revealed.filter((pz) => {
-      if (!q) return true;
-      return pz.title.toLowerCase().includes(q) ||
-        (pz.category || "").toLowerCase().includes(q);
+      const categoryMatch = categoryFilter === "all" || pz.category === categoryFilter;
+      if (!q) return categoryMatch;
+      return categoryMatch && (pz.title.toLowerCase().includes(q) ||
+        (pz.category || "").toLowerCase().includes(q));
     });
-    const unknown = (q || showOnly === "found")
+    // Category filtering never reveals metadata for undiscovered puzzles.
+    const unknown = (q || showOnly === "found" || categoryFilter !== "all")
       ? []
       : pool.filter((pz, i) => !isRevealed(seen, pz, i, pool.length));
 
@@ -193,9 +231,19 @@ export async function renderTraining(params, root) {
     return b;
   }
 
+  function categoryBtn(id, label) {
+    const b = h("button", { class: "filter-chip" + (categoryFilter === id ? " active" : ""), onClick: () => {
+      categoryFilter = id;
+      sessionStorage.setItem("bb_train_category", id);
+      paintBody();
+    } }, label);
+    return b;
+  }
+
   // ── Cards ────────────────────────────────────────────────────────────────
   function knownCard(pz, tier) {
     const rec = records[pz.archetypeId];
+    const solution = savedSolutions.find((entry) => entry.archetypeId === pz.archetypeId);
     // The whole card opens the puzzle; the trophy inside stops propagation so
     // it can open the board instead.
     return h("div", {
@@ -206,7 +254,9 @@ export async function renderTraining(params, root) {
     },
       h("div", { class: "puz-head" },
         h("span", { class: "t" }, pz.title),
-        trophyButton(pz, false)),
+        h("span", { class: "row gap-1" },
+          solution ? solutionButton(pz, solution) : null,
+          trophyButton(pz, false))),
       pz.category
         ? h("span", { class: "label", style: { letterSpacing: ".1em" } }, pz.category.replace(/_/g, " "))
         : null,
@@ -225,6 +275,15 @@ export async function renderTraining(params, root) {
       h("div", { class: "puz-head" },
         h("span", { class: "t" }, "? ? ?"),
         trophyButton(pz, true)));
+  }
+
+  function solutionButton(pz, solution) {
+    return h("button", {
+      class: "trophy-btn solution-shortcut" + (solution.completed ? " completed" : " incomplete"),
+      title: solution.completed ? "View your saved solution" : "View your incomplete draft",
+      "aria-label": "View your saved solution for " + pz.title,
+      onClick: (e) => { e.stopPropagation(); openSavedSolution(pz, solution); },
+    }, icon("terminal", 14));
   }
 
   function trophyButton(pz, unknown) {
@@ -271,38 +330,65 @@ export async function renderTraining(params, root) {
           "Solve and submit this problem to save your code, solution history, and a shareable accomplishment."));
         return;
       }
-      const accomplishment = h("button", { class: "btn btn-sm", onClick: async () => {
+      const completed = !!solution.completed;
+      const accomplishment = h("button", { class: "btn btn-sm", disabled: !completed, onClick: async () => {
         accomplishment.disabled = true;
         try {
           solution.accomplishment = !solution.accomplishment;
-          await toggleAccomplishment(profile, pz.archetypeId, solution.accomplishment);
+          const updated = await toggleAccomplishment(profile, pz.archetypeId, solution.accomplishment);
+          Object.assign(solution, updated);
           accomplishment.textContent = solution.accomplishment ? "★ Accomplishment" : "Mark accomplishment";
+          pin.disabled = !solution.accomplishment;
+          pin.textContent = solution.pinned ? "★ Pinned" : "Pin to profile";
           toast(solution.accomplishment ? "Marked as an accomplishment." : "Removed from accomplishments.", "ok");
         } catch (error) {
           solution.accomplishment = !solution.accomplishment;
           toast(error.message || "Couldn't update accomplishment.", "err");
         } finally { accomplishment.disabled = false; }
       } }, solution.accomplishment ? "★ Accomplishment" : "Mark accomplishment");
-      const share = h("button", { class: "btn btn-sm", onClick: async () => {
-        share.disabled = true;
+      const visibility = h("label", { class: "solution-visibility-switch" },
+        h("input", { type: "checkbox", checked: !!solution.isPublic, disabled: !completed }),
+        h("span", { class: "solution-switch-ui" }),
+        h("span", { class: "label" }, solution.isPublic ? "Public" : "Private"));
+      const toggle = visibility.querySelector("input");
+      toggle?.addEventListener("change", async () => {
+        toggle.disabled = true;
         try {
-          const created = await createPublicSolutionShare(profile, pz.archetypeId);
-          const url = `${window.location.origin}${window.location.pathname}#/share/${created.id}`;
-          try { await navigator.clipboard.writeText(url); toast("Public solution link copied.", "ok"); }
-          catch { prompt("Copy your public solution link:", url); }
-        } catch (error) { toast(error.message || "Couldn't create public share.", "err"); }
-        finally { share.disabled = false; }
-      } }, icon("target", 13), "Share");
+          const updated = await setSolutionVisibility(profile, pz.archetypeId, toggle.checked);
+          Object.assign(solution, updated);
+          visibility.querySelector(".label").textContent = updated.isPublic ? "Public" : "Private";
+          if (updated.isPublic) {
+            const url = `${window.location.origin}${window.location.pathname}#/share/${updated.publicShareId}`;
+            try { await navigator.clipboard.writeText(url); toast("Public solution link copied.", "ok"); }
+            catch { prompt("Copy your public solution link:", url); }
+          } else toast("Solution is private again.", "ok");
+        } catch (error) {
+          toggle.checked = !toggle.checked;
+          toast(error.message || "Couldn't change visibility.", "err");
+        } finally { toggle.disabled = !completed; }
+      });
+      const pin = h("button", { class: "btn btn-sm", disabled: !solution.accomplishment, onClick: async () => {
+        pin.disabled = true;
+        try {
+          solution.pinned = !solution.pinned;
+          await pinAccomplishment(profile, pz.archetypeId, solution.pinned);
+          pin.textContent = solution.pinned ? "★ Pinned" : "Pin to profile";
+          toast(solution.pinned ? "Accomplishment pinned to your profile." : "Pinned accomplishment removed.", "ok");
+        } catch (error) {
+          solution.pinned = !solution.pinned;
+          toast(error.message || "Couldn't update pinned accomplishment.", "err");
+        } finally { pin.disabled = !solution.accomplishment; }
+      } }, solution.pinned ? "★ Pinned" : "Pin to profile");
       solutionHost.append(
         h("div", { class: "solution-library-head" },
           h("div", {},
-            h("div", { class: "label" }, "// Saved solution"),
+            h("div", { class: "label" }, "// Saved " + (completed ? "solution" : "incomplete draft")),
             h("div", { class: "mono mt-1", style: { fontSize: "12px", color: "var(--muted-fg)" } },
-              `${solution.solveCount} accepted ${solution.solveCount === 1 ? "submit" : "submits"} · best ${fmtTime(solution.bestTimeMs)}`)),
-          h("span", { class: "pill pill-ok" }, solution.language)),
+              completed ? `${solution.completedSubmits || 1} accepted submit${(solution.completedSubmits || 1) === 1 ? "" : "s"} · best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete save${(solution.incompleteSaves || 1) === 1 ? "" : "s"}`)),
+          h("span", { class: "pill" + (completed ? " pill-ok" : "") }, solution.language)),
         h("div", { class: "row gap-2 wrapflex mt-3" },
-          h("button", { class: "btn btn-sm btn-primary", onClick: () => openSavedSolution(pz, solution) }, "View code"),
-          accomplishment, share),
+          h("button", { class: "btn btn-sm btn-primary", onClick: () => openSavedSolution(pz, solution) }, "View solution"),
+          accomplishment, pin, visibility),
       );
     }).catch(() => {
       clear(solutionHost).append(h("div", { class: "solution-library-empty" }, "Your solution library is temporarily unavailable."));
@@ -313,10 +399,15 @@ export async function renderTraining(params, root) {
     const historyHost = h("div", { class: "solution-history-list mt-5" }, h("div", { class: "label" }, "// Loading solve history…"));
     const code = h("pre", { class: "solution-code" }, solution.code || "// No saved source available.");
     modal(h("div", { class: "solution-modal" },
-      h("div", { class: "eyebrow mb-2" }, "// Saved solution"),
+      h("div", { class: "eyebrow mb-2" }, "// Saved " + (solution.completed ? "solution" : "incomplete draft")),
       h("h2", { class: "head mb-2" }, pz.title),
       h("p", { class: "mono", style: { fontSize: "12px", color: "var(--muted-fg)" } },
-        `${solution.language} · ${solution.lastMode} · best ${fmtTime(solution.bestTimeMs)}`),
+        solution.completed
+          ? `${solution.language} · ${solution.lastMode} · best ${fmtTime(solution.bestTimeMs)}`
+          : `${solution.language} · ${solution.lastMode} · incomplete draft`),
+      h("div", { class: "row gap-2 wrapflex mt-4" },
+        h("button", { class: "btn btn-sm btn-primary", onClick: () => startTraining(solution.difficulty, solution.archetypeId) }, "Play puzzle"),
+        solution.isPublic ? h("span", { class: "pill pill-ok" }, "Public") : h("span", { class: "pill" }, "Private")),
       code,
       h("div", { class: "section-title mt-6" }, "// Submission history"),
       historyHost,
@@ -328,8 +419,10 @@ export async function renderTraining(params, root) {
       else historyHost.append(...history.map((entry, index) => h("button", { class: "solution-history-row", onClick: () => {
         code.textContent = entry.code || "// Source unavailable";
       } },
-        h("span", { class: "mono" }, `#${history.length - index} · ${fmtTime(entry.timeMs)}`),
-        h("span", { class: "label" }, `${entry.language} · ${entry.mode} · ${fmtAgo(entry.solvedAt)}`))));
+        h("span", { class: "mono" }, entry.completed
+          ? `#${history.length - index} · completed · ${fmtTime(entry.timeMs)}`
+          : `#${history.length - index} · incomplete · ${entry.testsPassed || 0}/${entry.totalTests || 0} tests`),
+        h("span", { class: "label" }, `${entry.language} · ${entry.mode} · ${fmtAgo(entry.savedAt ?? entry.solvedAt)}`))));
     } catch {
       clear(historyHost).append(h("div", { class: "solution-library-empty" }, "Couldn't load submission history."));
     }
@@ -357,29 +450,34 @@ export async function renderTraining(params, root) {
       }
 
       const box = h("div", { class: "panel" });
-      box.append(h("div", { class: "lb-row lb-head", style: { gridTemplateColumns: "52px 1fr 92px 92px 88px" } },
+      box.append(h("div", { class: "lb-row lb-head", style: { gridTemplateColumns: "52px 1fr 92px 92px 88px 104px" } },
         h("span", {}, "#"), h("span", {}, "Player"),
-        h("span", {}, "Unranked"), h("span", {}, "Ranked"), h("span", {}, "Time")));
+        h("span", {}, "Unranked"), h("span", {}, "Ranked"), h("span", {}, "Time"), h("span", {}, "Solution")));
 
       const list = h("div", { class: "divide" });
       rows.forEach((r, i) => {
         const isMe = r.uid === session.profile?.uid;
         const rank = rankFor(r.rating, r);
-        list.append(h("div", {
+        const solutionCell = h("span", { class: "solution-board-cell" }, "—");
+        const row = h("div", {
           class: "lb-row" + (isMe ? " me" : "") + (i < 3 ? " podium" : ""),
-          style: { gridTemplateColumns: "52px 1fr 92px 92px 88px", cursor: "pointer" },
+          style: { gridTemplateColumns: "52px 1fr 92px 92px 88px 104px", cursor: "pointer" },
           onClick: () => navigate("/profile/" + r.uid),
         },
           h("span", { class: "rk" }, medal(i)),
-          h("div", { class: "row gap-3", style: { minWidth: "0" } },
-                        avatar(r, "sm"),
-
-            h("span", { class: "nm" }, r.username)),
-          h("span", { class: "tnum", style: { color: "var(--primary)" } },
-            r.soloRuns > 0 ? displayPlacementRating(r.soloRating, r.soloRd, r) : "—"),
-          h("span", { class: "tnum", style: { color: rank.color } },
-            rank.placement ? "Unranked" : displayPlacementRating(r.rating, r.rd, r)),
-          h("span", { class: "tnum", style: { fontWeight: "700" } }, fmtTime(r.timeMs))));
+          h("div", { class: "row gap-3", style: { minWidth: "0" } }, avatar(r, "sm"), h("span", { class: "nm" }, r.username)),
+          h("span", { class: "tnum", style: { color: "var(--primary)" } }, r.soloRuns > 0 ? displayPlacementRating(r.soloRating, r.soloRd, r) : "—"),
+          h("span", { class: "tnum", style: { color: rank.color } }, rank.placement ? "Unranked" : displayPlacementRating(r.rating, r.rd, r)),
+          h("span", { class: "tnum", style: { fontWeight: "700" } }, fmtTime(r.timeMs)),
+          solutionCell);
+        list.append(row);
+        getPublicPuzzleSolution(r.uid, pz.archetypeId).then((share) => {
+          if (!share) return;
+          clear(solutionCell).append(h("button", { class: "btn btn-sm", onClick: (event) => {
+            event.stopPropagation();
+            navigate("/share/" + share.id);
+          } }, "View solution"));
+        }).catch(() => {});
       });
 
             box.append(list);
@@ -416,42 +514,148 @@ export async function renderTraining(params, root) {
     libraryBtn.textContent = `Solution library${savedSolutions.length ? ` · ${savedSolutions.length}` : ""}`;
   }
 
-  function openSolutionLibrary() {
+  function paintSolutionsWorkspace() {
+    clear(bodyHost);
     const profile = session.profile;
     if (!profile || profile.isGuest || profile.isAnonymous) {
-      toast("Sign in to keep a solution library.", "err");
+      bodyHost.append(emptyState("Sign in to keep private solutions, drafts, accomplishments, and share links."));
       return;
     }
-    const host = h("div", { class: "solution-history-list" });
-    const m = modal(h("div", { class: "solution-modal" },
-      h("div", { class: "eyebrow mb-2" }, "// Your solution library"),
-      h("h2", { class: "head mb-3" }, `${savedSolutions.length} saved ${savedSolutions.length === 1 ? "solution" : "solutions"}`),
-      h("p", { class: "mono mb-5", style: { fontSize: "12px", color: "var(--muted-fg)", lineHeight: "1.6" } },
-        "Every accepted submit is saved here with its code, time, mode, and submission history."),
-      host,
-    ), { wide: true });
-    if (!savedSolutions.length) {
-      host.append(h("div", { class: "solution-library-empty" }, "Solve and submit a problem to start your library."));
-      return;
+
+    const categories = [...new Set(savedSolutions.map((solution) => solution.category).filter(Boolean))].sort();
+    const visible = savedSolutions.filter((solution) => {
+      const difficultyMatch = solutionDifficulty === "all" || solution.difficulty === solutionDifficulty;
+      const categoryMatch = categoryFilter === "all" || solution.category === categoryFilter;
+      const statusMatch = solutionFilter === "all"
+        || (solutionFilter === "completed" && solution.completed)
+        || (solutionFilter === "incomplete" && !solution.completed)
+        || (solutionFilter === "accomplishments" && solution.accomplishment)
+        || (solutionFilter === "public" && solution.isPublic);
+      return difficultyMatch && categoryMatch && statusMatch;
+    });
+
+    const side = h("aside", { class: "solutions-side" },
+      h("div", { class: "label mb-3" }, "// Difficulty"),
+      ...[["all", "All problems"], ...TIERS.map((tier) => [tier.name, tier.name])].map(([id, label]) =>
+        h("button", { class: "solutions-side-link" + (solutionDifficulty === id ? " active" : ""), onClick: () => {
+          solutionDifficulty = id;
+          sessionStorage.setItem("bb_solution_difficulty", id);
+          paintSolutionsWorkspace();
+        } }, label)));
+
+    const filterBar = h("div", { class: "solutions-filters" },
+      ...[["all", "All"], ["completed", "Completed"], ["incomplete", "Incomplete"], ["accomplishments", "Accomplishments"], ["public", "Public"]].map(([id, label]) =>
+        h("button", { class: "filter-chip" + (solutionFilter === id ? " active" : ""), onClick: () => {
+          solutionFilter = id;
+          sessionStorage.setItem("bb_solution_filter", id);
+          paintSolutionsWorkspace();
+        } }, label)),
+      h("span", { class: "solutions-filter-divider" }),
+      categoryBtnForSolutions("all", "All categories"),
+      ...categories.map((category) => categoryBtnForSolutions(category, category.replace(/_/g, " "))));
+
+    const content = h("section", { class: "solutions-content" },
+      h("div", { class: "between wrapflex gap-3 mb-5" },
+        h("div", {},
+          h("div", { class: "eyebrow mb-2" }, "// My solutions"),
+          h("h2", { class: "head" }, `${visible.length} ${visible.length === 1 ? "solution" : "solutions"}`)),
+        h("span", { class: "label" }, "Private by default")),
+      filterBar);
+
+    if (!visible.length) {
+      content.append(h("div", { class: "solution-library-empty mt-5" },
+        savedSolutions.length ? "No saved solutions match these filters." : "After any Training, Unranked, or Ranked run, use Save solution to preserve a complete solve or incomplete draft here."));
+    } else {
+      const list = h("div", { class: "solutions-grid mt-5" });
+      visible.forEach((solution) => list.append(solutionCard(solution)));
+      content.append(list);
     }
-    savedSolutions.forEach((solution) => host.append(h("button", { class: "solution-history-row", onClick: () => {
-      m.close();
-      openSavedSolution(solution, solution);
-    } },
-      h("span", { class: "mono", style: { fontWeight: "700" } }, solution.title),
-      h("span", { class: "label" }, `${solution.difficulty} · ${solution.solveCount} submits · ${fmtAgo(solution.lastSolvedAt)}`))));
+    bodyHost.append(h("div", { class: "solutions-layout" }, side, content));
   }
 
-  paintTabs();
+  function categoryBtnForSolutions(id, label) {
+    return h("button", { class: "filter-chip" + (categoryFilter === id ? " active" : ""), onClick: () => {
+      categoryFilter = id;
+      sessionStorage.setItem("bb_train_category", id);
+      paintSolutionsWorkspace();
+    } }, label);
+  }
+
+  function solutionCard(solution) {
+    const profile = session.profile;
+    const completed = !!solution.completed;
+    const status = completed ? "Completed" : "Incomplete";
+    const accomplishment = h("button", { class: "btn btn-sm", disabled: !completed, onClick: async () => {
+      accomplishment.disabled = true;
+      try {
+        solution.accomplishment = !solution.accomplishment;
+        Object.assign(solution, await toggleAccomplishment(profile, solution.archetypeId, solution.accomplishment));
+        toast(solution.accomplishment ? "Marked as an accomplishment." : "Removed from accomplishments.", "ok");
+        paintSolutionsWorkspace();
+      } catch (error) {
+        solution.accomplishment = !solution.accomplishment;
+        toast(error.message || "Couldn't update accomplishment.", "err");
+        accomplishment.disabled = !completed;
+      }
+    } }, solution.accomplishment ? "★ Accomplishment" : "Accomplishment");
+    const pin = h("button", { class: "btn btn-sm", disabled: !solution.accomplishment, onClick: async () => {
+      pin.disabled = true;
+      try {
+        solution.pinned = !solution.pinned;
+        Object.assign(solution, await pinAccomplishment(profile, solution.archetypeId, solution.pinned));
+        toast(solution.pinned ? "Pinned to profile." : "Removed profile pin.", "ok");
+        paintSolutionsWorkspace();
+      } catch (error) {
+        solution.pinned = !solution.pinned;
+        toast(error.message || "Couldn't update pin.", "err");
+        pin.disabled = !solution.accomplishment;
+      }
+    } }, solution.pinned ? "★ Pinned" : "Pin profile");
+    const visibility = h("label", { class: "solution-visibility-switch", title: completed ? "Make this completed solution public" : "Complete a solution before sharing it" },
+      h("input", { type: "checkbox", checked: !!solution.isPublic, disabled: !completed }),
+      h("span", { class: "solution-switch-ui" }),
+      h("span", { class: "label" }, solution.isPublic ? "Public" : "Private"));
+    const toggle = visibility.querySelector("input");
+    toggle?.addEventListener("change", async () => {
+      toggle.disabled = true;
+      try {
+        Object.assign(solution, await setSolutionVisibility(profile, solution.archetypeId, toggle.checked));
+        if (solution.isPublic) {
+          const url = `${window.location.origin}${window.location.pathname}#/share/${solution.publicShareId}`;
+          try { await navigator.clipboard.writeText(url); toast("Public solution link copied.", "ok"); }
+          catch { prompt("Copy your public solution link:", url); }
+        } else toast("Solution is private again.", "ok");
+        paintSolutionsWorkspace();
+      } catch (error) {
+        toggle.checked = !toggle.checked;
+        toast(error.message || "Couldn't update visibility.", "err");
+        toggle.disabled = !completed;
+      }
+    });
+    return h("article", { class: "solution-card" + (completed ? " completed" : " incomplete") },
+      h("div", { class: "between gap-3" },
+        h("span", { class: "pill" + (completed ? " pill-ok" : "") }, status),
+        solution.isPublic ? h("span", { class: "solution-public-label" }, "Public") : h("span", { class: "label" }, "Private")),
+      h("h3", { class: "mono mt-4", style: { fontSize: "15px", marginBottom: "0" } }, solution.title),
+      h("p", { class: "label mt-2", style: { textTransform: "none", letterSpacing: "0" } },
+        `${solution.difficulty} · ${(solution.category || "general").replace(/_/g, " ")} · ${solution.lastMode}`),
+      h("div", { class: "solution-card-meta mt-4" },
+        h("span", {}, completed ? `Best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete ${solution.incompleteSaves === 1 ? "draft" : "drafts"}`),
+        h("span", {}, `${solution.saveCount || 1} saved`)),
+      h("div", { class: "row gap-2 wrapflex mt-5" },
+        h("button", { class: "btn btn-sm btn-primary", onClick: () => openSavedSolution(solution, solution) }, "View solution"),
+        h("button", { class: "btn btn-sm", onClick: () => startTraining(solution.difficulty, solution.archetypeId) }, "Play puzzle")),
+      h("div", { class: "row gap-2 wrapflex mt-3" }, accomplishment, pin, visibility));
+  }
+
   await loadRecords();
-  await paintBody();
+  paintWorkspace();
 
   let lastUid = session.profile?.uid ?? null;
   unsubs.push(onSession(async () => {
     const uid = session.profile?.uid ?? null;
     if (uid !== lastUid) { lastUid = uid; await loadRecords(); }
-    paintTabs();
-    paintBody();
+    paintWorkspace();
   }));
 
   return () => unsubs.forEach((fn) => { try { fn(); } catch {} });

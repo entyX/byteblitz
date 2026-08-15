@@ -50,6 +50,7 @@ export async function renderHome(params, root) {
   // ── Welcome panel ────────────────────────────────────────────────────────
   const gmGrid = h("div", { class: "gm-grid" });
   const eloHost = h("div", {});
+  const newsHost = h("aside", { class: "home-news" });
   const headHost = h("div", {});
 
   welcomeHost.append(headHost, gmGrid);
@@ -108,6 +109,7 @@ export async function renderHome(params, root) {
           : p ? "Head to head · rated" : "Verified account required",
       }),
       eloHost,
+      newsHost,
     );
 
     paintElo();
@@ -257,6 +259,71 @@ export async function renderHome(params, root) {
       return;
     }
     findRankedMatch();
+  }
+
+  // ── Live friend news ─────────────────────────────────────────────────────
+  let newsFriendsUnsub = null;
+  let newsProfileUnsubs = [];
+  function streakFor(activity = {}) {
+    const today = new Date();
+    let run = 0;
+    let cursor = new Date(today);
+    if (!activity[dayKey(cursor)]) cursor.setDate(cursor.getDate() - 1);
+    while (activity[dayKey(cursor)]) { run++; cursor.setDate(cursor.getDate() - 1); }
+    return run;
+  }
+
+  function paintNews() {
+    newsFriendsUnsub?.();
+    newsFriendsUnsub = null;
+    newsProfileUnsubs.forEach((unsub) => { try { unsub(); } catch {} });
+    newsProfileUnsubs = [];
+    clear(newsHost);
+    const me = session.profile;
+    if (!me || me.isGuest || me.isAnonymous) {
+      newsHost.append(h("div", { class: "home-news-head" }, h("span", { class: "live-word" }, "News"), h("span", { class: "label" }, "Friends")),
+        h("div", { class: "home-news-empty" }, "Sign in to see friends' streak milestones and accomplishments."));
+      return;
+    }
+    const list = h("div", { class: "home-news-list" });
+    newsHost.append(h("div", { class: "home-news-head" }, h("span", { class: "live-word" }, "News"), h("span", { class: "label" }, "Live")), list);
+    const details = new Map();
+    const render = () => {
+      clear(list);
+      const items = [...details.values()].flatMap((friend) => {
+        const out = [];
+        const streak = streakFor(friend.activityDays || {});
+        if (streak >= 5 && streak % 5 === 0) out.push({ kind: "streak", friend, streak });
+        if (friend.pinnedAccomplishment?.title) out.push({ kind: "accomplishment", friend, title: friend.pinnedAccomplishment.title });
+        return out;
+      }).slice(0, 4);
+      if (!items.length) {
+        list.append(h("div", { class: "home-news-empty" }, "Milestones from friends will appear here."));
+        return;
+      }
+      items.forEach((item) => list.append(h("button", { class: "home-news-item", onClick: () => navigate("/profile/" + item.friend.uid) },
+        avatar(item.friend, "sm"),
+        h("span", { class: "grow", style: { minWidth: "0" } },
+          h("span", { class: "mono home-news-title" }, item.kind === "streak"
+            ? `${item.friend.username} reached a ${item.streak}-day streak`
+            : `${item.friend.username} pinned an accomplishment`),
+          h("span", { class: "label home-news-copy" }, item.kind === "streak" ? "Keep the coding streak alive." : item.title)))));
+    };
+    newsFriendsUnsub = watchFriends(me.uid, (friends) => {
+      newsProfileUnsubs.forEach((unsub) => { try { unsub(); } catch {} });
+      newsProfileUnsubs = [];
+      details.clear();
+      friends.forEach((friend) => {
+        details.set(friend.uid, friend);
+        try {
+          newsProfileUnsubs.push(watchProfile(friend.uid, (profile) => {
+            details.set(friend.uid, { ...friend, ...(profile || {}) });
+            render();
+          }));
+        } catch {}
+      });
+      render();
+    });
   }
 
   // ── Streak bar ──────────────────────────────────────────────────────────
@@ -493,6 +560,7 @@ export async function renderHome(params, root) {
     paintStreak();
     paintHead();
     paintModes();
+    paintNews();
     paintExtras();
   }
 
@@ -530,6 +598,8 @@ export async function renderHome(params, root) {
   // so they aren't in `unsubs` — tear the live ones down explicitly.
   return () => {
     friendUnsub?.();
+    newsFriendsUnsub?.();
+    newsProfileUnsubs.forEach((unsub) => { try { unsub(); } catch {} });
     queueUnsub?.();
     countsUnsub?.(); usersUnsub?.();
     friendDetailsUnsubs.forEach((unsub) => { try { unsub(); } catch {} });
