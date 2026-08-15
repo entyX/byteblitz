@@ -33,6 +33,7 @@ export async function renderHome(params, root) {
   let myRank = null;
 
   const railHost = h("div", { class: "rail" });
+  const newsHost = h("aside", { class: "home-news" });
   const welcomeHost = h("div", { class: "welcome" });
   const extrasHost = h("div", { class: "side-tiles" });
   const streakHost = h("div", {});
@@ -43,14 +44,13 @@ export async function renderHome(params, root) {
   page.append(
     streakHost,
     h("div", { class: "home-grid" },
-      h("div", { class: "home-side" }, railHost, extrasHost),
+      h("div", { class: "home-side" }, railHost, newsHost, extrasHost),
       h("div", { class: "home-main" }, welcomeHost)),
   );
 
   // ── Welcome panel ────────────────────────────────────────────────────────
   const gmGrid = h("div", { class: "gm-grid" });
   const eloHost = h("div", {});
-  const newsHost = h("aside", { class: "home-news" });
   const headHost = h("div", {});
 
   welcomeHost.append(headHost, gmGrid);
@@ -109,7 +109,6 @@ export async function renderHome(params, root) {
           : p ? "Head to head · rated" : "Verified account required",
       }),
       eloHost,
-      newsHost,
     );
 
     paintElo();
