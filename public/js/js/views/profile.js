@@ -18,7 +18,7 @@ import {
 import {
   getProfile, getFriends, sendFriendRequest, getSentRequests, removeFriend,
   ensureConversation, rankedPosition, renameUser, saveCountry, NAME_RE, seenMap, watchPresence,
-  deleteAccountData, resetAccountProgress, getMatchHistory,
+  deleteAccountData, resetAccountProgress, getMatchHistory, saveProfilePresentation, countPuzzleRecords,
 } from "../store.js";
 import { countryFor, countryOptions } from "../countries.js";
 import { challengeFriend } from "../game.js";
@@ -59,6 +59,12 @@ export async function renderProfile(params, root) {
   const w = p.wins ?? 0, l = p.losses ?? 0, d = p.draws ?? 0;
   const total = w + l + d;
   const wr = total ? Math.round((w / total) * 100) + "%" : "—";
+  const unrankedRank = rankFor(p.soloRating ?? p.rating, p);
+  const unrankedRuns = p.soloRuns ?? 0;
+  const unrankedSolved = p.soloSolved ?? 0;
+  const unrankedWr = unrankedRuns ? Math.round((unrankedSolved / unrankedRuns) * 100) + "%" : "—";
+  const unrankedBest = Math.min(...Object.values(p.soloBest || {}).filter(Number.isFinite));
+  const joined = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—";
 
   // ── Relationship actions ─────────────────────────────────────────────────
   const actions = h("div", { class: "row gap-2 wrapflex mt-5" });
@@ -75,7 +81,8 @@ export async function renderProfile(params, root) {
           Object.assign(p, patch);
           navigate("/profile/" + p.uid);
         }) }, icon("user", 13), "Profile picture"),
-        h("button", { class: "btn", onClick: openCountry }, "Country"));
+        h("button", { class: "btn", onClick: openCountry }, "Country"),
+        h("button", { class: "btn", onClick: openProfileSettings }, "Profile settings"));
       if (!p.isGuest) {
         actions.append(
           h("button", { class: "btn", onClick: openResetProgress }, "Reset progress"),
@@ -233,10 +240,9 @@ export async function renderProfile(params, root) {
             h("div", { class: "eyebrow mb-2" }, isMe ? "// You" : "// Player"),
             h("h1", { class: "head" }, p.username),
             h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted)" } },
-              p.isGuest
-                ? "Guest profile — saved on this device"
-                : "Joined " + (p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—")),
-            h("p", { class: "mono mt-1", style: { fontSize: "11.5px", color: "var(--muted-fg)" } },
+              p.isGuest ? "Guest profile — saved on this device" : `Joined ${joined}${p.emailVisible && p.publicEmail ? ` · ${p.publicEmail}` : ""}`),
+            p.bio ? h("p", { class: "profile-bio mt-3" }, p.bio) : null,
+            h("p", { class: "mono mt-2", style: { fontSize: "11.5px", color: "var(--muted-fg)" } },
               `${countryFor(p.country).flag} ${countryFor(p.country).name}`))),
         actions),
 
@@ -262,32 +268,25 @@ export async function renderProfile(params, root) {
           : null),
     ),
 
-    // ── Record ─────────────────────────────────────────────────────────────
-    h("div", { class: "mt-6" },
-      h("div", { class: "section-title" }, isMe ? "// Your rated record" : "// Rated record"),
-      h("div", { class: "stats" },
-        stat(String(w), "Wins", "var(--ok)"),
-        stat(String(l), "Losses", "var(--primary)"),
-        stat(String(d), "Draws"),
-        stat(wr, "Win rate"))),
-
-    h("div", { class: "mt-4" },
-      h("div", { class: "stats" },
-        stat(String(p.gamesPlayed ?? 0), "Rated matches"),
-        stat(String(p.streak ?? 0), "Current streak"),
-        stat(String(p.bestStreak ?? 0), "Best streak"),
-        rankHost())),
-
-    // ── Unranked ───────────────────────────────────────────────────────────
-    h("div", { class: "mt-8" },
-      h("div", { class: "section-title" }, "// Unranked"),
-      h("div", { class: "stats" },
-        stat(displayPlacementRating(p.soloRating, p.soloRd, p), "Unranked ELO", "var(--primary)"),
+    h("div", { class: "profile-track-grid mt-6" },
+      trackCard("Ranked", rank, displayPlacementRating(p.rating, p.rd, p), [
+        stat(`${w}-${l}-${d}`, "Record"),
+        stat(wr, "Win rate"),
+        stat(p.rankedBestTime ? fmtTime(p.rankedBestTime) : "—", "Best solve"),
+        rankHost(),
+      ]),
+      trackCard("Unranked", unrankedRank, displayPlacementRating(p.soloRating, p.soloRd, p), [
+        stat(`${unrankedSolved}/${unrankedRuns}`, "Clears / runs"),
+        stat(unrankedWr, "Win rate"),
+        stat(Number.isFinite(unrankedBest) ? fmtTime(unrankedBest) : "—", "Best time"),
         stat(`${placementGamesPlayed(p)}/${PLACEMENT_GAMES}`, "Placement"),
-        stat(`${placementConfidence(p)}/10`, "Confidence"),
-        stat(String(p.soloRuns ?? 0), "Runs"),
-        stat(String(p.soloSolved ?? 0), "Solved"),
-        stat(String(p.puzzlesSolved ?? 0), "Puzzles cleared"))),
+      ])),
+
+    h("div", { class: "profile-achievement-grid mt-4" },
+      stat(String(p.puzzlesSolved ?? 0), "Puzzles cleared", "var(--ok)"),
+      puzzleRecordsHost(),
+      stat(String(p.bestStreak ?? 0), "Best streak"),
+      stat(placed ? "PLACED" : `${placementConfidence(p)}/10`, placed ? "Ranked status" : "Confidence", placed ? rank.color : "var(--muted)")),
 
     bestTimesPanel(p),
     discoveryPanel(p),
@@ -322,6 +321,32 @@ export async function renderProfile(params, root) {
       unsubs.push(() => unsub?.());
     } catch {}
     return host;
+  }
+
+  function trackCard(label, division, elo, cells) {
+    return h("section", { class: "profile-track-card", style: { "--track-color": division.color } },
+      h("div", { class: "between gap-3 wrapflex" },
+        h("div", {},
+          h("div", { class: "eyebrow" }, `// ${label}`),
+          h("div", { class: "profile-division" }, division.name)),
+        h("div", { class: "profile-track-elo" },
+          h("span", {}, elo),
+          h("small", {}, division.name))),
+      h("div", { class: "stats mt-4" }, ...cells));
+  }
+
+  function puzzleRecordsHost() {
+    const cell = stat("—", "Puzzle records", "var(--warn)");
+    if (!p.isGuest) {
+      countPuzzleRecords(p.uid).then((count) => {
+        const value = cell.querySelector(".v");
+        if (value) value.textContent = String(count);
+      }).catch(() => {
+        const value = cell.querySelector(".v");
+        if (value) value.textContent = "—";
+      });
+    }
+    return cell;
   }
 
   // Ranked board position, filled in once it loads.
@@ -423,6 +448,41 @@ export async function renderProfile(params, root) {
       clear(panel).append(h("div", { class: "empty", style: { border: "none" } }, "Match history is temporarily unavailable."));
     });
     return host;
+  }
+
+  function openProfileSettings() {
+    const bio = h("textarea", { class: "input", maxlength: "240", rows: "5", placeholder: "Tell players a little about yourself…" });
+    bio.value = p.bio || "";
+    const email = auth.currentUser?.email || "";
+    const reveal = h("input", { type: "checkbox", checked: !!p.emailVisible && !!p.publicEmail, disabled: !email });
+    const note = h("p", { class: "label mt-2", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.55" } },
+      email
+        ? "When enabled, your sign-in email appears next to your join date on your public profile. When disabled, no email is stored in the public profile."
+        : "This account has no email address available to display.");
+    const save = h("button", { class: "btn btn-primary grow", onClick: async () => {
+      save.disabled = true;
+      try {
+        const patch = await saveProfilePresentation(p, { bio: bio.value, emailVisible: reveal.checked, email });
+        Object.assign(p, patch);
+        m.close();
+        toast("Profile settings saved.", "ok");
+        navigate("/profile/" + p.uid);
+      } catch (error) {
+        console.error(error);
+        save.disabled = false;
+        toast("Couldn't save profile settings.", "err");
+      }
+    } }, "Save settings");
+    const m = modal(h("div", {},
+      h("div", { class: "eyebrow mb-2" }, "// Profile settings"),
+      h("h2", { class: "head mb-3" }, "Public profile"),
+      h("label", { class: "label mb-2", style: { display: "block" } }, "// Bio · 240 characters"),
+      bio,
+      h("label", { class: "row gap-3 mt-5", style: { alignItems: "flex-start", cursor: email ? "pointer" : "not-allowed" } },
+        reveal,
+        h("span", {}, h("span", { class: "mono", style: { fontSize: "13px", fontWeight: "700" } }, "Show email publicly"), note)),
+      h("div", { class: "row gap-2 mt-5" }, save,
+        h("button", { class: "btn grow", onClick: () => m.close() }, "Cancel"))));
   }
 
   function openCountry() {

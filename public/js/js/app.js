@@ -6,7 +6,7 @@ import { h, add, clear, toast, icon, fmtAgo, modal, avatar } from "./ui.js";
 import { session, onSession, startSession, logout, openAuthModal, requireAccount } from "./session.js";
 import { route, startRouter, navigate, currentPath } from "./router.js";
 import {
-  watchNotifications, markAllRead, deleteNotification,
+  watchNotifications, markAllRead, deleteNotification, clearNotifications,
   acceptFriendRequest, declineFriendRequest, watchIncomingChallenges,
 } from "./store.js";
 import { rankFor } from "./glicko.js";
@@ -38,7 +38,7 @@ const outlet = h("main", { id: "outlet" });
 function buildShell() {
   const nav = h("nav", { class: "nav" },
     h("div", { class: "nav-inner" },
-      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.2.5")),
+      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.2.6")),
       navLinks,
       h("div", { class: "nav-right" },
         playerSearchBox({ onExpandedChange: (open) => nav.classList.toggle("search-open", open) }),
@@ -141,8 +141,23 @@ document.addEventListener("mousedown", (e) => {
 });
 
 function buildDropdown() {
+  const clearAll = h("button", { class: "btn btn-sm", onClick: async () => {
+    clearAll.disabled = true;
+    try {
+      await clearNotifications(session.profile.uid);
+      notifications = [];
+      paintBell();
+      toast("Notifications cleared.", "ok");
+    } catch (error) {
+      console.error(error);
+      clearAll.disabled = false;
+      toast("Couldn't clear notifications.", "err");
+    }
+  } }, "Clear all");
   const box = h("div", { class: "dropdown" },
-    h("div", { class: "panel-head" }, h("span", { class: "label" }, "// Notifications")));
+    h("div", { class: "panel-head" },
+      h("span", { class: "label" }, "// Notifications"),
+      notifications.length ? clearAll : null));
 
   if (!notifications.length) {
     box.append(h("div", { class: "empty", style: { border: "none" } }, "Nothing yet."));

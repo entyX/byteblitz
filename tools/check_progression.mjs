@@ -10,6 +10,7 @@ import {
   placementGamesPlayed,
   placementLeft,
   placementCalibration,
+  partialTestLossMitigation,
   rankFor,
 } from "../public/js/js/glicko.js";
 
@@ -50,6 +51,11 @@ assert.ok(bLoss.rating >= 0 && bLoss.rating <= 900, "beginner placement stays wi
 
 const masterLoss = placementCalibration({ skillLevel: "master", placementBaseRating: 1600, soloRating: 1600, soloVol: 0.06, placementGames: 0 }, false, 300, "Master");
 assert.ok(masterLoss.rating >= 1100, "master placement cannot crash below the base-rating guard rail");
+
+assert.equal(partialTestLossMitigation(0, 12, 0.55), 0, "zero tests earns no Unranked mitigation");
+assert.equal(partialTestLossMitigation(11, 12, 0.55), 0.55, "11/12 tests caps Unranked mitigation at 55%");
+assert.equal(partialTestLossMitigation(12, 12, 0.28), 0.28, "full progress cannot exceed the 28% Ranked cap");
+assert.ok(partialTestLossMitigation(6, 12, 0.55) < 0.55, "partial progress below 11/12 remains below the cap");
 
 assert.deepEqual(
   SKILL_LEVELS.map((level) => [level.id, level.rating]),

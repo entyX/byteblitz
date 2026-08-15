@@ -86,6 +86,8 @@ export async function startSolo(preset) {
           solved,
           timeMs: solved ? r.timeMs : limit * 1000,
           difficulty,
+          testsPassed: r.passed ?? 0,
+          totalTests: problem.testCases?.length ?? 0,
         });
         if (res && session.profile) {
           Object.assign(session.profile, {
@@ -577,6 +579,11 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
   const result = isDraw ? "draw" : iWon ? "win" : "loss";
   const winBy = d.winBy ?? "solve";
 
+  const myTime = playerNum === 1 ? d.p1SolveTime : d.p2SolveTime;
+  const oppTime = playerNum === 1 ? d.p2SolveTime : d.p1SolveTime;
+  const myTests = playerNum === 1 ? (d.p1BestTests ?? 0) : (d.p2BestTests ?? 0);
+  const totalTests = problem.testCases?.length ?? TESTS_PER_PROBLEM;
+
   let res = null;
   if (profile && duelMode === "rated" && !d.anonymousPairing && !applied.has(d.id)) {
     applied.add(d.id);
@@ -586,7 +593,11 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
       res = await applyDuelResult(
         profile.uid, profile,
         { uid: opponent.uid, username: opponent.username, rating: opponent.rating, rd: opponent.rd },
-        score, result, { duelId: d.id, difficulty: d.difficulty, winBy }
+        score, result, {
+          duelId: d.id, difficulty: d.difficulty, winBy,
+          testsPassed: myTests, totalTests,
+          timeMs: myTime ? Math.round(myTime * 1000) : null,
+        }
       );
     } catch (e) {
       console.error("rating update failed", e);
@@ -598,10 +609,7 @@ async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, 
   // Before that it is the handshake's evidence that both players accepted.
   try { await mm.leaveLobby(actorUid); } catch {}
 
-  const myTime = playerNum === 1 ? d.p1SolveTime : d.p2SolveTime;
-  const oppTime = playerNum === 1 ? d.p2SolveTime : d.p1SolveTime;
-
-  arena.showResult(duelResultScreen({
+    arena.showResult(duelResultScreen({
     result, winBy, res, me, opponent, myTime, oppTime, problem, duelMode,
     onRematch: async () => {
       try {

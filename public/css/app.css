@@ -1342,3 +1342,38 @@ select.input { cursor: pointer; }
 .change-series[open] > summary::after { content: "−"; }
 .change-series-body { padding: 14px; display: grid; gap: 12px; }
 .change-series .change-card { margin: 0; }
+
+/* ── v1.2.6 division and profile refinement ─────────────────────────────── */
+.lb-division-elo {
+  font-weight: 900;
+  letter-spacing: -.045em;
+  text-shadow: 0 0 14px currentColor;
+}
+.lb-division-elo small { font-weight: 800; letter-spacing: .16em; }
+.profile-bio {
+  max-width: 620px; color: var(--muted-fg); font-size: 13px; line-height: 1.65;
+  padding-left: 12px; border-left: 2px solid var(--primary);
+}
+.profile-track-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;
+}
+.profile-track-card {
+  position: relative; overflow: hidden; padding: 20px;
+  border: 1px solid color-mix(in srgb, var(--track-color) 44%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--track-color) 13%, hsl(240 6% 8% / .86)), hsl(240 6% 7% / .84) 62%);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / .04), 0 12px 30px hsl(0 0% 0% / .18);
+}
+.profile-track-card::after {
+  content: ""; position: absolute; width: 170px; height: 170px; right: -72px; top: -82px;
+  border-radius: 999px; background: var(--track-color); opacity: .09; filter: blur(12px); pointer-events: none;
+}
+.profile-division { color: var(--track-color); font-family: var(--font-display); font-size: 1.55rem; font-weight: 900; font-style: italic; letter-spacing: -.04em; }
+.profile-track-elo { position: relative; z-index: 1; text-align: right; color: var(--track-color); font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.1rem); font-weight: 900; font-style: italic; line-height: .9; text-shadow: 0 0 18px color-mix(in srgb, var(--track-color) 60%, transparent); }
+.profile-track-elo small { display: block; margin-top: 8px; font-family: var(--font-mono); font-size: 9px; font-style: normal; letter-spacing: .18em; text-transform: uppercase; }
+.profile-track-card .stats { position: relative; z-index: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.profile-achievement-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.profile-achievement-grid .stat { background: hsl(240 6% 9% / .72); border: 1px solid var(--border-soft); }
+@media (max-width: 720px) {
+  .profile-track-grid { grid-template-columns: 1fr; }
+  .profile-achievement-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

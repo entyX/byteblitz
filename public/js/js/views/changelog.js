@@ -6,9 +6,21 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.5",
+    version: "v1.2.6",
     date: "August 14, 2026",
     current: true,
+    items: [
+      "Losses now preserve a bounded amount of demonstrated test-case progress: at 11/12 or more tests, an Unranked loss can be softened by up to 55% and a Ranked loss by up to 28%. Wins, draws, and low-progress losses are unchanged.",
+      "Ranked standings now foreground division with colored, bold, softly glowing ELO and a Bronze, Silver, Gold, or higher division label.",
+      "Profiles now use smoother Ranked and Unranked track cards for division, ELO, win rate, best time, clears, placement, board position, and puzzle-record count.",
+      "Players can save a public bio and choose whether their sign-in email is displayed next to their join date. The email is omitted from the public profile unless the owner opts in.",
+      "The notification drawer now includes a Clear all action.",
+    ],
+  },
+  {
+    version: "v1.2.5",
+    date: "August 14, 2026",
+    current: false,
     items: [
       "Placement calibration now uses high-signal, shrinking per-game swings. Early placement games can move ELO by hundreds while the selected onboarding level remains a broad benchmark guard rail.",
       "Reset Progress now clears the selected skill level and automatically reopens onboarding, so a reset begins with a fresh self-assessment and new placement benchmark.",

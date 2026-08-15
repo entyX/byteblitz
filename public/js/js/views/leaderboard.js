@@ -4,7 +4,7 @@
 
 import { h, clear, emptyState, avatar } from "../ui.js";
 import { session } from "../session.js";
-import { displayPlacementRating, isPlaced, placementGamesPlayed } from "../glicko.js";
+import { displayPlacementRating, isPlaced, placementGamesPlayed, rankFor } from "../glicko.js";
 import { rankedLeaderboard, soloLeaderboard, isPermissionDenied } from "../store.js";
 import { navigate } from "../router.js";
 import { countryFor } from "../countries.js";
@@ -94,6 +94,7 @@ export async function renderLeaderboard(params, root) {
       const country = countryFor(player.country);
       const rating = isRanked ? player.rating : player.soloRating;
       const rd = isRanked ? player.rd : player.soloRd;
+      const division = isRanked ? rankFor(rating, player) : null;
       const record = isRanked
         ? h("span", { class: "lb-record" },
             h("b", {}, `${player.wins ?? 0}W`), " · ", h("i", {}, `${player.losses ?? 0}L`), " · ", h("em", {}, `${player.draws ?? 0}D`))
@@ -117,7 +118,9 @@ export async function renderLeaderboard(params, root) {
             h("span", { class: "country-flag" }, country.flag),
             h("span", { class: "country-name mono", style: { fontSize: "10.5px", color: "var(--muted-fg)" } }, country.name))),
         record,
-        h("span", { class: "lb-elo" }, displayPlacementRating(rating, rd, player), h("small", {}, isPlaced(player) ? "Rating" : "Placement"))));
+        h("span", { class: "lb-elo" + (isRanked ? " lb-division-elo" : ""), style: isRanked ? { color: division.color, textShadow: `0 0 14px ${division.color}66` } : {} },
+          displayPlacementRating(rating, rd, player),
+          h("small", { style: isRanked ? { color: division.color } : {} }, isRanked ? division.name : (isPlaced(player) ? "Rating" : "Placement")))));
     });
 
     bodyHost.append(table,

@@ -268,6 +268,17 @@ export function placementCalibration(profile, solved, solveTimeSecs, difficulty)
   };
 }
 
+/**
+ * Reward meaningful partial progress on a loss without turning it into a draw.
+ * At 11/12 or more tests this reaches the supplied maximum mitigation; lower
+ * progress scales linearly and zero tests receives no reduction.
+ */
+export function partialTestLossMitigation(passed, total, cap) {
+  const safeTotal = Math.max(1, Number(total) || 0);
+  const ratio = Math.max(0, Math.min(1, (Number(passed) || 0) / safeTotal));
+  return Math.min(cap, ratio * cap / (11 / 12));
+}
+
 /** Show a question mark only until the required Unranked placements are done. */
 export function displayPlacementRating(rating, rd, profile) {
   if (rating == null) return "—";

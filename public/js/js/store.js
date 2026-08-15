@@ -5,12 +5,12 @@
 import {
   db, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc,
   collection, query, where, orderBy, limit, onSnapshot, serverTimestamp,
-  increment, writeBatch, collectionGroup,
+  increment, writeBatch, collectionGroup, deleteField,
 
 } from "./firebase.js";
 import {
   defaultRating, rate, decayRd, soloScore, soloOpponent, placementRd, placementCalibration,
-  placementGamesPlayed, confidenceForPlacementGames, PLACEMENT_GAMES, skillLevel, isPlaced,
+  placementGamesPlayed, confidenceForPlacementGames, PLACEMENT_GAMES, skillLevel, isPlaced, partialTestLossMitigation,
 } from "./glicko.js";
 import {
   isGuestProfile, patchGuest, markGuestSeen, guestSeen,
@@ -26,6 +26,12 @@ export function isPermissionDenied(e) {
   return e?.code === "permission-denied" || /insufficient permissions/i.test(e?.message ?? "");
 }
 
+function softenLoss(next, before, mitigation) {
+  if (!mitigation || next.rating >= before) return next;
+  const rating = before + (next.rating - before) * (1 - mitigation);
+  return { ...next, rating: Math.round(rating * 100) / 100 };
+}
+
 // ── Profile ─────────────────────────────────────────────────────────────────
 export function blankProfile(uid, username, isAnon) {
   const g = defaultRating();
@@ -37,7 +43,7 @@ export function blankProfile(uid, username, isAnon) {
     createdAt: Date.now(),
 
     rating: g.rating, rd: g.rd, vol: g.vol,
-    wins: 0, losses: 0, draws: 0, gamesPlayed: 0, lastPlayedAt: null,
+    wins: 0, losses: 0, draws: 0, gamesPlayed: 0, lastPlayedAt: null, rankedBestTime: null,
 
     soloRating: g.rating, soloRd: g.rd, soloVol: g.vol,
     soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
@@ -53,6 +59,8 @@ export function blankProfile(uid, username, isAnon) {
         avatarIcon: null,
     avatarHue: null,
     country: "US", // Profiles created before v1.2.0 render as US until changed.
+    bio: "",
+    emailVisible: false,
     activityDays: {}, // YYYY-MM-DD -> last activity timestamp, used by dashboard streaks.
 
   };
@@ -77,6 +85,7 @@ export async function applySkillLevel(profile, level) {
     placementConfidence: 0,
     placementBaseRating: level.rating,
     rankedUnlocked: false,
+    rankedBestTime: null,
     tutorialCompleted: false,
     lbRating: level.rating,
     lbSolo: level.rating,
@@ -99,6 +108,18 @@ export async function saveCountry(profile, country) {
   if (isGuestProfile(profile)) { patchGuest(patch); return patch; }
   await updateDoc(doc(db, "users", profile.uid), patch);
   return patch;
+}
+
+/** Save public profile copy. Email is copied into the public document only when opted in. */
+export async function saveProfilePresentation(profile, { bio, emailVisible, email }) {
+  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to edit profile settings.");
+  const patch = {
+    bio: String(bio || "").trim().slice(0, 240),
+    emailVisible: !!emailVisible,
+    publicEmail: emailVisible && email ? String(email).trim() : deleteField(),
+  };
+  await updateDoc(doc(db, "users", profile.uid), patch);
+  return { ...patch, publicEmail: emailVisible && email ? String(email).trim() : null };
 }
 
 function activityKey(now = Date.now()) {
@@ -257,7 +278,7 @@ export async function resetAccountProgress(profile) {
   const patch = {
     rating: base, rd: g.rd, vol: g.vol, lbRating: base,
     soloRating: base, soloRd: g.rd, soloVol: g.vol, lbSolo: base,
-    wins: 0, losses: 0, draws: 0, gamesPlayed: 0, lastPlayedAt: null,
+    wins: 0, losses: 0, draws: 0, gamesPlayed: 0, lastPlayedAt: null, rankedBestTime: null,
     soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
     placementGames: 0, placementConfidence: 0, placementBaseRating: null, rankedUnlocked: false,
     // Clearing the selected skill forces onboarding to establish a new base.
@@ -321,7 +342,11 @@ export async function applyDuelResult(uid, profile, opponent, score, result, his
     rd: decayRd(profile.rd, profile.vol, profile.lastPlayedAt),
     vol: profile.vol,
   };
-    const next = rate(me, opponent, score);
+  let next = rate(me, opponent, score);
+  const mitigation = result === "loss"
+    ? partialTestLossMitigation(history?.testsPassed, history?.totalTests, 0.28)
+    : 0;
+  next = softenLoss(next, profile.rating, mitigation);
 
   const streak = result === "win" ? (profile.streak ?? 0) + 1 : 0;
   const updates = {
@@ -332,6 +357,8 @@ export async function applyDuelResult(uid, profile, opponent, score, result, his
     lastPlayedAt: Date.now(),
     streak,
     bestStreak: Math.max(profile.bestStreak ?? 0, streak),
+    ...(result === "win" && history?.timeMs && (!profile.rankedBestTime || history.timeMs < profile.rankedBestTime)
+      ? { rankedBestTime: history.timeMs } : {}),
     updatedAt: serverTimestamp(),
   };
   if (result === "win") updates.wins = increment(1);
@@ -345,7 +372,9 @@ export async function applyDuelResult(uid, profile, opponent, score, result, his
       opponentUid: opponent.uid ?? null, opponentUsername: opponent.username ?? "Opponent",
       difficulty: history.difficulty ?? null, winBy: history.winBy ?? null,
       ratingBefore: Math.round(profile.rating), ratingAfter: Math.round(next.rating),
-      delta: Math.round(next.rating) - Math.round(profile.rating), createdAt: Date.now(),
+      delta: Math.round(next.rating) - Math.round(profile.rating),
+      testsPassed: Number(history.testsPassed) || 0, totalTests: Number(history.totalTests) || 0,
+      lossMitigation: Math.round(mitigation * 100), createdAt: Date.now(),
     });
   }
   markDailyActivity(profile);
@@ -357,7 +386,7 @@ export async function applyDuelResult(uid, profile, opponent, score, result, his
 // Stored under the `solo*` field names the collection has always used; the UI
 // calls this track "Unranked".
 export async function applySoloResult(uid, profile, opts) {
-  const { solved, timeMs, difficulty } = opts;
+  const { solved, timeMs, difficulty, testsPassed = 0, totalTests = 0 } = opts;
   const secs = timeMs / 1000;
 
   // Build the player's unranked "me" object first so the soloScore function
@@ -373,9 +402,12 @@ export async function applySoloResult(uid, profile, opts) {
   // Placement is deliberately responsive, but its bounded calibration prevents
   // a solo resignation from outweighing several completed placement runs.
   const score = soloScore(solved, secs, difficulty, profile);
-  const next = calibrating
+  let next = calibrating
     ? placementCalibration(profile, solved, secs, difficulty)
     : rate(me, soloOpponent(difficulty, me.rating), score);
+  const mitigation = !solved ? partialTestLossMitigation(testsPassed, totalTests, 0.55) : 0;
+  next = softenLoss(next, profile.soloRating, mitigation);
+  if (calibrating) next.delta = Math.round(next.rating - (profile.soloRating ?? next.rating));
   const placementGames = calibrating
     ? next.games
     : Math.min(PLACEMENT_GAMES, priorPlacementGames + 1);
@@ -433,7 +465,9 @@ export async function applySoloResult(uid, profile, opts) {
       ratingBefore: Math.round(profile.soloRating ?? next.rating),
       ratingAfter: Math.round(next.rating),
       delta: calibrating ? next.delta : Math.round(next.rating - (profile.soloRating ?? next.rating)),
-      placementGames, createdAt: Date.now(),
+      placementGames,
+      testsPassed: Number(testsPassed) || 0, totalTests: Number(totalTests) || 0,
+      lossMitigation: Math.round(mitigation * 100), createdAt: Date.now(),
     });
   }
 
@@ -506,6 +540,19 @@ export async function getMyPuzzleRecords(profile) {
   const map = {};
   snap.forEach((d) => { map[d.data().archetypeId] = d.data(); });
   return map;
+}
+
+/** Count puzzles where this player currently holds the fastest valid recorded solve. */
+export async function countPuzzleRecords(uid) {
+  if (!uid || String(uid).startsWith("local:")) return 0;
+  const own = await getDocs(query(collection(db, "puzzleTimes"), where("uid", "==", uid)));
+  const records = own.docs.map((entry) => entry.data()).filter((entry) => entry.solved && Number.isFinite(entry.timeMs));
+  let held = 0;
+  for (const record of records) {
+    const top = await puzzleLeaderboard(record.archetypeId, 1);
+    if (top[0]?.uid === uid) held += 1;
+  }
+  return held;
 }
 
 export async function recordPuzzleTime(profile, puzzle, timeMs, solved) {
@@ -786,6 +833,18 @@ export async function markAllRead(uid, ids) {
 
 export async function deleteNotification(uid, id) {
   try { await deleteDoc(doc(db, "notifications", uid, "items", id)); } catch {}
+}
+
+/** Permanently clear every notification owned by this profile. */
+export async function clearNotifications(uid) {
+  if (!uid) return;
+  const snap = await getDocs(collection(db, "notifications", uid, "items"));
+  const refs = snap.docs.map((entry) => entry.ref);
+  for (let start = 0; start < refs.length; start += 450) {
+    const batch = writeBatch(db);
+    refs.slice(start, start + 450).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
 }
 
 // ── Presence / online counts ───────────────────────────────────────────────
