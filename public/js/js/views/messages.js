@@ -157,17 +157,18 @@ export async function renderMessages(params, root) {
           return;
         }
 
-        // Row holds time and bubble; time sits outside the bubble on left for
-        // others and right for the current user's messages.
-        const row = h("div", { class: "msg-row", style: { display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "8px" } });
-        const bubble = h("div", { class: "bubble" + (m2.fromUid === me.uid ? " mine" : "") });
+        const mine = m2.fromUid === me.uid;
+        const row = h("div", { class: "msg-row" + (mine ? " mine" : "") });
+        const unit = h("div", { class: "msg-unit" + (mine ? " mine" : "") });
+        const bubble = h("div", { class: "bubble" + (mine ? " mine" : "") });
         const content = m2.deleted ? h("em", { style: { color: "var(--muted)" } }, "[deleted]") : h("div", {}, m2.text);
         bubble.append(content);
+        const timeSpan = h("span", { class: "msg-time label" }, fmtAgo(m2.createdAt));
+        unit.append(bubble, timeSpan);
 
-        const timeSpan = h("span", { class: "msg-time label", style: { fontSize: "11px", color: "var(--muted)", whiteSpace: "nowrap" } }, fmtAgo(m2.createdAt));
-
-        // Actions container — hidden until hover. Use icon glyphs for compact UI.
-        const actions = h("div", { class: "msg-actions", style: { display: "none", gap: "6px", alignItems: "center" } });
+        // Actions container — hidden until hover. It sits beside the complete
+        // message unit, never between a timestamp and its bubble.
+        const actions = h("div", { class: "msg-actions" });
         if (!m2.deleted && m2.fromUid === me.uid) {
           const editI = h("button", { class: "btn-icon", title: "Edit", onClick: () => startEdit(m2, bubble) }, icon("edit", 14));
           const delI = h("button", { class: "btn-icon", title: "Delete", onClick: async () => {
@@ -178,15 +179,9 @@ export async function renderMessages(params, root) {
           actions.append(editI, delI);
         }
 
-        // Place time to the right for own messages, left for others
-        if (m2.fromUid === me.uid) {
-          row.append(bubble, timeSpan, actions);
-        } else {
-          row.append(timeSpan, bubble, actions);
-        }
+        row.append(unit, actions);
 
-        // Show actions only when hovering the row to support mouseover across
-        // bubble and icons without flicker.
+        // Show actions only when hovering the complete message unit.
         row.onmouseenter = () => { actions.style.display = actions.children.length ? "inline-flex" : "none"; };
         row.onmouseleave = () => { actions.style.display = "none"; };
 

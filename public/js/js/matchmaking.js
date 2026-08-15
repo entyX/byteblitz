@@ -24,7 +24,17 @@ export function lobbyPlayer(profile) {
     rd: Math.round(profile.rd ?? 350),
     vol: profile.vol ?? 0.06,
     gamesPlayed: profile.gamesPlayed ?? 0,
+    rankedEligible: true,
+    anonymous: !!profile.anonymous,
     joinedAt: Date.now(),
+  };
+}
+
+/** Ephemeral player record for a signed-out Firebase anonymous session. */
+export function anonymousLobbyPlayer(uid) {
+  return {
+    uid, username: "Anonymous player", rating: 1500, rd: 350, vol: 0.06,
+    gamesPlayed: 0, rankedEligible: true, anonymous: true, joinedAt: Date.now(),
   };
 }
 
@@ -44,19 +54,23 @@ export async function leaveLobby(uid) {
       const mineData = mineSnap.data();
       const duelId = mineData.duelId;
 
-      // A cancellation that races a successful claim must neutralize the newly
-      // created duel and put the other player back into a real search state.
-      if (mineData.status === "matched" && duelId && mineData.matchedWith) {
+      // A cancellation before both players are ready aborts the pending duel and
+      // returns the other person to a real search. Once both accepted, leaving
+      // is an ordinary forfeit so the waiting opponent always gets a resolution.
+      if ((mineData.status === "matched" || mineData.status === "ready") && duelId && mineData.matchedWith) {
         const duelRef = doc(db, "duels", duelId);
         const otherRef = doc(db, "matchmaking_lobby", mineData.matchedWith);
         const [duelSnap, otherSnap] = await Promise.all([tx.get(duelRef), tx.get(otherRef)]);
-        if (duelSnap.exists() && duelSnap.data().status === "waiting") {
-          tx.update(duelRef, { status: "aborted", abortedBy: uid, abortedAt: Date.now() });
-          if (otherSnap.exists()) {
-            const other = otherSnap.data();
-            if (other.status === "matched" && other.duelId === duelId) {
+        if (duelSnap.exists()) {
+          const duel = duelSnap.data();
+          if (duel.status === "waiting") {
+            tx.update(duelRef, { status: "aborted", abortedBy: uid, abortedAt: Date.now() });
+            if (otherSnap.exists() && otherSnap.data().duelId === duelId) {
               tx.update(otherRef, { status: "searching", duelId: null, matchedWith: null, joinedAt: Date.now() });
             }
+          } else if (duel.status === "ready") {
+            const winner = duel.player1.uid === uid ? duel.player2.uid : duel.player1.uid;
+            tx.update(duelRef, { status: "complete", winner, winBy: "forfeit", forfeit: uid, completedAt: Date.now() });
           }
         }
       }
@@ -80,12 +94,27 @@ export async function activateLobbyDuel(uid, duelId) {
   const duelRef = doc(db, "duels", duelId);
   return runTransaction(db, async (tx) => {
     const [lobbySnap, duelSnap] = await Promise.all([tx.get(lobbyRef), tx.get(duelRef)]);
-    if (!duelSnap.exists()) return false;
+    if (!lobbySnap.exists() || !duelSnap.exists()) return { accepted: false, ready: false };
+    const lobby = lobbySnap.data();
     const duel = duelSnap.data();
-    if (duel.status === "aborted" || duel.status === "complete") return false;
-    if (duel.status === "waiting") tx.update(duelRef, { status: "ready", activatedAt: Date.now() });
-    if (lobbySnap.exists() && lobbySnap.data().duelId === duelId) tx.delete(lobbyRef);
-    return true;
+    if (lobby.duelId !== duelId || (duel.status !== "waiting" && duel.status !== "ready")) return { accepted: false, ready: false };
+    const playerNum = duel.player1.uid === uid ? 1 : duel.player2.uid === uid ? 2 : 0;
+    if (!playerNum) return { accepted: false, ready: false };
+    if (duel.status === "ready") return { accepted: true, ready: true };
+
+    const p1Ready = !!duel.p1Ready || playerNum === 1;
+    const p2Ready = !!duel.p2Ready || playerNum === 2;
+    const bothReady = p1Ready && p2Ready;
+    tx.update(duelRef, bothReady
+      ? { p1Ready, p2Ready, status: "ready", startTime: Date.now() + COUNTDOWN_MS, activatedAt: Date.now() }
+      : { p1Ready, p2Ready });
+    if (bothReady) {
+      const otherUid = playerNum === 1 ? duel.player2.uid : duel.player1.uid;
+      const otherRef = doc(db, "matchmaking_lobby", otherUid);
+      tx.update(lobbyRef, { status: "ready" });
+      tx.update(otherRef, { status: "ready" });
+    }
+    return { accepted: true, ready: bothReady };
   });
 }
 
@@ -139,10 +168,17 @@ export function watchLobbyForOpponent(me, onFound) {
 
     // Closest opponent first, so a widened window still produces the best
     // pairing available rather than whoever the snapshot happened to list first.
-    const candidates = latest
-      .filter((o) => o.uid !== me.uid && o.status === "searching")
+    let candidates = latest
+      .filter((o) => o.uid !== me.uid && o.status === "searching" && o.rankedEligible === true)
       .sort((a, b) =>
         Math.abs((a.rating ?? 1500) - myRating) - Math.abs((b.rating ?? 1500) - myRating));
+
+    // Signed-out players first look for each other. After a short grace period
+    // they may take the nearest waiting registered player, but that duel is
+    // explicitly neutral: neither rating can change.
+    if (me.anonymous && waited < 6000) {
+      candidates = candidates.filter((o) => o.anonymous);
+    }
 
     for (const opp of candidates) {
       // If we haven't hit the max-wait threshold yet, enforce the current
@@ -186,16 +222,21 @@ export async function createDuel(a, b, duelId, fromLobby, mode = "rated") {
   const seed = Math.floor(Math.random() * 1_000_000_000);
   const difficulty = tierFor(Math.min(a.rating ?? 1500, b.rating ?? 1500)).name;
 
+  const anonymousPairing = !!a.anonymous || !!b.anonymous;
   const payload = {
     id: duelId,
     player1: stripPlayer(p1),
     player2: stripPlayer(p2),
     difficulty,
-    mode,
+    // Any anonymous pairing is intentionally casual, even when it started from
+    // the Ranked card. This guarantees no player's ELO is affected.
+    mode: anonymousPairing ? "casual" : mode,
+    anonymousPairing,
     problemSeed: seed,
     timeLimit: TIME_LIMITS[difficulty] ?? 300,
-    startTime: Date.now() + COUNTDOWN_MS,
-    status: "waiting",
+    startTime: fromLobby ? null : Date.now() + COUNTDOWN_MS,
+    status: fromLobby ? "waiting" : "ready",
+    p1Ready: !fromLobby, p2Ready: !fromLobby,
     p1SolveTime: null, p2SolveTime: null,
     p1BestTests: 0, p2BestTests: 0,
     winner: null, winBy: null, forfeit: null,
@@ -230,6 +271,8 @@ export async function createDuel(a, b, duelId, fromLobby, mode = "rated") {
 function stripPlayer(p) {
   return {
     uid: p.uid, username: p.username,
+    anonymous: !!p.anonymous,
+    rankedEligible: p.rankedEligible === true,
     rating: Math.round(p.rating ?? 1500),
     rd: Math.round(p.rd ?? 350),
     vol: p.vol ?? 0.06,
@@ -238,9 +281,8 @@ function stripPlayer(p) {
 }
 
 export function watchDuel(duelId, cb) {
-  return onSnapshot(doc(db, "duels", duelId), (snap) => {
-    if (snap.exists()) cb({ id: snap.id, ...snap.data() });
-  });
+  return onSnapshot(doc(db, "duels", duelId), (snap) =>
+    cb(snap.exists() ? { id: snap.id, ...snap.data() } : null));
 }
 
 export async function getDuel(duelId) {
@@ -250,40 +292,57 @@ export async function getDuel(duelId) {
 
 // ── In-match writes ─────────────────────────────────────────────────────────
 export async function submitSolve(duelId, playerNum, solveSecs, duel) {
-  const field = playerNum === 1 ? "p1SolveTime" : "p2SolveTime";
-  const myUid = playerNum === 1 ? duel.player1.uid : duel.player2.uid;
-  const updates = { [field]: solveSecs };
-
-  if (duel.winner === null && duel.status !== "complete") {
-    updates.winner = myUid;
-    updates.winBy = "solve";
-    updates.status = "complete";
-  }
-  await updateDoc(doc(db, "duels", duelId), updates);
+  const duelRef = doc(db, "duels", duelId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(duelRef);
+    if (!snap.exists()) return;
+    const latest = snap.data();
+    if (latest.status !== "ready" || latest.winner != null) return;
+    const field = playerNum === 1 ? "p1SolveTime" : "p2SolveTime";
+    const myUid = playerNum === 1 ? latest.player1.uid : latest.player2.uid;
+    tx.update(duelRef, { [field]: solveSecs, winner: myUid, winBy: "solve", status: "complete", completedAt: Date.now() });
+  });
 }
 
 export async function reportTestProgress(duelId, playerNum, passed) {
-  const field = playerNum === 1 ? "p1BestTests" : "p2BestTests";
-  try { await updateDoc(doc(db, "duels", duelId), { [field]: passed }); } catch {}
+  const duelRef = doc(db, "duels", duelId);
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(duelRef);
+      if (!snap.exists() || snap.data().status !== "ready") return;
+      const field = playerNum === 1 ? "p1BestTests" : "p2BestTests";
+      tx.update(duelRef, { [field]: Math.max(0, Number(passed) || 0) });
+    });
+  } catch { /* progress is cosmetic; never disrupt the arena */ }
 }
 
 export async function forfeitDuel(duelId, forfeiterUid, duel) {
-  if (duel.status === "complete") return;
-  const winnerUid = duel.player1.uid === forfeiterUid ? duel.player2.uid : duel.player1.uid;
-  await updateDoc(doc(db, "duels", duelId), {
-    winner: winnerUid, winBy: "forfeit", forfeit: forfeiterUid, status: "complete",
+  const duelRef = doc(db, "duels", duelId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(duelRef);
+    if (!snap.exists()) return;
+    const latest = snap.data();
+    if (latest.status !== "ready" || latest.winner != null) return;
+    const winnerUid = latest.player1.uid === forfeiterUid ? latest.player2.uid : latest.player1.uid;
+    tx.update(duelRef, { winner: winnerUid, winBy: "forfeit", forfeit: forfeiterUid, status: "complete", completedAt: Date.now() });
   });
 }
 
 // Time ran out for both — decide on hidden tests passed, else a draw.
 export async function resolveTimeout(duelId, duel) {
-  if (duel.status === "complete") return;
-  const p1 = duel.p1BestTests ?? 0;
-  const p2 = duel.p2BestTests ?? 0;
-  let winner = null, winBy = "draw";
-  if (p1 > p2) { winner = duel.player1.uid; winBy = "testcases"; }
-  else if (p2 > p1) { winner = duel.player2.uid; winBy = "testcases"; }
-  await updateDoc(doc(db, "duels", duelId), { winner, winBy, status: "complete", forfeit: null });
+  const duelRef = doc(db, "duels", duelId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(duelRef);
+    if (!snap.exists()) return;
+    const latest = snap.data();
+    if (latest.status !== "ready" || latest.winner != null) return;
+    const p1 = latest.p1BestTests ?? 0;
+    const p2 = latest.p2BestTests ?? 0;
+    let winner = null, winBy = "draw";
+    if (p1 > p2) { winner = latest.player1.uid; winBy = "testcases"; }
+    else if (p2 > p1) { winner = latest.player2.uid; winBy = "testcases"; }
+    tx.update(duelRef, { winner, winBy, status: "complete", forfeit: null, completedAt: Date.now() });
+  });
 }
 
 export async function abortDuel(duelId, uid) {

@@ -6,7 +6,7 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.3",
+    version: "v1.2.4",
     date: "August 14, 2026",
     current: true,
     items: [
@@ -18,6 +18,11 @@ const RELEASES = [
       "The tutorial action now lives in the welcome header, while Ranked is visibly disabled until Unranked placement is complete.",
       "Player search now combines exact username reservations with case-insensitive prefix lookup for more reliable results.",
       "Accounts can now be permanently deleted from their profile after explicit confirmation and fresh authentication; associated public records and social references are removed with the account.",
+      "Placement calibration is now bounded and symmetric: fast adjustment remains, while one resignation cannot erase multiple completed runs or push a base rating hundreds of points away.",
+      "Profiles now include a recent Unranked and Ranked match list with a rating-trend graph, plus a confirmed reset-progress action that keeps your account, friends, messages, username, avatar, and country.",
+      "Signed-out visitors can practice Unranked or join anonymous matchmaking. Anonymous pairings are always casual, prefer other anonymous players, and never change either player's ELO.",
+      "Ranked matchmaking now waits for both players to explicitly accept the same duel before a shared start time is set; stale queue entries and completed duels cannot be reused.",
+      "Arena indentation now unindents by level with Backspace, Unranked focus exits are ELO-neutral, and chat messages keep their timestamps grouped with their bubbles.",
     ],
   },
   {

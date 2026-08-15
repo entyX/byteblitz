@@ -9,6 +9,7 @@ import {
   placementConfidence,
   placementGamesPlayed,
   placementLeft,
+  placementCalibration,
   rankFor,
 } from "../public/js/js/glicko.js";
 
@@ -36,7 +37,19 @@ assert.equal(placementLeft(complete), 0);
 assert.equal(placementConfidence(complete), 10);
 assert.equal(isPlaced(complete), true);
 assert.equal(displayPlacementRating(1600, 350, complete), "1600");
-assert.equal(rankFor(1600, complete).name, "Gold");
+assert.equal(rankFor(1600, complete).name, "Platinum");
+
+const beginner = { skillLevel: "beginner", placementBaseRating: 400, soloRating: 400, soloVol: 0.06, placementGames: 0 };
+const bWin1 = placementCalibration(beginner, true, 90, "Bronze");
+const bWin2 = placementCalibration({ ...beginner, soloRating: bWin1.rating, placementGames: 1 }, true, 100, "Bronze");
+const bWin3 = placementCalibration({ ...beginner, soloRating: bWin2.rating, placementGames: 2 }, true, 110, "Bronze");
+const bLoss = placementCalibration({ ...beginner, soloRating: bWin3.rating, placementGames: 3 }, false, 300, "Bronze");
+assert.ok(bWin1.delta > 0 && bWin1.delta <= 56, "a first placement win should be bounded");
+assert.ok(bLoss.delta < 0 && Math.abs(bLoss.delta) <= 44, "a placement loss must be bounded below a win-sized swing");
+assert.ok(bLoss.rating >= 200 && bLoss.rating <= 600, "beginner placement stays within its base-rating guard rail");
+
+const masterLoss = placementCalibration({ skillLevel: "master", placementBaseRating: 1600, soloRating: 1600, soloVol: 0.06, placementGames: 0 }, false, 300, "Master");
+assert.ok(masterLoss.rating >= 1400, "master placement cannot crash below the base-rating guard rail");
 
 assert.deepEqual(
   SKILL_LEVELS.map((level) => [level.id, level.rating]),

@@ -120,7 +120,9 @@ class Arena {
         h("div", { class: "panel panel-pad", style: { maxWidth: "620px", width: "100%" } },
           h("div", { class: "stack gap-4" },
             rule("The arena runs fullscreen", "Your match opens in fullscreen. Leaving fullscreen ends it."),
-            rule("Leaving the page auto-resigns", "Switching tabs, minimising, or clicking away from this window resigns the match immediately. There is no warning and no undo."),
+            this.cfg.mode === "duel"
+              ? rule("Leaving the page auto-resigns", "Switching tabs, minimising, or clicking away from this window resigns the rated match immediately. There is no warning and no undo.")
+              : rule("Leaving a solo run is neutral", "Switching tabs or windows ends an Unranked run without gaining or losing ELO."),
             rule("Copy and paste are disabled", "The editor blocks paste, copy, and the context menu."),
             rule("The clock does not stop", `${fmtClock(this.timeLimit)} on the clock. Submit as many times as you like — only a full pass ends it.`),
           ),
@@ -211,7 +213,7 @@ class Arena {
               h("div", { class: "bar" }, bar))))),
     );
 
-        push("BYTEBLITZ // CODE BURST v1.2.3");
+        push("BYTEBLITZ // CODE BURST v1.2.4");
 
     await wait(180); push("> Establishing secure session…"); bump(15);
     await wait(220); push("> Session authenticated. ✓"); bump(30);
@@ -439,6 +441,27 @@ class Arena {
   }
 
   onEditorKey(e) {
+    if (e.key === "Backspace" && !e.shiftKey) {
+      const ta = this.ta;
+      const s = ta.selectionStart, t = ta.selectionEnd, v = ta.value;
+      if (s === t) {
+        const lineStart = v.lastIndexOf("\n", s - 1) + 1;
+        const beforeCaret = v.slice(lineStart, s);
+        // When the caret sits immediately after indentation, backspace removes
+        // one whole indentation unit: a tab, up to four spaces, or the editor's
+        // two-space JavaScript indent. It never makes players erase spaces one by one.
+        const unit = beforeCaret.match(/(?:\t| {1,4})$/)?.[0] || "";
+        if (unit && /^\s+$/.test(beforeCaret)) {
+          e.preventDefault();
+          const from = s - unit.length;
+          ta.value = v.slice(0, from) + v.slice(s);
+          ta.selectionStart = ta.selectionEnd = from;
+          this.code = ta.value;
+          this.paintCode();
+          return;
+        }
+      }
+    }
     if (e.key === "Tab") {
       e.preventDefault();
       const ta = this.ta;
@@ -581,7 +604,10 @@ class Arena {
   engageLockdown() {
     const bail = (msg) => {
       if (this.finished || !this.started || this.enteringFs) return;
-      this.end("left", msg);
+      // A duel needs a decisive result for the waiting opponent. Solo activity
+      // is different: switching focus is not evidence of a failed attempt, so
+      // it ends neutrally and does not touch the Unranked rating.
+      this.end(this.cfg.mode === "duel" ? "left" : "neutralExit", msg);
     };
 
     const onFs = () => {
@@ -602,10 +628,9 @@ class Arena {
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("blur", onBlur);
     window.addEventListener("beforeunload", onBeforeUnload);
-    // A hard close still resigns — fire the loss before the tab dies.
-    const onPageHide = () => {
-      if (!this.finished && this.started) this.cfg.onFailed?.({ reason: "left", passed: this.bestPassed, timeMs: this.elapsedMs() });
-    };
+    // Treat hard closes just like visibility changes. Duels forfeit; solo runs
+    // settle as neutral exits so no ELO is awarded or lost after a tab switch.
+    const onPageHide = () => bail(this.cfg.mode === "duel" ? "Page closed. Match resigned." : "Solo run left.");
     window.addEventListener("pagehide", onPageHide);
 
     this.cleanups.push(

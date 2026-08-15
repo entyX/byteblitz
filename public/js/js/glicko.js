@@ -233,6 +233,38 @@ export function placementLeft(profile) {
   return Math.max(0, PLACEMENT_GAMES - placementGamesPlayed(profile));
 }
 
+/**
+ * A bounded placement update. Placement needs to adapt faster than a settled
+ * rating, but a solo loss is much noisier than a head-to-head forfeit. This
+ * update therefore rewards a solve by 0.75–0.95 performance, records a miss as
+ * 0.30 rather than a full zero, and uses equal-sized decreasing caps for either
+ * direction. The base selected during onboarding remains a ±200 guard rail.
+ */
+export function placementCalibration(profile, solved, solveTimeSecs, difficulty) {
+  const priorGames = placementGamesPlayed(profile);
+  const base = Number(profile?.placementBaseRating)
+    || skillLevel(profile?.skillLevel)?.rating
+    || Number(profile?.soloRating)
+    || DEFAULT_RATING;
+  const current = Number(profile?.soloRating) || base;
+  const par = PAR_TIME[difficulty] || 150;
+  const speed = solved ? Math.max(0, Math.min(1, (2 - (solveTimeSecs / par)) / 2)) : 0;
+  const performance = solved ? 0.75 + 0.20 * speed : 0.30;
+  const cap = Math.max(28, 56 - Math.min(priorGames, PLACEMENT_GAMES - 1) * 4);
+  const delta = Math.round((performance - 0.5) * 2 * cap);
+  const rating = Math.max(base - 200, Math.min(base + 200, current + delta));
+  const games = Math.min(PLACEMENT_GAMES, priorGames + 1);
+  const rd = Math.max(PROVISIONAL_RD + 25, DEFAULT_RD - games * 30);
+  return {
+    rating: Math.round(rating * 100) / 100,
+    rd: Math.round(rd * 100) / 100,
+    vol: profile?.soloVol ?? DEFAULT_VOL,
+    delta: Math.round(rating - current),
+    games,
+    performance: Math.round(performance * 1000) / 1000,
+  };
+}
+
 /** Show a question mark only until the required Unranked placements are done. */
 export function displayPlacementRating(rating, rd, profile) {
   if (rating == null) return "—";

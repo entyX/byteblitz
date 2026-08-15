@@ -5,7 +5,7 @@
 // This is also where your own record lives; the main page stays about playing.
 // ============================================================================
 
-import { h, add, clear, emptyState, toast, fmtTime, icon, avatar, modal } from "../ui.js";
+import { h, add, clear, emptyState, toast, fmtTime, icon, avatar, modal, confirmModal, fmtAgo } from "../ui.js";
 import { session, requireAccount, openAuthModal, refreshGuest } from "../session.js";
 import {
   auth, googleProvider, deleteUser, EmailAuthProvider,
@@ -18,7 +18,7 @@ import {
 import {
   getProfile, getFriends, sendFriendRequest, getSentRequests, removeFriend,
   ensureConversation, rankedPosition, renameUser, saveCountry, NAME_RE, seenMap, watchPresence,
-  deleteAccountData,
+  deleteAccountData, resetAccountProgress, getMatchHistory,
 } from "../store.js";
 import { countryFor, countryOptions } from "../countries.js";
 import { challengeFriend } from "../game.js";
@@ -77,7 +77,9 @@ export async function renderProfile(params, root) {
         }) }, icon("user", 13), "Profile picture"),
         h("button", { class: "btn", onClick: openCountry }, "Country"));
       if (!p.isGuest) {
-        actions.append(h("button", { class: "btn btn-danger", onClick: openDeleteAccount }, "Delete account"));
+        actions.append(
+          h("button", { class: "btn", onClick: openResetProgress }, "Reset progress"),
+          h("button", { class: "btn btn-danger", onClick: openDeleteAccount }, "Delete account"));
       }
       if (p.isGuest) {
         actions.append(
@@ -127,6 +129,24 @@ export async function renderProfile(params, root) {
           paintActions();
         } catch { toast("Couldn't send that request.", "err"); paintActions(); }
       } }, icon("userPlus", 13), "Add friend"));
+    }
+  }
+
+  async function openResetProgress() {
+    const ok = await confirmModal(
+      "Reset account progress",
+      "This resets both ELO tracks, placement, match history, Training Grounds discovery, puzzle times, streaks, and play statistics. Your account, username, avatar, friends, and messages remain. This cannot be undone.",
+      "Reset progress"
+    );
+    if (!ok) return;
+    try {
+      const patch = await resetAccountProgress(p);
+      Object.assign(p, patch);
+      toast("Progress reset. Your account and friends were kept.", "ok");
+      navigate("/profile/" + p.uid);
+    } catch (error) {
+      console.error("progress reset failed", error);
+      toast("Couldn't reset progress. Please try again.", "err");
     }
   }
 
@@ -271,6 +291,7 @@ export async function renderProfile(params, root) {
 
     bestTimesPanel(p),
     discoveryPanel(p),
+    historyPanel(p),
   );
 
   // Your own avatar is a button that opens the picker; everyone else's is just
@@ -287,7 +308,7 @@ export async function renderProfile(params, root) {
     }) : h("span");
 
     function paintAvatar() {
-      clear(host).append(
+      add(clear(host),
         avatar({ ...p, online: !!presence.online, inMatch: !!presence.inMatch }, "lg"),
         isMe ? h("span", { class: "edit-dot" }, icon("pencil", 12)) : null);
     }
@@ -349,6 +370,59 @@ export async function renderProfile(params, root) {
               h("div", { class: "label mt-1", style: { textTransform: "none", letterSpacing: "0" } },
                 "Puzzles are revealed by meeting them in Unranked or Ranked."))),
           h("button", { class: "btn btn-sm", onClick: () => navigate("/training") }, "Open"))));
+  }
+
+  function historyPanel(prof) {
+    if (prof.isGuest || String(prof.uid).startsWith("local:")) return null;
+    const host = h("div", { class: "mt-8" },
+      h("div", { class: "section-title" }, "// Match history"),
+      h("div", { class: "panel panel-pad" }, "Loading recent matches…"));
+    getMatchHistory(prof.uid).then((rows) => {
+      const panel = host.querySelector(".panel");
+      clear(panel);
+      if (!rows.length) {
+        panel.append(h("div", { class: "empty", style: { border: "none" } }, "No tracked matches yet. New Unranked and Ranked results will appear here."));
+        return;
+      }
+      const chronological = [...rows].reverse();
+      const values = chronological.map((row) => Number(row.ratingAfter ?? row.ratingBefore ?? 0));
+      const min = Math.min(...values), max = Math.max(...values);
+      const width = 640, height = 150, pad = 12;
+      const spread = Math.max(1, max - min);
+      const points = values.map((value, index) => {
+        const x = pad + (index * (width - pad * 2)) / Math.max(1, values.length - 1);
+        const y = height - pad - ((value - min) * (height - pad * 2)) / spread;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+      panel.append(
+        h("div", { class: "between mb-3" },
+          h("span", { class: "label" }, "// Rating trend · last " + rows.length),
+          h("span", { class: "label" }, `${Math.round(min)}–${Math.round(max)}`)),
+        h("svg", { viewBox: `0 0 ${width} ${height}`, class: "history-chart", role: "img", "aria-label": "Rating history graph" },
+          h("polyline", { points, fill: "none", stroke: "var(--primary)", "stroke-width": "3", "stroke-linecap": "round", "stroke-linejoin": "round" })),
+        h("div", { class: "divide mt-4" }, ...rows.map((row) => {
+          const won = row.result === "win" || row.result === "solved";
+          const delta = Number(row.delta ?? 0);
+          const title = row.mode === "ranked"
+            ? `Ranked · ${row.opponentUsername || "Opponent"}`
+            : `Unranked · ${row.difficulty || "Run"}`;
+          const detail = row.mode === "ranked"
+            ? `${row.result || "complete"}${row.winBy ? ` · ${row.winBy}` : ""}`
+            : `${row.result || "complete"}${row.timeMs ? ` · ${fmtTime(row.timeMs)}` : ""}`;
+          return h("div", { class: "list-row" },
+            h("div", {},
+              h("div", { class: "mono", style: { fontSize: "12.5px", fontWeight: "700" } }, title),
+              h("div", { class: "label mt-1", style: { textTransform: "none", letterSpacing: "0" } }, `${detail} · ${fmtAgo(row.createdAt)}`)),
+            h("span", { class: "mono tnum", style: { color: delta > 0 ? "var(--ok)" : delta < 0 ? "var(--primary)" : "var(--muted)" } },
+              `${delta >= 0 ? "+" : ""}${delta}`));
+        })),
+      );
+    }).catch((error) => {
+      console.error("history load failed", error);
+      const panel = host.querySelector(".panel");
+      clear(panel).append(h("div", { class: "empty", style: { border: "none" } }, "Match history is temporarily unavailable."));
+    });
+    return host;
   }
 
   function openCountry() {

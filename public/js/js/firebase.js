@@ -39,7 +39,7 @@ export function onSnapshot(target, next, onError) {
 // Anonymous auth is deliberately absent: guest play is local-only and never
 // talks to Firebase (see local.js).
 export {
-  signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInAnonymously,
   signOut, onAuthStateChanged, updateProfile, deleteUser,
   reauthenticateWithCredential, reauthenticateWithPopup,
   sendPasswordResetEmail, linkWithPopup, EmailAuthProvider, linkWithCredential,

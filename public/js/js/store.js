@@ -9,8 +9,8 @@ import {
 
 } from "./firebase.js";
 import {
-  defaultRating, rate, decayRd, soloScore, soloOpponent, placementRd,
-  placementGamesPlayed, confidenceForPlacementGames, PLACEMENT_GAMES,
+  defaultRating, rate, decayRd, soloScore, soloOpponent, placementRd, placementCalibration,
+  placementGamesPlayed, confidenceForPlacementGames, PLACEMENT_GAMES, skillLevel,
 } from "./glicko.js";
 import {
   isGuestProfile, patchGuest, markGuestSeen, guestSeen,
@@ -41,7 +41,7 @@ export function blankProfile(uid, username, isAnon) {
 
     soloRating: g.rating, soloRd: g.rd, soloVol: g.vol,
     soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
-    placementGames: 0, placementConfidence: 0,
+    placementGames: 0, placementConfidence: 0, placementBaseRating: null,
     tutorialCompleted: false,
 
     totalMatches: 0,
@@ -75,6 +75,7 @@ export async function applySkillLevel(profile, level) {
     soloRating: level.rating,
     placementGames: 0,
     placementConfidence: 0,
+    placementBaseRating: level.rating,
     tutorialCompleted: false,
     lbRating: level.rating,
     lbSolo: level.rating,
@@ -224,6 +225,47 @@ export function watchProfile(uid, cb) {
   });
 }
 
+/** Return a player's recent public Unranked and Ranked results, newest first. */
+export async function getMatchHistory(uid, n = 40) {
+  if (!uid || String(uid).startsWith("local:")) return [];
+  const snap = await getDocs(query(collection(db, "users", uid, "history"), orderBy("createdAt", "desc"), limit(n)));
+  return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
+}
+
+/**
+ * Reset progression without deleting the account itself. Friends, messages,
+ * username, avatar, country, and authentication are kept; only ratings,
+ * placement, training discovery, puzzle records, activity, and history reset.
+ */
+export async function resetAccountProgress(profile) {
+  if (!profile?.uid || isGuestProfile(profile)) throw new Error("Sign in to reset account progress.");
+  const base = Number(profile.placementBaseRating)
+    || skillLevel(profile.skillLevel)?.rating
+    || DEFAULT_RATING;
+  const [records, history] = await Promise.all([
+    getDocs(query(collection(db, "puzzleTimes"), where("uid", "==", profile.uid))),
+    getDocs(collection(db, "users", profile.uid, "history")),
+  ]);
+  const refs = [...records.docs.map((entry) => entry.ref), ...history.docs.map((entry) => entry.ref)];
+  for (let start = 0; start < refs.length; start += 450) {
+    const batch = writeBatch(db);
+    refs.slice(start, start + 450).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+  const g = defaultRating();
+  const patch = {
+    rating: base, rd: g.rd, vol: g.vol, lbRating: base,
+    soloRating: base, soloRd: g.rd, soloVol: g.vol, lbSolo: base,
+    wins: 0, losses: 0, draws: 0, gamesPlayed: 0, lastPlayedAt: null,
+    soloRuns: 0, soloSolved: 0, soloBest: {}, lastSoloAt: null,
+    placementGames: 0, placementConfidence: 0, placementBaseRating: base,
+    totalMatches: 0, puzzlesSolved: 0, bestStreak: 0, streak: 0,
+    seen: {}, activityDays: {}, tutorialCompleted: false, updatedAt: serverTimestamp(),
+  };
+  await updateDoc(doc(db, "users", profile.uid), patch);
+  return patch;
+}
+
 export async function ensureProfile(user, preferredName) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
@@ -270,7 +312,7 @@ export async function renameUser(uid, oldName, newName) {
  * Apply one rated duel result to the signed-in player.
  * `result` is "win" | "loss" | "draw"; `score` is the Glicko score in [0,1].
  */
-export async function applyDuelResult(uid, profile, opponent, score, result) {
+export async function applyDuelResult(uid, profile, opponent, score, result, history = null) {
   const me = {
     rating: profile.rating,
     rd: decayRd(profile.rd, profile.vol, profile.lastPlayedAt),
@@ -294,6 +336,15 @@ export async function applyDuelResult(uid, profile, opponent, score, result) {
   else updates.draws = increment(1);
 
     await updateDoc(doc(db, "users", uid), updates);
+  if (history && !isGuestProfile(profile)) {
+    await setDoc(doc(db, "users", uid, "history", `duel_${history.duelId}`), {
+      mode: "ranked", duelId: history.duelId, result, score,
+      opponentUid: opponent.uid ?? null, opponentUsername: opponent.username ?? "Opponent",
+      difficulty: history.difficulty ?? null, winBy: history.winBy ?? null,
+      ratingBefore: Math.round(profile.rating), ratingAfter: Math.round(next.rating),
+      delta: Math.round(next.rating) - Math.round(profile.rating), createdAt: Date.now(),
+    });
+  }
   markDailyActivity(profile);
   return { ...next, before: Math.round(profile.rating) };
 
@@ -314,14 +365,19 @@ export async function applySoloResult(uid, profile, opts) {
     vol: profile.soloVol,
   };
 
-  // Placement runs deliberately move quickly while both tracks calibrate.
-  const score = soloScore(solved, secs, difficulty, profile);
-  const next = rate(me, soloOpponent(difficulty, me.rating), score);
   const priorPlacementGames = placementGamesPlayed(profile);
-  const placementGames = Math.min(PLACEMENT_GAMES, priorPlacementGames + 1);
-  next.rd = placementRd(next.rd, { ...profile, placementGames });
-  const placementConfidence = confidenceForPlacementGames(placementGames);
   const calibrating = priorPlacementGames < PLACEMENT_GAMES;
+  // Placement is deliberately responsive, but its bounded calibration prevents
+  // a solo resignation from outweighing several completed placement runs.
+  const score = soloScore(solved, secs, difficulty, profile);
+  const next = calibrating
+    ? placementCalibration(profile, solved, secs, difficulty)
+    : rate(me, soloOpponent(difficulty, me.rating), score);
+  const placementGames = calibrating
+    ? next.games
+    : Math.min(PLACEMENT_GAMES, priorPlacementGames + 1);
+  if (!calibrating) next.rd = placementRd(next.rd, { ...profile, placementGames });
+  const placementConfidence = confidenceForPlacementGames(placementGames);
 
   const best = { ...(profile.soloBest || {}) };
   let newRecord = false;
@@ -367,12 +423,20 @@ export async function applySoloResult(uid, profile, opts) {
       updates.lbRating = next.rating;
     }
     await updateDoc(doc(db, "users", uid), updates);
+    await addDoc(collection(db, "users", uid, "history"), {
+      mode: "unranked", result: solved ? "solved" : "missed", difficulty,
+      timeMs: solved ? timeMs : null, score,
+      ratingBefore: Math.round(profile.soloRating ?? next.rating),
+      ratingAfter: Math.round(next.rating),
+      delta: calibrating ? next.delta : Math.round(next.rating - (profile.soloRating ?? next.rating)),
+      placementGames, createdAt: Date.now(),
+    });
   }
 
   markDailyActivity(profile);
   const ratingDelta = Math.round((next.rating - (profile.soloRating ?? next.rating)) * 10) / 10;
   return {
-    ...next, before: Math.round(profile.soloRating), delta: ratingDelta, score, newRecord,
+    ...next, before: Math.round(profile.soloRating), delta: calibrating ? next.delta : ratingDelta, score, newRecord,
     placementGames, placementConfidence, rankedRating: calibrating ? next.rating : profile.rating,
     placementComplete: placementGames >= PLACEMENT_GAMES,
   };

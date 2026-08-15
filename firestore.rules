@@ -15,6 +15,13 @@ service cloud.firestore {
       allow write: if isMe(uid);
     }
 
+    // Public result history powers the profile graph; only its owner can write,
+    // reset, or remove their entries.
+    match /users/{uid}/history/{historyId} {
+      allow read: if true;
+      allow write: if isMe(uid);
+    }
+
     // ── Username reservations (uniqueness index) ─────────────────────────────
     match /usernames/{name} {
       allow read:   if true;

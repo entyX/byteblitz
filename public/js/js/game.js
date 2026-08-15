@@ -19,7 +19,7 @@ import {
   getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence,
 
 } from "./store.js";
-import { session, requireAccount, requireAnySession, refreshGuest } from "./session.js";
+import { session, requireAccount, requireAnySession, refreshGuest, ensureAnonymousMatchSession } from "./session.js";
 import * as mm from "./matchmaking.js";
 import { navigate } from "./router.js";
 
@@ -38,14 +38,13 @@ export const RANKED_ELO_WINDOW = mm.ELO_WINDOW;
 // UNRANKED — race the clock, own rating track, never touches ranked
 // ════════════════════════════════════════════════════════════════════════════
 export async function startSolo(preset) {
-  const player = await requireAnySession("play");
-  if (!player) return;
+  const player = session.profile;
 
   // No difficulty picker: unranked is a measurement, and you don't get to pick
   // how hard the thing measuring you is. The tier comes from your unranked
   // rating, the same way a duel's tier comes from the players' ratings.
   const difficulty = preset || tierFor(session.profile?.soloRating ?? 1500).name;
-  const placing = !isPlaced(player);
+  const placing = !!player && !isPlaced(player);
 
   let problem;
   try {
@@ -78,31 +77,34 @@ export async function startSolo(preset) {
     settled = true;
     setBattlePresence(false);
     const profile = session.profile;
-    if (!profile) { arena.exit(); return; }
 
     let res = null;
-    try {
-      res = await applySoloResult(profile.uid, profile, {
-        solved,
-        timeMs: solved ? r.timeMs : limit * 1000,
-        difficulty,
-      });
-      if (res && session.profile) {
-        Object.assign(session.profile, {
-          soloRating: res.rating, soloRd: res.rd, soloVol: res.vol,
-          rating: res.rankedRating, placementGames: res.placementGames,
-          placementConfidence: res.placementConfidence,
+    const neutralExit = r.reason === "neutralExit";
+    if (!neutralExit && profile) {
+      try {
+        res = await applySoloResult(profile.uid, profile, {
+          solved,
+          timeMs: solved ? r.timeMs : limit * 1000,
+          difficulty,
         });
+        if (res && session.profile) {
+          Object.assign(session.profile, {
+            soloRating: res.rating, soloRd: res.rd, soloVol: res.vol,
+            rating: res.rankedRating, placementGames: res.placementGames,
+            placementConfidence: res.placementConfidence,
+          });
+        }
+        refreshGuest();
+      } catch (e) {
+        console.error(e);
+        toast("Couldn't save your result.", "err");
       }
-      refreshGuest();
-    } catch (e) {
-      console.error(e);
-      toast("Couldn't save your result.", "err");
     }
 
     arena.showResult(soloResultScreen({
       solved, reason: r.reason, timeMs: r.timeMs, limit, difficulty, problem, res,
       placement: placing,
+      signedOut: !profile,
       onAgain: () => { arena.destroy(); startSolo(); },
       onHome: () => arena.exit(),
     }));
@@ -110,7 +112,7 @@ export async function startSolo(preset) {
 }
 
 function soloResultScreen(o) {
-  const { solved, reason, timeMs, difficulty, problem, res, placement } = o;
+  const { solved, reason, timeMs, difficulty, problem, res, placement, signedOut } = o;
   const delta = res ? Math.round(res.rating) - res.before : 0;
   const par = PAR_TIME[difficulty];
 
@@ -118,17 +120,21 @@ function soloResultScreen(o) {
     h("div", { class: "eyebrow mb-2" }, placement ? "// Unranked placement complete" : "// Unranked run complete"),
     h("h1", { class: "head mb-2" },
       solved ? h("span", { style: { color: "var(--ok)" } }, "Solved")
-             : h("span", { class: "accent" }, reason === "left" ? "Resigned" : reason === "resigned" ? "Resigned" : "Time up")),
+             : h("span", { class: "accent" }, reason === "neutralExit" ? "Run paused" : reason === "left" ? "Resigned" : reason === "resigned" ? "Resigned" : "Time up")),
     h("p", { class: "mono mb-6", style: { fontSize: "13px", color: "var(--muted-fg)" } },
-      solved
-        ? `${problem.title} — ${fmtTime(timeMs)}${par ? ` (par ${par}s)` : ""}`
-        : `${problem.title} — better luck next run.`),
+      signedOut
+        ? `${problem.title} — signed-out runs are practice only and do not affect ELO.`
+        : solved
+          ? `${problem.title} — ${fmtTime(timeMs)}${par ? ` (par ${par}s)` : ""}`
+          : reason === "neutralExit"
+          ? "You left the arena, so this Unranked run was not recorded and your ELO is unchanged."
+          : `${problem.title} — better luck next run.`),
 
     h("div", { class: "stats mb-6" },
       stat(solved ? fmtTime(timeMs) : "—", "Your time"),
       stat(par ? par + "s" : "—", "Par time"),
       stat(res ? displayPlacementRating(res.rating, res.rd, { placementGames: res.placementGames }) : "—", "Unranked ELO"),
-      stat((delta >= 0 ? "+" : "") + delta, "Change", delta >= 0 ? "var(--ok)" : "var(--primary)"),
+      stat(res ? (delta >= 0 ? "+" : "") + delta : "0", res ? "Change" : "No ELO change", res && delta >= 0 ? "var(--ok)" : res ? "var(--primary)" : "var(--muted)"),
     ),
 
     placement && res
@@ -186,8 +192,7 @@ export function offerTutorial(profile = session.profile) {
 }
 
 export async function startTutorial() {
-  const player = await requireAnySession("play");
-  if (!player) return;
+  const player = session.profile;
   let problem;
   try { problem = await problemById("Bronze", TUTORIAL_PUZZLE_ID); }
   catch (error) { console.error(error); }
@@ -229,8 +234,7 @@ export async function startTutorial() {
 // TRAINING — a specific puzzle, timed, with a per-puzzle leaderboard
 // ════════════════════════════════════════════════════════════════════════════
 export async function startTraining(difficulty, archetypeId) {
-  const user = await requireAnySession("play");
-  if (!user) return;
+  const user = session.profile;
 
   let problem;
   try {
@@ -307,7 +311,7 @@ function trainingResultScreen(o) {
 
     anon
       ? h("div", { class: "empty mb-5" },
-          "Guest times are saved on this device only — create an account to appear on puzzle leaderboards.")
+          "Signed-out practice is not saved — sign in to appear on puzzle leaderboards and keep your records.")
       : h("div", { class: "panel mb-5" },
           h("div", { class: "panel-head" },
             h("span", { class: "label" }, "// Fastest solves — " + problem.title),
@@ -331,16 +335,27 @@ function trainingResultScreen(o) {
 // RANKED DUEL
 // ════════════════════════════════════════════════════════════════════════════
 export async function findRankedMatch() {
-  const user = await requireAccount("play");
-  if (!user) return;
   const profile = session.profile;
-  if (!profile) return;
-  if (!isPlaced(profile)) {
+  if (profile && !isPlaced(profile)) {
     toast(`${placementLeft(profile)} Unranked placement ${placementLeft(profile) === 1 ? "game" : "games"} remaining before Ranked unlocks.`, "err");
     return;
   }
 
-  const me = mm.lobbyPlayer(profile);
+  let me;
+  let anonymousQueue = false;
+  if (profile) {
+    me = mm.lobbyPlayer(profile);
+  } else {
+    try {
+      const anonymousUser = await ensureAnonymousMatchSession();
+      me = mm.anonymousLobbyPlayer(anonymousUser.uid);
+      anonymousQueue = true;
+    } catch (error) {
+      console.error(error);
+      toast("Couldn't start anonymous matchmaking. Try again.", "err");
+      return;
+    }
+  }
   let unsubLobby = null, unsubSelf = null, unsubCount = null;
   let cancelled = false;
   let matched = false;
@@ -359,10 +374,12 @@ export async function findRankedMatch() {
   }, 500);
 
   const m = modal(h("div", { class: "center" },
-    h("div", { class: "eyebrow mb-3" }, "// Ranked matchmaking"),
+    h("div", { class: "eyebrow mb-3" }, anonymousQueue ? "// Anonymous matchmaking" : "// Ranked matchmaking"),
     h("h2", { class: "head mb-2" }, "Finding an ", h("span", { class: "accent" }, "opponent")),
     h("p", { class: "mono mb-6", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
-      `Searching within ±${mm.ELO_WINDOW} rating, widening as you wait. The problem difficulty is set by the lower-rated player.`),
+      anonymousQueue
+        ? "We first look for another anonymous player. If none is waiting, we take the nearest available player. This duel is casual for both players: no ELO changes."
+        : `Searching within ±${mm.ELO_WINDOW} rating, widening as you wait. The problem difficulty is set by the lower-rated player.`),
     h("div", { class: "row gap-3", style: { justifyContent: "center" } },
       h("span", { class: "spinner" }), timeEl),
     h("div", { class: "row gap-6 mt-5", style: { justifyContent: "center" } },
@@ -392,11 +409,14 @@ export async function findRankedMatch() {
     activating = true;
     try {
       const activated = await mm.activateLobbyDuel(me.uid, duelId);
-      if (!activated || cancelled) { activating = false; return; }
+      if (!activated?.accepted || cancelled) { activating = false; return; }
+      // The first player waits in the modal until the second explicitly accepts.
+      // Only the transaction that sees both readiness flags can enter the arena.
+      if (!activated.ready) { activating = false; return; }
       matched = true;
       teardown();
       m.close();
-      enterDuel(duelId);
+      enterDuel(duelId, me);
     } catch (error) {
       console.error("match activation failed", error);
       activating = false;
@@ -414,7 +434,7 @@ export async function findRankedMatch() {
 
     unsubCount = mm.watchLobbyCount((n) => { countEl.textContent = String(n); });
   unsubSelf = mm.watchOwnLobbyDoc(me.uid, (entry) => {
-    if (entry?.status === "matched" && entry.duelId) onMatched(entry.duelId);
+    if ((entry?.status === "matched" || entry?.status === "ready") && entry.duelId) onMatched(entry.duelId);
     if (entry?.status === "searching") activating = false;
   });
   unsubLobby = mm.watchLobbyForOpponent(me, (opp, duelId) => onMatched(duelId));
@@ -425,10 +445,11 @@ export async function findRankedMatch() {
 
 }
 
-/** Enter (or re-enter) a duel by id. */
-export async function enterDuel(duelId) {
+/** Enter (or re-enter) a duel by id. `identity` supports signed-out anonymous matches. */
+export async function enterDuel(duelId, identity = null) {
   const profile = session.profile;
-  if (!profile) { navigate("/"); return; }
+  const activeIdentity = profile ? mm.lobbyPlayer(profile) : identity;
+  if (!activeIdentity?.uid) { navigate("/"); return; }
 
   let duel;
   try {
@@ -438,7 +459,13 @@ export async function enterDuel(duelId) {
   }
   if (!duel) { toast("That match no longer exists.", "err"); navigate("/"); return; }
 
-  const playerNum = duel.player1.uid === profile.uid ? 1 : 2;
+  const playerNum = duel.player1.uid === activeIdentity.uid ? 1
+    : duel.player2.uid === activeIdentity.uid ? 2 : 0;
+  if (!playerNum) {
+    toast("You are not a participant in this duel.", "err");
+    navigate("/");
+    return;
+  }
   const me = playerNum === 1 ? duel.player1 : duel.player2;
   const opponent = playerNum === 1 ? duel.player2 : duel.player1;
   const duelMode = duel.mode === "casual" ? "casual" : "rated";
@@ -488,20 +515,28 @@ export async function enterDuel(duelId) {
       if (r.reason === "timeout") {
         try { await mm.resolveTimeout(duelId, latest); } catch {}
       } else {
-        try { await mm.forfeitDuel(duelId, profile.uid, latest); } catch {}
+        try { await mm.forfeitDuel(duelId, activeIdentity.uid, latest); } catch {}
       }
     },
   });
 
   unsub = mm.watchDuel(duelId, async (d) => {
-    latest = d;
-
-        if (d.status === "aborted" && d.abortedBy !== profile.uid) {
+    if (!d) {
       ended = true;
       setBattlePresence(false);
       cleanup();
+      arena.showResult(simpleEnd("Match unavailable", "This duel was removed before it could finish.", () => arena.exit()));
+      return;
+    }
+    latest = d;
 
-      arena.showResult(simpleEnd("Match cancelled", "Your opponent left before the match began.", () => { arena.exit(); }));
+    if (d.status === "aborted") {
+      ended = true;
+      setBattlePresence(false);
+      cleanup();
+      arena.showResult(simpleEnd("Match cancelled", d.abortedBy === activeIdentity.uid
+        ? "You left before the match began."
+        : "Your opponent left before the match began.", () => { arena.exit(); }));
       return;
     }
 
@@ -525,7 +560,7 @@ export async function enterDuel(duelId) {
       cleanup();
       arena.forceEnd?.("complete", "");
 
-      await settleDuel(d, profile, playerNum, me, opponent, arena, problem, duelMode);
+      await settleDuel(d, profile, activeIdentity.uid, playerNum, me, opponent, arena, problem, duelMode);
     }
 
     if (d.newDuelId && d.newDuelId !== duelId) {
@@ -536,28 +571,32 @@ export async function enterDuel(duelId) {
   });
 }
 
-async function settleDuel(d, profile, playerNum, me, opponent, arena, problem, duelMode) {
-  const iWon = d.winner === profile.uid;
+async function settleDuel(d, profile, actorUid, playerNum, me, opponent, arena, problem, duelMode) {
+  const iWon = d.winner === actorUid;
   const isDraw = d.winner === null;
   const result = isDraw ? "draw" : iWon ? "win" : "loss";
   const winBy = d.winBy ?? "solve";
 
   let res = null;
-  if (duelMode === "rated" && !applied.has(d.id)) {
+  if (profile && duelMode === "rated" && !d.anonymousPairing && !applied.has(d.id)) {
     applied.add(d.id);
     const [myScore] = scoresFor(winBy, iWon);
     const score = isDraw ? 0.5 : myScore;
     try {
       res = await applyDuelResult(
         profile.uid, profile,
-        { rating: opponent.rating, rd: opponent.rd },
-        score, result
+        { uid: opponent.uid, username: opponent.username, rating: opponent.rating, rd: opponent.rd },
+        score, result, { duelId: d.id, difficulty: d.difficulty, winBy }
       );
     } catch (e) {
       console.error("rating update failed", e);
       toast("Result saved, but your rating couldn't be updated.", "err");
     }
   }
+
+  // Remove the ready lobby record only after the duel reaches a terminal state.
+  // Before that it is the handshake's evidence that both players accepted.
+  try { await mm.leaveLobby(actorUid); } catch {}
 
   const myTime = playerNum === 1 ? d.p1SolveTime : d.p2SolveTime;
   const oppTime = playerNum === 1 ? d.p2SolveTime : d.p1SolveTime;
@@ -566,10 +605,10 @@ async function settleDuel(d, profile, playerNum, me, opponent, arena, problem, d
     result, winBy, res, me, opponent, myTime, oppTime, problem, duelMode,
     onRematch: async () => {
       try {
-        const meP = mm.lobbyPlayer(session.profile);
+        const meP = session.profile ? mm.lobbyPlayer(session.profile) : activeIdentity;
         const newId = await mm.acceptRematch(d.id, meP, opponent, duelMode);
         arena.destroy();
-        enterDuel(newId);
+        enterDuel(newId, meP);
       } catch (e) {
         console.error(e);
         toast("Couldn't start a rematch.", "err");

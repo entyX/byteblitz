@@ -9,7 +9,7 @@
 
 import {
   auth, googleProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signInWithPopup, signOut, onAuthStateChanged,
+  signInWithPopup, signInAnonymously, signOut, onAuthStateChanged,
   sendPasswordResetEmail, updateProfile,
 } from "./firebase.js";
 import { ensureProfile, watchProfile, NAME_RE, usernameAvailable, setPresence } from "./store.js";
@@ -73,6 +73,15 @@ export function startSession() {
       session.user = user;
       session.profile = null;
 
+      if (user?.isAnonymous) {
+        // Anonymous sessions exist solely for signed-out matchmaking. They never
+        // receive a profile, username, local progression, or visible account.
+        session.ready = true;
+        emit();
+        if (first) { first = false; resolve(session); }
+        return;
+      }
+
       if (user) {
         try {
           const profile = await ensureProfile(user);
@@ -102,10 +111,10 @@ export function startSession() {
           toast("Could not load your profile — check your connection.", "err");
         }
       } else if (first) {
-        // On boot only: this device may already have a guest mid-run. Later
-        // sign-outs must land you signed out, not silently back in an old
-        // guest session you'd forgotten about.
-        session.profile = loadGuest();
+        // Guest profiles are retired: a signed-out visitor is simply signed out.
+        // Remove the legacy local payload rather than reviving a synthetic account.
+        localStorage.removeItem("bb_guest");
+        session.profile = null;
       }
 
       session.ready = true;
@@ -162,13 +171,7 @@ export function openAuthModal(opts = {}) {
   const toggle = h("button", { class: "linkish", type: "button", onClick: flip }, "Create an account");
   const forgot = h("button", { class: "linkish", type: "button", onClick: doReset }, "Forgot password?");
 
-  const anonLine = allowAnonymous
-    ? h("div", { class: "guest-strip mt-6" },
-        h("button", { class: "btn btn-block btn-guest", type: "button", onClick: doGuest },
-          "Play as a guest ▸"),
-        h("p", { class: "mono mt-3", style: { fontSize: "11.5px", color: "var(--muted-fg)", lineHeight: "1.65", textAlign: "center" } },
-          "Unranked and Training Grounds, no account needed. Your rating and best times are saved on this device only."))
-    : null;
+  const anonLine = null; // Signed-out play is sessionless; no guest account is created.
 
   const form = h("form", { onSubmit: onSubmit },
     h("div", { class: "stack gap-3" }, unameRow, email, pass),
@@ -247,14 +250,6 @@ export function openAuthModal(opts = {}) {
     }
   }
 
-  // Guest play is entirely local — nothing here can fail on the network, and
-  // nothing here depends on a Firebase provider being enabled in the console.
-  function doGuest() {
-    if (busy) return;
-    const p = beginGuest();
-    m.close();
-    onDone?.({ uid: p.uid, isGuest: true });
-  }
 
   async function doReset() {
     const em = email.value.trim();
@@ -305,10 +300,15 @@ export function requireAccount(intent = "gate") {
   });
 }
 
-/** Any player at all, guests included. Used by unranked and training. */
-export function requireAnySession(intent = "play") {
-  return new Promise((resolve) => {
-    if (session.profile) return resolve(session.profile);
-    openAuthModal({ intent, allowAnonymous: true, onDone: resolve });
-  });
+/** Legacy helper for solo/training callers. Signed-out play is allowed without a profile. */
+export async function requireAnySession() {
+  return session.profile;
+}
+
+/** Create an ephemeral Firebase session for signed-out Ranked matchmaking only. */
+export async function ensureAnonymousMatchSession() {
+  if (auth.currentUser?.isAnonymous) return auth.currentUser;
+  if (auth.currentUser && !auth.currentUser.isAnonymous) return auth.currentUser;
+  const credential = await signInAnonymously(auth);
+  return credential.user;
 }

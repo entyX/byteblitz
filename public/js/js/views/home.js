@@ -65,7 +65,7 @@ export async function renderHome(params, root) {
       h("h1", { class: "welcome-title gradient-text" }, "ByteBlitz"),
       h("p", { class: "welcome-sub" },
         !p
-          ? "Log in or create an account to get started, or play as a guest!"
+          ? "Play Unranked practice without an account, or enter an anonymous Ranked match. Sign in to keep ELO, placement, history, and friends."
           : p.isGuest
             ? `Playing as ${p.username} — unranked and training only. Your progress is saved on this device.`
             : placing
@@ -77,7 +77,7 @@ export async function renderHome(params, root) {
   // ── Gamemode cards ───────────────────────────────────────────────────────
   function paintModes() {
     const p = session.profile;
-    const rankedLocked = !p || p.isAnonymous || !isPlaced(p);
+    const rankedLocked = !!p && !isPlaced(p);
     if (rankedLocked && mode === "ranked") {
       mode = null;
       sessionStorage.removeItem(LS_MODE);
@@ -104,8 +104,8 @@ export async function renderHome(params, root) {
           "Your RANKED ELO gets impacted.",
         ],
         foot: rankedLocked
-          ? (p && !p.isAnonymous ? `${placementLeft(p)} placement games to unlock` : "Complete placement to unlock")
-          : "Head to head · rated",
+          ? `${placementLeft(p)} placement games to unlock`
+          : p ? "Head to head · rated" : "Anonymous pairing · no ELO",
       }),
       eloHost,
     );
@@ -117,7 +117,7 @@ export async function renderHome(params, root) {
   // so picking a mode never changes the card's size.
   function modeCard({ id, cls, title, lines, foot }) {
     const p = session.profile;
-    const disabled = id === "ranked" && (!p || p.isAnonymous || !isPlaced(p));
+    const disabled = id === "ranked" && !!p && !isPlaced(p);
     const selected = !disabled && mode === id;
     return h("button", {
       class: `gm-card ${cls}${selected ? " selected" : ""}${disabled ? " locked" : ""}`,
@@ -138,7 +138,7 @@ export async function renderHome(params, root) {
   }
 
   function selectMode(id) {
-    if (id === "ranked" && (!session.profile || session.profile.isAnonymous || !isPlaced(session.profile))) return;
+    if (id === "ranked" && session.profile && !isPlaced(session.profile)) return;
     mode = mode === id ? null : id;
     if (mode) sessionStorage.setItem(LS_MODE, mode);
     else sessionStorage.removeItem(LS_MODE);
@@ -195,11 +195,11 @@ export async function renderHome(params, root) {
   }
 
   function paintRankedElo(p) {
-    const accountLocked = !p || p.isAnonymous;
-    const placementLocked = !accountLocked && !isPlaced(p);
-    const locked = accountLocked || placementLocked;
-    const placed = !accountLocked && isPlaced(p);
-    const rank = rankFor(p?.rating, p);
+    const signedOut = !p;
+    const placementLocked = !!p && !isPlaced(p);
+    const locked = placementLocked;
+    const placed = !!p && isPlaced(p);
+    const rank = p ? rankFor(p.rating, p) : tierFor(1500);
 
     add(eloHost,
       h("div", { class: "elo-rank-badge" },
@@ -208,16 +208,14 @@ export async function renderHome(params, root) {
           placed && myRank ? "#" + myRank : "—")),
 
       h("div", { class: "label" }, "Your ranked ELO"),
-      h("div", { class: "elo-value mt-2", style: { color: accountLocked ? "var(--muted)" : rank.color } },
-        accountLocked ? "—" : displayPlacementRating(p.rating, p.rd, p)),
+      h("div", { class: "elo-value mt-2", style: { color: signedOut ? "var(--muted)" : rank.color } },
+        signedOut ? "—" : displayPlacementRating(p.rating, p.rd, p)),
       h("div", { class: "head mt-2", style: { fontSize: "24px", color: rank.color } },
         placementLocked ? "Placement" : rank.name),
 
-      accountLocked
+      signedOut
         ? h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
-            p?.isGuest
-              ? "Ranked needs an account — guests play Unranked and the tutorial only."
-              : "Sign in to begin placement and unlock Ranked.")
+            "Signed out: we first pair you with another anonymous player. If none is waiting, you may face the nearest available player; the duel is always casual and neither ELO changes.")
         : placementLocked
           ? h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
               `${placementLeft(p)} Unranked placement ${placementLeft(p) === 1 ? "game" : "games"} remaining. Finish at Confidence 10/10 to unlock Ranked.`)
@@ -230,8 +228,7 @@ export async function renderHome(params, root) {
       ),
 
       h("button", { class: "play-btn mt-6", onClick: onPlayRanked },
-        accountLocked ? (p?.isGuest ? "Create account" : "Sign in to play")
-          : placementLocked ? "Complete placement" : "Play", icon("play", 20)),
+        signedOut ? "Find anonymous match" : placementLocked ? "Complete placement" : "Play", icon("play", 20)),
     );
   }
 
@@ -248,11 +245,7 @@ export async function renderHome(params, root) {
 
   async function onPlayRanked() {
     const p = session.profile;
-    if (!p || p.isAnonymous) {
-      const u = await requireAccount("play");
-      if (!u) return;
-    }
-    if (session.profile && !isPlaced(session.profile)) {
+    if (p && !isPlaced(p)) {
       mode = "unranked";
       sessionStorage.setItem(LS_MODE, mode);
       paintModes();
