@@ -19,7 +19,7 @@ import {
   getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence,
 
 } from "./store.js";
-import { session, requireAccount, requireAnySession, refreshGuest, ensureAnonymousMatchSession } from "./session.js";
+import { session, requireAccount, requireAnySession, refreshGuest } from "./session.js";
 import * as mm from "./matchmaking.js";
 import { navigate } from "./router.js";
 
@@ -337,27 +337,19 @@ function trainingResultScreen(o) {
 // RANKED DUEL
 // ════════════════════════════════════════════════════════════════════════════
 export async function findRankedMatch() {
+  const user = await requireAccount("play");
+  if (!user) return;
   const profile = session.profile;
-  if (profile && !isPlaced(profile)) {
+  if (!profile) {
+    toast("Finishing your account setup — try Ranked again in a moment.", "err");
+    return;
+  }
+  if (!isPlaced(profile)) {
     toast(`${placementLeft(profile)} Unranked placement ${placementLeft(profile) === 1 ? "game" : "games"} remaining before Ranked unlocks.`, "err");
     return;
   }
 
-  let me;
-  let anonymousQueue = false;
-  if (profile) {
-    me = mm.lobbyPlayer(profile);
-  } else {
-    try {
-      const anonymousUser = await ensureAnonymousMatchSession();
-      me = mm.anonymousLobbyPlayer(anonymousUser.uid);
-      anonymousQueue = true;
-    } catch (error) {
-      console.error(error);
-      toast("Couldn't start anonymous matchmaking. Try again.", "err");
-      return;
-    }
-  }
+  const me = mm.lobbyPlayer(profile);
   let unsubLobby = null, unsubSelf = null, unsubCount = null;
   let cancelled = false;
   let matched = false;
@@ -376,12 +368,10 @@ export async function findRankedMatch() {
   }, 500);
 
   const m = modal(h("div", { class: "center" },
-    h("div", { class: "eyebrow mb-3" }, anonymousQueue ? "// Anonymous matchmaking" : "// Ranked matchmaking"),
+    h("div", { class: "eyebrow mb-3" }, "// Ranked matchmaking"),
     h("h2", { class: "head mb-2" }, "Finding an ", h("span", { class: "accent" }, "opponent")),
     h("p", { class: "mono mb-6", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
-      anonymousQueue
-        ? "We first look for another anonymous player. If none is waiting, we take the nearest available player. This duel is casual for both players: no ELO changes."
-        : `Searching within ±${mm.ELO_WINDOW} rating, widening as you wait. The problem difficulty is set by the lower-rated player.`),
+      `Searching within ±${mm.ELO_WINDOW} rating, widening as you wait. The problem difficulty is set by the lower-rated player.`),
     h("div", { class: "row gap-3", style: { justifyContent: "center" } },
       h("span", { class: "spinner" }), timeEl),
     h("div", { class: "row gap-6 mt-5", style: { justifyContent: "center" } },

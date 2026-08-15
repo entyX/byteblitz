@@ -291,6 +291,10 @@ export async function resetAccountProgress(profile) {
 }
 
 export async function ensureProfile(user, preferredName) {
+  const passwordAccount = user?.providerData?.some((provider) => provider.providerId === "password");
+  if (!user?.isAnonymous && passwordAccount && !user.emailVerified) {
+    throw new Error("Verify your email before creating a ByteBlitz profile.");
+  }
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
   if (snap.exists()) return { uid: user.uid, ...snap.data() };

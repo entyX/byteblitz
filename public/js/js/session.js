@@ -10,7 +10,7 @@
 import {
   auth, googleProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signInWithPopup, signInAnonymously, signOut, onAuthStateChanged,
-  sendPasswordResetEmail, updateProfile,
+  sendPasswordResetEmail, sendEmailVerification, reload, updateProfile,
 } from "./firebase.js";
 import { ensureProfile, watchProfile, NAME_RE, usernameAvailable, setPresence } from "./store.js";
 import { loadGuest, startGuest } from "./local.js";
@@ -21,6 +21,7 @@ export const session = {
   profile: null,     // Firestore profile doc, or the local guest profile
   ready: false,
   isGuest: () => !!session.profile?.isGuest,
+  needsEmailVerification: () => needsEmailVerification(session.user),
 };
 
 const listeners = new Set();
@@ -28,6 +29,98 @@ let profileUnsub = null;
 let presenceInterval = null;
 let unloadHandler = null;
 let authEpoch = 0;
+let verificationModalUid = null;
+
+/**
+ * Email/password identities remain inactive until Firebase confirms that the
+ * person who created them controls the address. Federated providers, including
+ * Google, already verify the provider email and remain available immediately.
+ */
+export function needsEmailVerification(user = auth.currentUser) {
+  if (!user || user.isAnonymous || user.emailVerified) return false;
+  return user.providerData?.some((provider) => provider.providerId === "password") ?? false;
+}
+
+function verificationActionSettings() {
+  return {
+    url: `${window.location.origin}/#/`,
+    handleCodeInApp: false,
+  };
+}
+
+/** Show the inactive-account screen until the inbox link has been confirmed. */
+export function openEmailVerificationModal(user = auth.currentUser) {
+  if (!user || !needsEmailVerification(user) || verificationModalUid === user.uid) return;
+  verificationModalUid = user.uid;
+
+  let busy = false;
+  const status = h("p", { class: "mono mt-4", style: { fontSize: "12px", minHeight: "20px", color: "var(--muted-fg)", lineHeight: "1.55" } },
+    "Your account is inactive until the verification link is opened.");
+  const resend = h("button", { class: "btn btn-block", type: "button", onClick: resendVerification }, "Resend verification email");
+  const confirm = h("button", { class: "btn btn-primary btn-block", type: "button", onClick: confirmVerification }, "I verified my email");
+  const signOutBtn = h("button", { class: "linkish mt-4", type: "button", onClick: leaveUnverifiedAccount }, "Use a different account");
+  const content = h("div", { class: "center", style: { maxWidth: "440px" } },
+    h("div", { class: "eyebrow mb-3" }, "// Email verification required"),
+    h("h2", { class: "head mb-3" }, "Check your inbox"),
+    h("p", { class: "mono", style: { fontSize: "13px", color: "var(--muted-fg)", lineHeight: "1.65" } },
+      "We sent a verification link to ", h("strong", { style: { color: "var(--fg)" } }, user.email || "your email address"), ". Open it to activate ByteBlitz."),
+    status,
+    h("div", { class: "stack gap-3 mt-5" }, confirm, resend),
+    signOutBtn,
+  );
+  const m = modal(content, { closable: false, onClose: () => { verificationModalUid = null; } });
+
+  function setBusy(value) {
+    busy = value;
+    confirm.disabled = value;
+    resend.disabled = value;
+    confirm.textContent = value ? "Checking…" : "I verified my email";
+  }
+
+  async function resendVerification() {
+    if (busy || !auth.currentUser || auth.currentUser.uid !== user.uid) return;
+    setBusy(true);
+    try {
+      await sendEmailVerification(auth.currentUser, verificationActionSettings());
+      status.textContent = "A new verification email has been sent. Check your inbox and spam folder.";
+      status.style.color = "var(--ok)";
+    } catch (error) {
+      status.textContent = authMessage(error);
+      status.style.color = "var(--primary)";
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmVerification() {
+    if (busy || !auth.currentUser || auth.currentUser.uid !== user.uid) return;
+    setBusy(true);
+    try {
+      await reload(auth.currentUser);
+      if (needsEmailVerification(auth.currentUser)) {
+        status.textContent = "Firebase has not confirmed the link yet. Open the newest email, then try again.";
+        status.style.color = "var(--primary)";
+        return;
+      }
+      // Refresh the ID token as well. Firestore rules use the verified-email
+      // claim, so this prevents a just-verified player seeing a stale denial.
+      await auth.currentUser.getIdToken(true);
+      m.close();
+      toast("Email verified — your ByteBlitz account is active.", "ok");
+      window.location.reload();
+    } catch (error) {
+      status.textContent = authMessage(error);
+      status.style.color = "var(--primary)";
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function leaveUnverifiedAccount() {
+    if (busy) return;
+    try { await logout(); } finally { m.close(); }
+  }
+}
 
 function stopRealtimeSession() {
   profileUnsub?.();
@@ -79,6 +172,16 @@ export function startSession() {
         session.ready = true;
         emit();
         if (first) { first = false; resolve(session); }
+        return;
+      }
+
+      if (needsEmailVerification(user)) {
+        // Do not reserve a username, create a profile, write presence, or start
+        // onboarding until the inbox owner has confirmed the address.
+        session.ready = true;
+        emit();
+        if (first) { first = false; resolve(session); }
+        setTimeout(() => openEmailVerificationModal(user), 0);
         return;
       }
 
@@ -229,12 +332,19 @@ export function openAuthModal(opts = {}) {
         if (!(await usernameAvailable(name))) throw new Error("That username is taken.");
         const cred = await createUserWithEmailAndPassword(auth, em, pw);
         try { await updateProfile(cred.user, { displayName: name }); } catch {}
-        await ensureProfile(cred.user, name);
+        await sendEmailVerification(cred.user, verificationActionSettings());
       } else {
         await signInWithEmailAndPassword(auth, em, pw);
       }
+
+      const activeUser = auth.currentUser;
       m.close();
-      onDone?.(auth.currentUser);
+      if (needsEmailVerification(activeUser)) {
+        setTimeout(() => openEmailVerificationModal(activeUser), 0);
+        onDone?.(null);
+        return;
+      }
+      onDone?.(activeUser);
     } catch (e2) {
       setBusy(false);
       fail(authMessage(e2));
@@ -307,11 +417,17 @@ function authMessage(e) {
  */
 export function requireAccount(intent = "gate") {
   return new Promise((resolve) => {
-    if (session.user && !session.user.isAnonymous) return resolve(session.user);
+    if (session.user && !session.user.isAnonymous && !needsEmailVerification(session.user)) {
+      return resolve(session.user);
+    }
+    if (session.user && needsEmailVerification(session.user)) {
+      openEmailVerificationModal(session.user);
+      return resolve(null);
+    }
     openAuthModal({
       intent,
       allowAnonymous: false,
-      onDone: (u) => resolve(u && !u.isAnonymous && !u.isGuest ? u : null),
+      onDone: (u) => resolve(u && !u.isAnonymous && !u.isGuest && !needsEmailVerification(u) ? u : null),
     });
   });
 }

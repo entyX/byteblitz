@@ -6,9 +6,19 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.7",
+    version: "v1.2.8",
     date: "August 14, 2026",
     current: true,
+    items: [
+      "New email-password accounts now receive a verification link at sign-up and remain inactive until the inbox owner confirms it.",
+      "The account activation screen can resend the verification email and refresh Firebase after the link is opened. Unverified accounts cannot reserve usernames, create profiles, complete onboarding, enter Ranked, use friends or chat, or appear on public boards.",
+      "Signed-out visitors can still use local Unranked practice without creating an account.",
+    ],
+  },
+  {
+    version: "v1.2.7",
+    date: "August 14, 2026",
+    current: false,
     items: [
       "Profile cards and the hero now scale, stack, and preserve division labels at high browser zoom and on narrow screens instead of dropping rank copy onto an unintended line.",
       "Placement now treats onboarding as a starting hypothesis rather than a rating floor. Seven consistent failures—including easy Bronze problems—can correct a Master selection all the way into the low-rating range.",

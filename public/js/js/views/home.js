@@ -65,7 +65,7 @@ export async function renderHome(params, root) {
       h("h1", { class: "welcome-title gradient-text" }, "ByteBlitz"),
       h("p", { class: "welcome-sub" },
         !p
-          ? "Play Unranked practice without an account, or enter an anonymous Ranked match. Sign in to keep ELO, placement, history, and friends."
+          ? "Play Unranked practice without an account. Sign in and verify your email to keep ELO, complete placement, play Ranked, and add friends."
           : p.isGuest
             ? `Playing as ${p.username} — unranked and training only. Your progress is saved on this device.`
             : placing
@@ -105,7 +105,7 @@ export async function renderHome(params, root) {
         ],
         foot: rankedLocked
           ? `${placementLeft(p)} placement games to unlock`
-          : p ? "Head to head · rated" : "Anonymous pairing · no ELO",
+          : p ? "Head to head · rated" : "Verified account required",
       }),
       eloHost,
     );
@@ -196,8 +196,9 @@ export async function renderHome(params, root) {
 
   function paintRankedElo(p) {
     const signedOut = !p;
+    const verificationLocked = session.needsEmailVerification();
     const placementLocked = !!p && !isPlaced(p);
-    const locked = placementLocked;
+    const locked = placementLocked || verificationLocked;
     const placed = !!p && isPlaced(p);
     const rank = p ? rankFor(p.rating, p) : tierFor(1500);
 
@@ -213,10 +214,13 @@ export async function renderHome(params, root) {
       h("div", { class: "head mt-2", style: { fontSize: "24px", color: rank.color } },
         placementLocked ? "Placement" : rank.name),
 
-      signedOut
+      verificationLocked
         ? h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
-            "Signed out: we first pair you with another anonymous player. If none is waiting, you may face the nearest available player; the duel is always casual and neither ELO changes.")
-        : placementLocked
+            "Verify your email to activate your account and unlock Ranked matchmaking.")
+        : signedOut
+          ? h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
+              "Sign in and verify your email to complete placement and enter Ranked matchmaking.")
+          : placementLocked
           ? h("p", { class: "mono mt-2", style: { fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: "1.6" } },
               `${placementLeft(p)} Unranked placement ${placementLeft(p) === 1 ? "game" : "games"} remaining. Finish at Confidence 10/10 to unlock Ranked.`)
           : null,
@@ -228,7 +232,7 @@ export async function renderHome(params, root) {
       ),
 
       h("button", { class: "play-btn mt-6", onClick: onPlayRanked },
-        signedOut ? "Find anonymous match" : placementLocked ? "Complete placement" : "Play", icon("play", 20)),
+        verificationLocked ? "Verify email" : signedOut ? "Sign in to play" : placementLocked ? "Complete placement" : "Play", icon("play", 20)),
     );
   }
 

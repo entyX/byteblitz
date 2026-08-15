@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { h, add, clear, toast, icon, fmtAgo, modal, avatar } from "./ui.js";
-import { session, onSession, startSession, logout, openAuthModal, requireAccount } from "./session.js";
+import { session, onSession, startSession, logout, openAuthModal, openEmailVerificationModal, requireAccount } from "./session.js";
 import { route, startRouter, navigate, currentPath } from "./router.js";
 import {
   watchNotifications, markAllRead, deleteNotification, clearNotifications,
@@ -38,7 +38,7 @@ const outlet = h("main", { id: "outlet" });
 function buildShell() {
   const nav = h("nav", { class: "nav" },
     h("div", { class: "nav-inner" },
-      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.2.7")),
+      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.2.8")),
       navLinks,
       h("div", { class: "nav-right" },
         playerSearchBox({ onExpandedChange: (open) => nav.classList.toggle("search-open", open) }),
@@ -78,8 +78,19 @@ function paintAuth() {
   }
 
   if (!p) {
-    authArea.append(
-      h("button", { class: "btn btn-sm", onClick: () => openAuthModal({ intent: "gate", allowAnonymous: true }) }, "Sign in"));
+    if (session.needsEmailVerification()) {
+      authArea.append(
+        h("button", { class: "btn btn-sm btn-primary", onClick: () => openEmailVerificationModal(session.user) }, "Verify email"),
+        h("button", { class: "icon-btn", title: "Sign out", "aria-label": "Sign out", onClick: async () => {
+          await logout();
+          navigate("/");
+          toast("Signed out.");
+        } }, icon("logout", 18)),
+      );
+    } else {
+      authArea.append(
+        h("button", { class: "btn btn-sm", onClick: () => openAuthModal({ intent: "gate", allowAnonymous: true }) }, "Sign in"));
+    }
     return;
   }
 

@@ -42,7 +42,7 @@ export {
   signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInAnonymously,
   signOut, onAuthStateChanged, updateProfile, deleteUser,
   reauthenticateWithCredential, reauthenticateWithPopup,
-  sendPasswordResetEmail, linkWithPopup, EmailAuthProvider, linkWithCredential,
+  sendPasswordResetEmail, sendEmailVerification, reload, linkWithPopup, EmailAuthProvider, linkWithCredential,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
 export {
