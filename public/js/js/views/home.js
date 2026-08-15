@@ -132,7 +132,8 @@ export async function renderHome(params, root) {
         h("span", {}, selected ? "Selected" : foot),
         selected
           ? h("span", { class: "gm-check" }, icon("check", 13))
-          : h("span", { class: "gm-check-off" }, disabled ? "LOCK" : ""))),
+          : h("span", { class: "gm-check-off" }, disabled ? "LOCK" : "")
+      )
     );
   }
 

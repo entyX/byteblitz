@@ -153,12 +153,12 @@ export function scoresFor(winBy, iWon) {
 
 // ── Rank tiers ──────────────────────────────────────────────────────────────
 export const TIERS = [
-  { name: "Bronze",   code: "B", color: "#CD7F32", min: 0,    max: 1199 },
-  { name: "Silver",   code: "S", color: "#C0C0C0", min: 1200, max: 1499 },
-  { name: "Gold",     code: "G", color: "#FFD700", min: 1500, max: 1799 },
-  { name: "Platinum", code: "P", color: "#4DD9E0", min: 1800, max: 2099 },
-  { name: "Diamond",  code: "D", color: "#4FA3FF", min: 2100, max: 2399 },
-  { name: "Master",   code: "M", color: "#8B5CF6", min: 2400, max: Infinity },
+  { name: "Bronze",   code: "B", color: "#CD7F32", min: 0,    max: 500 },
+  { name: "Silver",   code: "S", color: "#C0C0C0", min: 501,  max: 1000 },
+  { name: "Gold",     code: "G", color: "#FFD700", min: 1001, max: 1500 },
+  { name: "Platinum", code: "P", color: "#4DD9E0", min: 1501, max: 2000 },
+  { name: "Diamond",  code: "D", color: "#4FA3FF", min: 2001, max: 2500 },
+  { name: "Master",   code: "M", color: "#8B5CF6", min: 2501, max: 3000 },
 ];
 
 export const TIER_NAMES = TIERS.map(t => t.name);
@@ -167,7 +167,10 @@ export const TIER_COLORS = TIERS.reduce((acc, t) => (acc[t.name] = t.color, acc)
 
 export function tierFor(rating) {
   const r = rating ?? DEFAULT_RATING;
-  return TIERS.find(t => r >= t.min && r <= t.max) ?? TIERS[0];
+  const t = TIERS.find(t => r >= t.min && r <= t.max);
+  if (t) return t;
+  if (r < TIERS[0].min) return TIERS[0];
+  return TIERS[TIERS.length - 1];
 }
 
 export function nextTier(rating) {

@@ -6,9 +6,20 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.2.0",
+    version: "v1.2.4",
     date: "August 14, 2026",
     current: true,
+    items: [
+      "Updated tier ranges: Bronze 0–500, Silver 501–1000, Gold 1001–1500, Platinum 1501–2000, Diamond 2001–2500, Master 2501–3000. Puzzles, matchmaking and difficulty selection follow these ranges.",
+      "Onboarding flow simplified: skill choices no longer display ELO or tier labels and the form fits on-screen without scrolling on most devices.",
+      "Matchmaking, puzzle selection and problem time limits now use the updated tiers.",
+      "Minor UX tweaks to onboarding layout and compact modals for small screens.",
+    ],
+  },
+  {
+    version: "v1.2.0",
+    date: "August 14, 2026",
+    current: false,
     items: [
       "Leaderboards now show profile pictures, country flags, and complete ranked records including draws.",
       "The Ranked and Unranked boards received a sharper, more detailed standings layout built around each player's ELO.",

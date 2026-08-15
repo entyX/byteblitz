@@ -52,15 +52,11 @@ export function runOnboarding(profile) {
     const country = h("select", { class: "input", "aria-label": "Country or region" },
       ...countryOptions(profile.country).map((item) => h("option", { value: item.value, selected: item.selected }, item.label)));
 
-    const options = SKILL_LEVELS.map((s) => {
-      const tier = tierFor(s.rating);
+    const optionsEls = SKILL_LEVELS.map((s) => {
       return h("button", { class: "skill-opt", onClick: () => choose(s) },
         h("div", { class: "grow" },
           h("div", { class: "name" }, s.name),
-          h("div", { class: "desc" }, s.desc)),
-        h("div", { class: "stack", style: { alignItems: "flex-end", gap: "4px" } },
-          h("span", { class: "rating", style: { color: tier.color } }, String(s.rating)),
-          h("span", { class: "label", style: { color: tier.color } }, tier.name)));
+          h("div", { class: "desc" }, s.desc)));
     });
 
     const m = modal(h("div", {},
@@ -72,10 +68,13 @@ export function runOnboarding(profile) {
       country,
       h("p", { class: "label mt-2 mb-4", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.5" } },
         "This flag appears on the leaderboard. You can change it later from your profile."),
-      h("div", { class: "stack gap-2" }, ...options),
+      h("div", { class: "skill-grid" }, ...optionsEls),
       h("p", { class: "label mt-5", style: { textTransform: "none", letterSpacing: "0", lineHeight: "1.6" } },
         "Not sure? Pick Intermediate. Your first seven Unranked placement games are designed to correct a rough starting estimate quickly."),
     ), { wide: true, closable: false });
+
+    // Make onboarding modal more compact for small screens
+    m.el.classList.add('onboarding');
   });
 }
 
