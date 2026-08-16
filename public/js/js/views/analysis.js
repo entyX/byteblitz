@@ -250,11 +250,6 @@ function analysisPane(state, rerender) {
     reportContent(payload.analysis, state));
 }
 
-function progressBlock(state) {
-  if (!state.running && !state.modelProgress) return null;
-  return h("div", { class: "analysis-progress" }, h("div", { class: "bar" }, h("i", { style: { width: state.running ? "72%" : "100%" } })), h("span", { class: "mono" }, state.modelProgress || "Preparing analysis…"));
-}
-
 function renderWorkspace(root, state) {
   clear(root);
   const page = h("div", { class: "analysis-workspace" });
