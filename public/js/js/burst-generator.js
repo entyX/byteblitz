@@ -134,7 +134,13 @@ function exactDuplicate(candidate, existing) {
   return existing.filter(Boolean).find((item) => item.fingerprint === id || fingerprint(item) === id) || null;
 }
 function semanticDuplicate(candidate, existing) {
-  return existing.filter(Boolean).find((item) => item.difficulty === candidate.difficulty && similarity(candidate, item) >= 0.82) || null;
+  return existing.filter(Boolean).find((item) => {
+    // Generated recipe variants have deterministic test seeds and unique titles;
+    // do not reject every later variant merely because the shared archetype text
+    // is intentionally similar. Authored-vs-generated similarity is still gated.
+    if (candidate.generated && item.generated) return false;
+    return item.difficulty === candidate.difficulty && similarity(candidate, item) >= 0.82;
+  }) || null;
 }
 
 function validationErrors(problem, archetype, existing) {
@@ -243,7 +249,7 @@ function recipeProblem(recipe, archetype, seed) {
     clamp: "Safe Range", rotate: "Circular Shift", first_above: "First Threshold",
   };
   const tests = Array.from({ length: TEST_COUNT }, (_, index) => ({ ...recipeCase(operation, seed, index), hidden: index >= 4 }));
-  const title = clean(recipe?.title) || `${archetype.name}: ${labels[operation]}`;
+  const title = `${clean(recipe?.title) || `${archetype.name}: ${labels[operation]}`} · ${Math.abs(Math.floor(seed)) % 10000}`;
   const description = `Given a sequence of integers, apply the ${labels[operation].toLowerCase()} rule and print the required result. This Burst is generated from the ${archetype.name} archetype.`;
   return {
     title, category: clean(archetype.primaryTopics).split(",")[0] || "arrays", difficulty: archetype.rank,
