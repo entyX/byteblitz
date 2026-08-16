@@ -17,7 +17,7 @@ import {
 } from "../store.js";
 import { startSolo, startTutorial, findRankedMatch, challengeFriend, RANKED_ELO_WINDOW } from "../game.js";
 import { watchLobbyCount } from "../matchmaking.js";
-import { c4QuestionMode, setC4QuestionMode } from "../burst-generator.js";
+import { c4QuestionMode, setC4QuestionMode, warmBurstQuestionModel } from "../burst-generator.js";
 import { navigate } from "../router.js";
 
 const LS_MODE = "bb_mode";
@@ -34,6 +34,8 @@ export async function renderHome(params, root) {
   let myRank = null;
   let unrankedLaunching = false;
   let unrankedLaunchStatus = "";
+  let burstModelWarming = false;
+  let burstModelStatus = "";
 
   const railHost = h("div", { class: "rail" });
   const newsHost = h("aside", { class: "home-news" });
@@ -177,7 +179,22 @@ export async function renderHome(params, root) {
   function paintUnrankedElo(p) {
     const tier = tierFor(p?.soloRating ?? 1500);
     const generatedOnly = c4QuestionMode() === "generated_only";
-    const toggleMode = () => { setC4QuestionMode(generatedOnly ? "existing_first" : "generated_only"); paintElo(); };
+    const toggleMode = () => {
+      const nextGeneratedOnly = !generatedOnly;
+      setC4QuestionMode(nextGeneratedOnly ? "generated_only" : "existing_first");
+      if (nextGeneratedOnly && !burstModelWarming) {
+        burstModelWarming = true;
+        burstModelStatus = "Preparing the local Burst author…";
+        warmBurstQuestionModel((progress) => {
+          burstModelStatus = progress?.text || "Loading the local Burst author…";
+          if (!unrankedLaunching) paintElo();
+        }).finally(() => {
+          burstModelWarming = false;
+          if (!unrankedLaunching) paintElo();
+        });
+      }
+      paintElo();
+    };
 
     add(eloHost,
       h("div", { class: "label" }, "Your unranked ELO"),
@@ -199,10 +216,12 @@ export async function renderHome(params, root) {
       h("button", { class: "btn btn-block mt-4 c4-generation-toggle", onClick: toggleMode, "aria-pressed": generatedOnly ? "true" : "false" },
         icon(generatedOnly ? "bulb" : "target", 14), generatedOnly ? "AI-generated Burst only" : "Authored-first Burst"),
       h("p", { class: "label mt-2", style: { lineHeight: "1.5", textTransform: "none", letterSpacing: "0" } },
-        generatedOnly ? "AI mode: generate and validate a fresh Burst question for this run." : "Existing authored questions are favored; Burst generation expands the pool as you progress."),
+        generatedOnly ? "AI mode: generate and validate a fresh Burst question locally on this device. The first model download is cached afterward." : "Existing authored questions are favored; Burst generation expands the pool as you progress."),
       unrankedLaunching
         ? h("div", { class: "c4-launch-status", role: "status" }, h("span", { class: "spinner" }), unrankedLaunchStatus || "Preparing your Burst question…")
-        : null,
+        : burstModelWarming
+          ? h("div", { class: "c4-launch-status", role: "status" }, h("span", { class: "spinner" }), burstModelStatus || "Preparing the local Burst author…")
+          : null,
       h("button", { class: "play-btn mt-4", disabled: unrankedLaunching, onClick: onPlayUnranked },
         unrankedLaunching ? "Loading…" : (p && !isPlaced(p) ? "Play placement" : "Play"), icon("play", 20)),
     );

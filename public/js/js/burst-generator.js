@@ -5,7 +5,7 @@
 // authored CSV files.
 // ============================================================================
 
-import { auth } from "./firebase.js";
+import { loadLocalBurstModel, warmLocalBurstModel } from "./burst-local-model.js";
 
 const ARCHETYPES_URL = "/data/byteblitz_archetypes.md";
 const TEMPLATES_URL = "/data/byteblitz_question_templates.md";
@@ -98,29 +98,7 @@ function readCache(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
 }
 
-async function requestBurstProblem(payload) {
-  const user = auth.currentUser;
-  if (!user) throw new Error("Sign in to create an AI-generated Burst question.");
-  const token = await user.getIdToken();
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), 30000);
-  try {
-    const response = await fetch("/api/generate-burst", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body?.error || "AI question generation failed.");
-    return body?.problem;
-  } catch (error) {
-    if (error?.name === "AbortError") throw new Error("AI question generation took too long. Please try again.");
-    throw error;
-  } finally {
-    window.clearTimeout(timer);
-  }
-}
+
 function writeCache(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode */ }
 }
@@ -233,21 +211,21 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
   const template = choices[Math.abs(Math.floor(seed / 7)) % Math.max(1, choices.length)] || archetype.structure;
   const known = [...existingProblems, ...generatedPool()];
   onProgress({ text: "Selecting a fresh archetype…", progress: 0.15 });
-  let raw;
-  try {
-    onProgress({ text: "Writing your AI Burst question…", progress: 0.35 });
-    raw = await requestBurstProblem({
-      difficulty,
-      archetype,
-      template,
-      existingTitles: known.slice(-80).map((item) => item.title).filter(Boolean),
-    });
-  } catch (error) {
-    const message = String(error?.message || "AI question generation failed.");
-    throw new Error(message.replace(/^internal\s*:?\s*/i, ""));
-  }
-  onProgress({ text: "Validating tests and uniqueness…", progress: 0.82 });
-  const candidate = shapeProblem(raw, archetype);
+  const model = await loadLocalBurstModel((progress) => onProgress({
+    text: progress?.text || "Loading the local Burst author…",
+    progress: progress?.progress ?? 0.2,
+  }));
+  onProgress({ text: "Writing your local AI Burst question…", progress: 0.62 });
+  const response = await model.chat.completions.create({
+    messages: [
+      { role: "system", content: "You generate safe, original, automatically judgeable competitive-programming problems. Output strict JSON only." },
+      { role: "user", content: promptFor({ archetype, template, rank: difficulty, existing: known }) },
+    ],
+    temperature: 0.7,
+    max_tokens: 2200,
+  });
+  onProgress({ text: "Validating tests and uniqueness…", progress: 0.9 });
+  const candidate = shapeProblem(parseJson(response.choices?.[0]?.message?.content), archetype);
   const errors = validationErrors(candidate, archetype, known);
   if (errors.length) throw new Error(`Generated Burst question rejected: ${errors.join(", ")}.`);
   const saved = [...generatedPool(), candidate].slice(-MAX_ACCEPTED);
@@ -266,6 +244,10 @@ function completedEnough(seenIds, pool) {
 // so pressing Play later does not inherit the guide's network or parsing delay.
 if (typeof window !== "undefined") {
   window.setTimeout(() => { loadLibrary().catch(() => {}); }, 1800);
+}
+
+export function warmBurstQuestionModel(onProgress = () => {}) {
+  return warmLocalBurstModel(onProgress);
 }
 
 export function generatedQuestions(difficulty = "") { return generatedPool().filter((item) => !difficulty || item.difficulty === difficulty); }
