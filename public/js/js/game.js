@@ -116,6 +116,7 @@ export async function startSolo(preset) {
       solved, reason: r.reason, timeMs: r.timeMs, limit, difficulty, problem, res, submission: r,
       placement: placing,
       signedOut: !profile || profile.isGuest || profile.isAnonymous,
+      meUid: profile?.uid || null,
       autoSaved,
       onAgain: () => { arena.destroy(); startSolo(); },
       onHome: () => arena.exit(),
@@ -124,7 +125,7 @@ export async function startSolo(preset) {
 }
 
 function soloResultScreen(o) {
-  const { solved, reason, timeMs, difficulty, problem, res, submission, placement, signedOut, autoSaved } = o;
+  const { solved, reason, timeMs, difficulty, problem, res, submission, placement, signedOut, meUid, autoSaved } = o;
   const delta = res ? Math.round(res.rating) - res.before : 0;
   const par = PAR_TIME[difficulty];
   const totalTests = problem.testCases?.length || 0;
@@ -182,6 +183,7 @@ function soloResultScreen(o) {
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Run again ▸"),
+      solved && autoSaved && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena")),
   );
 }
@@ -399,6 +401,7 @@ function trainingResultScreen(o) {
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Try again ▸"),
+      autoSaved && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
       h("button", { class: "btn", onClick: o.onBack }, "Training grounds"),
     ),
   );

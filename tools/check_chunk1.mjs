@@ -93,5 +93,17 @@ assert.match(game, /Analyze match/, "duel results must expose post-match analysi
 assert.match(store, /export async function saveSolutionAnalysis/, "solution analysis must be persisted for owner and public-share views");
 assert.match(matchmaking, /getDuelSubmissionHistory/, "duels must retain full submission progression for analysis");
 assert.match(rules, /duels\/\{duelId\}\/submissions/, "duel submission history needs participant-only Firestore rules");
+assert.match(training, /solution-card-actions/, "solution cards must use a consolidated action layout");
+assert.match(training, /solution-hub-actions/, "View solution must open the hub for sharing and accomplishments");
+assert.match(training, /ui-tooltip/, "solution icon controls must provide custom tooltips");
+assert.match(game, /Analyze solution/, "completed Training and Unranked results must provide direct analysis access");
+assert.match(analysis, /analysis-workspace-grid/, "analysis must use the requested three-pane workspace");
+assert.match(analysis, /Opponent code/, "duel analysis must expose an opponent-code tab");
+assert.match(analysis, /Apply next improvement/, "analysis must support step-by-step code improvements");
+assert.match(analysisEngine, /function formatProblemBrief/, "analysis prompts must include complete problem context and constraints");
+assert.match(analysisEngine, /failureDiagnosis/, "analysis must explain recorded failed-test evidence");
+assert.match(analysisEngine, /export async function improveCode/, "analysis must generate guided code improvements");
+assert.match(css, /analysis-workspace-grid/, "analysis workspace must be styled as a three-pane layout");
+assert.match(css, /\[data-tooltip\]/, "custom tooltip styling must exist for compact controls");
 
 console.log("v1.3 chunk 1 checks passed");
