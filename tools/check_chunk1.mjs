@@ -112,7 +112,9 @@ assert.match(analysis, /Code grade/, "analysis must render a letter grade instea
 assert.match(analysis, /No distinct rewrite was prepared/, "non-S grades must not claim that no improvement exists when an automatic rewrite is unavailable");
 assert.match(analysis, /collapseButton/, "problem and coach sections must be collapsible");
 assert.match(analysis, /paneResizer/, "analysis panes must expose draggable horizontal resizers");
-assert.match(analysis, /Analyze local edits/, "the local editor must be able to analyze unsaved changes");
+assert.match(analysis, /Analyze local edits/, "the primary analysis action must be able to analyze unsaved changes");
+assert.match(analysis, /Best target:/, "time and space metrics must show their best feasible target");
+assert.match(analysis, /analysis-metric-grade/, "time and space metrics must show percentage and letter ratings");
 assert.match(analysis, /originalAnalysis/, "coaching and local analysis must retain the original review baseline");
 assert.match(analysis, /materiallyDifferentCode/, "unchanged coach snippets must be detected before application");
 assert.match(analysis, /localAnalysisSources/, "local analysis must be tied to the exact unsaved source being reviewed");
@@ -128,13 +130,15 @@ assert.match(analysisEngine, /below 92/, "sub-top-tier reviews must request a co
 assert.match(analysisEngine, /No automatic rewrite was prepared/, "non-S no-change outcomes must explain automatic rewrite limits without contradicting the grade");
 assert.match(analysisEngine, /materially different from CURRENT CODE/, "guided improvements must reject unchanged source suggestions");
 assert.match(analysisEngine, /Original submitted baseline/, "coach context must retain the original source alongside local edits");
+assert.match(analysisEngine, /safeOutputConstructionRewrite/, "identified output-construction weaknesses must have a safe rewrite fallback");
+assert.match(analysisEngine, /metricRating/, "analysis must grade time and space efficiency against the best target");
 assert.match(css, /analysis-workspace-grid/, "analysis workspace must be styled as a three-pane layout");
 assert.match(css, /\[data-tooltip\]/, "custom tooltip styling must exist for compact controls");
 assert.match(css, /analysis-editor-input/, "analysis editor must have dedicated local sandbox styling");
 assert.match(css, /grade-s/, "analysis grades must include S-tier styling");
 assert.match(css, /analysis-pane-resizer/, "analysis workspace must style draggable pane splitters");
 assert.match(css, /analysis-collapse-btn/, "analysis workspace must style collapsible controls");
-assert.match(css, /analysis-editor-actions/, "local analysis and test actions must be styled together");
+assert.match(css, /analysis-metric-grade/, "time and space metric grades must have dedicated styling");
 assert.match(css, /analysis-coach-unchanged/, "unchanged coach-code notices must be styled clearly");
 
 console.log("v1.3 chunk 1 checks passed");

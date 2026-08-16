@@ -9,7 +9,7 @@ import { getSavedSolution, getPublicPuzzleSolution, getPublicSolutionShare, save
 import { getDuel, getDuelSubmissionHistory } from "../matchmaking.js";
 import { loadAllPools, problemById, outputMatches } from "../problems.js";
 import { navigate } from "../router.js";
-import { analyzeCode, askCodeCoach, fastCodeAnalysis, improveCode, gradeForScore } from "../analysis-engine.js";
+import { analyzeCode, askCodeCoach, fastCodeAnalysis, improveCode, gradeForScore, metricRating } from "../analysis-engine.js";
 import { runCode, getRunTimeout, warmRuntime, highlight } from "../runner.js";
 
 function setAnalysisMetadata(subject, canonicalPath) {
@@ -76,10 +76,12 @@ function listBlock(label, items, tone = "") {
     h("ul", {}, ...rows));
 }
 
-function metricCard(label, value, explanation) {
-  return h("article", { class: "analysis-metric-card" },
-    h("div", { class: "label" }, label),
+function metricCard(label, value, explanation, best = "") {
+  const rating = best ? metricRating(value, best) : null;
+  return h("article", { class: `analysis-metric-card${rating ? ` metric-grade-${rating.tier}` : ""}` },
+    h("div", { class: "between gap-2" }, h("div", { class: "label" }, label), rating ? h("span", { class: "analysis-metric-grade" }, `${rating.percent}% · ${rating.letter}`) : null),
     h("strong", { class: "mono" }, value || "—"),
+    best ? h("span", { class: "analysis-metric-best" }, `Best target: ${best}`) : null,
     h("p", {}, explanation || "The assistant will explain this metric after analysis."));
 }
 
@@ -218,19 +220,16 @@ function codePane(state, rerender) {
   const share = shareControl(state, rerender);
   const improvement = state.improvements?.[activeKey];
   const changeRows = improvement?.steps?.slice(0, state.appliedSteps?.[activeKey] || 0).map((step, index) => h("div", { class: "analysis-code-change" }, h("strong", {}, `${index + 1}. ${step.title}`), h("p", {}, step.explanation))) || [];
-  let analyzeLocalButton = null;
   const editorTextarea = h("textarea", { class: "analysis-editor-input", spellcheck: "false", onInput: (event) => {
     state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: event.target.value };
-    if (analyzeLocalButton) analyzeLocalButton.disabled = !materiallyDifferentCode(event.target.value, submittedCode) || state.running;
+    if (state.primaryAnalysisLabel) state.primaryAnalysisLabel.textContent = materiallyDifferentCode(event.target.value, submittedCode) ? "Analyze local edits" : "Refresh analysis";
   } });
   editorTextarea.value = displayCode;
   const results = Array.isArray(state.editorResults) ? state.editorResults : [];
   const passed = results.filter((result) => result.pass).length;
   const resultRows = results.map((result) => h("article", { class: "analysis-editor-result " + (result.pass ? "pass" : "fail") }, h("strong", {}, result.index ? `Test ${result.index}${result.hidden ? " · hidden" : ""}` : "Run status"), h("span", {}, result.pass ? "Passed" : result.error || "Wrong answer"), !result.hidden && !result.pass && result.expected !== undefined ? h("pre", {}, `Expected: ${result.expected}\nReceived: ${result.output || "(empty)"}`) : null));
-  const hasLocalEdits = materiallyDifferentCode(displayCode, submittedCode);
-  analyzeLocalButton = h("button", { class: "btn btn-sm", disabled: state.running || !hasLocalEdits, onClick: () => runAnalysis(state, rerender) }, icon("bulb", 13), "Analyze local edits");
   const editorPanel = state.editorMode && canEdit ? h("section", { class: "analysis-editor" },
-    h("div", { class: "analysis-editor-head" }, h("div", {}, h("div", { class: "label" }, "// Local editor"), h("p", {}, "Edits and test runs stay in this browser. They never affect solve time, completion, or saved submissions.")), h("div", { class: "analysis-editor-actions" }, analyzeLocalButton, h("button", { class: "btn btn-sm btn-primary", disabled: state.editorRunning || !displayCode.trim(), onClick: () => runSandboxTests(state, activeKey, language, rerender) }, icon("play", 13), state.editorRunning ? "Running…" : "Run tests"))),
+    h("div", { class: "analysis-editor-head" }, h("div", {}, h("div", { class: "label" }, "// Local editor"), h("p", {}, "Edits and test runs stay in this browser. They never affect solve time, completion, or saved submissions. Use the Analysis button to review local edits against the original.")), h("button", { class: "btn btn-sm btn-primary", disabled: state.editorRunning || !displayCode.trim(), onClick: () => runSandboxTests(state, activeKey, language, rerender) }, icon("play", 13), state.editorRunning ? "Running…" : "Run tests")),
     editorTextarea,
     state.editorRuntimeStatus ? h("p", { class: "analysis-editor-status" }, state.editorRuntimeStatus) : null,
     results.length ? h("div", { class: "analysis-editor-results" }, h("div", { class: "label mb-2" }, `// ${passed}/${results.length} tests passed`), ...resultRows) : null) : null;
@@ -261,8 +260,8 @@ function reportContent(analysis, state) {
     h("div", { class: "analysis-score-ring" }, h("strong", {}, grade.letter)),
     h("div", {}, h("div", { class: "label" }, "// Code grade"), h("h2", { class: "head mt-1" }, grade.label), h("p", { class: "body-text mt-2" }, grade.description)));
   const metrics = h("div", { class: "analysis-metrics-grid" },
-    metricCard("Time complexity", analysis.timeComplexity, analysis.timeComplexityExplanation),
-    metricCard("Space complexity", analysis.spaceComplexity, analysis.spaceComplexityExplanation),
+    metricCard("Time complexity", analysis.timeComplexity, analysis.timeComplexityExplanation, analysis.bestTimeComplexity),
+    metricCard("Space complexity", analysis.spaceComplexity, analysis.spaceComplexityExplanation, analysis.bestSpaceComplexity),
     metricCard("Code quality", analysis.codeQuality, analysis.codeQualityExplanation));
   const sections = [
     score,
@@ -371,7 +370,9 @@ async function runAnalysis(state, rerender) {
 function analysisPane(state, rerender) {
   const payload = selectedPayload(state);
   const subjectLabel = payload.key === "opponent" ? "opponent code" : "your code";
-  const analyze = h("button", { class: "btn btn-primary", disabled: state.running || !String(payload.displayCode || "").trim(), onClick: () => runAnalysis(state, rerender) }, icon("bulb", 15), payload.isLocalEdit ? "Analyze local edits" : payload.analysis ? "Refresh analysis" : "Start analysis");
+  const analyzeLabel = h("span", {}, payload.isLocalEdit ? "Analyze local edits" : payload.analysis ? "Refresh analysis" : "Start analysis");
+  const analyze = h("button", { class: "btn btn-primary", disabled: state.running || !String(payload.displayCode || "").trim(), onClick: () => runAnalysis(state, rerender) }, icon("bulb", 15), analyzeLabel);
+  state.primaryAnalysisLabel = analyzeLabel;
   const improvement = state.improvements?.[payload.key];
   const improvementState = state.improvementStates?.[payload.key];
   const appliedCount = state.appliedSteps?.[payload.key] || 0;
@@ -454,8 +455,14 @@ function shareControl(state, rerender) {
   return { button, panel: h("section", { class: "analysis-share-popover" }, visibility, link, privateHint) };
 }
 
+function defaultPaneSizes() {
+  const viewport = typeof window === "undefined" ? 1600 : window.innerWidth;
+  const side = Math.min(520, Math.max(220, Math.floor((viewport - 358) / 2)));
+  return { problem: side, analysis: side };
+}
+
 function paneGridColumns(state) {
-  const sizes = state.paneSizes || { problem: 330, analysis: 390 };
+  const sizes = state.paneSizes || defaultPaneSizes();
   return `${sizes.problem}px 9px minmax(340px, 1fr) 9px ${sizes.analysis}px`;
 }
 
@@ -463,7 +470,7 @@ function paneResizer(side, state, grid, rerender) {
   return h("div", { class: "analysis-pane-resizer", role: "separator", tabindex: "0", "aria-orientation": "vertical", "aria-label": `Resize ${side} pane`, onPointerdown: (event) => {
     if (window.innerWidth <= 880) return;
     event.preventDefault();
-    const sizes = state.paneSizes || { problem: 330, analysis: 390 };
+    const sizes = state.paneSizes || defaultPaneSizes();
     const initial = side === "problem" ? sizes.problem : sizes.analysis;
     const startX = event.clientX;
     const adjust = (move) => {
@@ -485,7 +492,7 @@ function paneResizer(side, state, grid, rerender) {
 function renderWorkspace(root, state) {
   state.solution = state.solution || {};
   state.problem = state.problem || { archetypeId: state.solution.archetypeId, title: state.solution.title || "Coding problem", description: "Problem details are unavailable for this saved solution." };
-  state.paneSizes = state.paneSizes || { problem: 330, analysis: 390 };
+  state.paneSizes = state.paneSizes || defaultPaneSizes();
   clear(root);
   const page = h("div", { class: "analysis-workspace" });
   root.append(page);

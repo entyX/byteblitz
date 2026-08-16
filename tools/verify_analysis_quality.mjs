@@ -1,4 +1,4 @@
-import { fastCodeAnalysis, gradeForScore } from "../public/js/js/analysis-engine.js";
+import { fastCodeAnalysis, gradeForScore, metricRating } from "../public/js/js/analysis-engine.js";
 
 const code = [
   "n = int(input())",
@@ -21,4 +21,7 @@ const gradeCases = [[95, "S"], [86, "A"], [78, "B"], [66, "C"], [53, "D"], [20, 
 if (!gradeCases.every(([score, letter]) => gradeForScore(score).letter === letter)) {
   throw new Error("Letter-grade thresholds are not stable.");
 }
-console.log("analysis quality fallback and grades: PASS");
+if (metricRating("Likely O(N)", "O(N) single-pass target").letter !== "S" || metricRating("Likely O(N²)", "O(N) single-pass target").letter !== "C") {
+  throw new Error("Complexity metric grades are not stable.");
+}
+console.log("analysis quality fallback, grades, and metric ratings: PASS");

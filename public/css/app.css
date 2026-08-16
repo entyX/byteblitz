@@ -1686,7 +1686,7 @@ select.input { cursor: pointer; }
 .solution-visibility-switch.compact { margin: 0; min-height: 32px; }
 
 .analysis-workspace { min-height: calc(100vh - var(--nav-h, 70px)); background: hsl(240 7% 5%); }
-.analysis-workspace-grid { display: grid; grid-template-columns: 330px 9px minmax(340px, 1fr) 9px 390px; min-height: calc(100vh - var(--nav-h, 70px)); }
+.analysis-workspace-grid { display: grid; grid-template-columns: 520px 9px minmax(340px, 1fr) 9px 520px; min-height: calc(100vh - var(--nav-h, 70px)); }
 .analysis-pane { min-width: 0; min-height: 0; padding: 19px; border-right: 1px solid var(--border); background: hsl(240 7% 6%); }
 .analysis-pane:last-child { border-right: 0; }
 .analysis-pane-resizer { position: relative; z-index: 5; width: 9px; cursor: col-resize; touch-action: none; background: linear-gradient(90deg, transparent 3px, hsl(0 0% 100% / .1) 3px, hsl(0 0% 100% / .1) 4px, transparent 4px); transition: background .15s ease; }
@@ -1769,6 +1769,14 @@ select.input { cursor: pointer; }
 .analysis-metric-card { padding: 12px; border: 1px solid var(--border); background: hsl(240 7% 5% / .65); }
 .analysis-metric-card strong { display: block; margin-top: 6px; color: var(--foreground); font-size: 12px; }
 .analysis-metric-card p { margin: 6px 0 0; color: var(--muted-fg); font-size: 11px; line-height: 1.5; }
+.analysis-metric-grade { padding: 3px 6px; border: 1px solid currentColor; color: var(--muted-fg); font: 700 9px var(--font-mono); letter-spacing: .04em; }
+.analysis-metric-best { display: block; margin-top: 6px; color: var(--muted-fg); font: 9px/1.4 var(--font-mono); }
+.metric-grade-s .analysis-metric-grade { color: hsl(272 85% 72%); }
+.metric-grade-a .analysis-metric-grade { color: hsl(208 86% 68%); }
+.metric-grade-b .analysis-metric-grade { color: hsl(140 70% 61%); }
+.metric-grade-c .analysis-metric-grade { color: hsl(47 90% 66%); }
+.metric-grade-d .analysis-metric-grade { color: hsl(27 92% 66%); }
+.metric-grade-f .analysis-metric-grade { color: hsl(0 78% 68%); }
 .analysis-report .analysis-detail-block, .analysis-report .analysis-list-panel, .analysis-report .analysis-timeline { padding: 13px; border: 1px solid var(--border); background: hsl(240 7% 5% / .62); }
 .analysis-report .analysis-list-panel { min-width: 0; }
 .analysis-report .analysis-list-panel ul { margin: 0; padding-left: 17px; }
