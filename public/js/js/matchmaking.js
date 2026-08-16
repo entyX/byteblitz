@@ -8,7 +8,7 @@
 
 import {
   db, doc, setDoc, deleteDoc, updateDoc, collection, onSnapshot,
-  serverTimestamp, getDoc, runTransaction,
+  serverTimestamp, getDoc, getDocs, addDoc, query, where, runTransaction,
 } from "./firebase.js";
 import { tierFor, TIME_LIMITS } from "./glicko.js";
 
@@ -239,6 +239,7 @@ export async function createDuel(a, b, duelId, fromLobby, mode = "rated") {
     p1Ready: !fromLobby, p2Ready: !fromLobby,
     p1SolveTime: null, p2SolveTime: null,
     p1Submission: null, p2Submission: null,
+    p1SubmissionHistory: [], p2SubmissionHistory: [],
     p1BestTests: 0, p2BestTests: 0,
     winner: null, winBy: null, forfeit: null,
     drawRequestBy: null, rematchReqBy: null, newDuelId: null, abortedBy: null,
@@ -301,10 +302,13 @@ export async function submitSolve(duelId, playerNum, solveSecs, submission = {})
     if (latest.status !== "ready" || latest.winner != null) return;
     const timeField = playerNum === 1 ? "p1SolveTime" : "p2SolveTime";
     const submissionField = playerNum === 1 ? "p1Submission" : "p2Submission";
+    const historyField = playerNum === 1 ? "p1SubmissionHistory" : "p2SubmissionHistory";
+    const snapshot = sanitizeSubmission(submission);
     const myUid = playerNum === 1 ? latest.player1.uid : latest.player2.uid;
     tx.update(duelRef, {
       [timeField]: solveSecs,
-      [submissionField]: sanitizeSubmission(submission),
+      [submissionField]: snapshot,
+      [historyField]: appendSubmissionHistory(latest[historyField], snapshot),
       winner: myUid,
       winBy: "solve",
       status: "complete",
@@ -316,7 +320,7 @@ export async function submitSolve(duelId, playerNum, solveSecs, submission = {})
 /** Keep post-match snapshots compact, safe to render, and bounded within Firestore documents. */
 function sanitizeSubmission(submission = {}) {
   return {
-    code: String(submission.code || "").slice(0, 100000),
+    code: String(submission.code || "").slice(0, 18000),
     language: String(submission.language || "python").slice(0, 32),
     passed: Math.max(0, Number(submission.passed) || 0),
     submissionCount: Math.max(0, Number(submission.submissionCount) || 0),
@@ -326,12 +330,42 @@ function sanitizeSubmission(submission = {}) {
   };
 }
 
-export async function recordSubmission(duelId, playerNum, submission = {}) {
+function appendSubmissionHistory(history, snapshot) {
+  const entries = Array.isArray(history) ? history.slice(-7) : [];
+  const previous = entries[entries.length - 1];
+  const sameAttempt = previous && previous.code === snapshot.code && previous.submissionCount === snapshot.submissionCount && previous.passed === snapshot.passed;
+  const entry = { ...snapshot, recordedAt: Date.now() };
+  return sameAttempt ? [...entries.slice(0, -1), entry] : [...entries, entry];
+}
+
+export async function recordSubmission(duelId, playerNum, submission = {}, uid = null) {
   const duelRef = doc(db, "duels", duelId);
   const submissionField = playerNum === 1 ? "p1Submission" : "p2Submission";
+  const historyField = playerNum === 1 ? "p1SubmissionHistory" : "p2SubmissionHistory";
+  const snapshot = sanitizeSubmission(submission);
+  const recordedAt = Date.now();
   try {
-    await updateDoc(duelRef, { [submissionField]: sanitizeSubmission(submission) });
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(duelRef);
+      if (!snap.exists()) return;
+      const latest = snap.data();
+      tx.update(duelRef, {
+        [submissionField]: snapshot,
+        [historyField]: appendSubmissionHistory(latest[historyField], snapshot),
+      });
+    });
+    if (uid) {
+      await addDoc(collection(db, "duels", duelId, "submissions"), { ...snapshot, uid, playerNum, recordedAt });
+    }
   } catch { /* Post-match telemetry is best effort and must not interrupt play. */ }
+}
+
+/** Full private submission progression for C3 analysis. Older matches fall back to the compact duel history. */
+export async function getDuelSubmissionHistory(duelId, uid) {
+  if (!duelId || !uid) return [];
+  const snap = await getDocs(query(collection(db, "duels", duelId, "submissions"), where("uid", "==", uid)));
+  return snap.docs.map((entry) => ({ id: entry.id, ...entry.data() }))
+    .sort((a, b) => Number(a.recordedAt || 0) - Number(b.recordedAt || 0));
 }
 
 export async function reportTestProgress(duelId, playerNum, passed) {

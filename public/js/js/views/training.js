@@ -16,10 +16,11 @@ import { loadPool } from "../problems.js";
 import {
   getMyPuzzleRecords, puzzleLeaderboard, puzzleLeaderboardDetailed, puzzleLeaderboardIds,
   getSavedSolution, getAccomplishableSolution, getSavedSolutions, getSolutionHistory, toggleAccomplishment,
-  setSolutionVisibility, getPublicPuzzleSolution, getPublicPuzzleSolutions, trashSavedSolution, syncSavedSolutionsToPuzzleRecords,
+  setSolutionVisibility, getPublicPuzzleSolution, getPublicPuzzleSolutions, saveSolutionAnalysis, trashSavedSolution, syncSavedSolutionsToPuzzleRecords,
   seenMap, isPermissionDenied, isRevealed, starterCount,
 } from "../store.js";
 import { startTraining } from "../game.js";
+import { fastCodeAnalysis } from "../analysis-engine.js";
 import { navigate } from "../router.js";
 
 export async function renderTraining(params, root) {
@@ -279,10 +280,10 @@ export async function renderTraining(params, root) {
   function solutionButton(pz, solution) {
     return h("button", {
       class: "trophy-btn solution-shortcut" + (solution.completed ? " completed" : " incomplete"),
-      title: solution.completed ? "View your saved solution" : "View your incomplete draft",
-      "aria-label": "View your saved solution for " + pz.title,
-      onClick: (e) => { e.stopPropagation(); openSavedSolution(pz, solution); },
-    }, icon("pencil", 14));
+      title: solution.completed ? "Analyze your saved solution" : "Analyze your incomplete draft",
+      "aria-label": "Analyze your saved solution for " + pz.title,
+      onClick: (e) => { e.stopPropagation(); navigate(`/analysis/${encodeURIComponent(session.profile.uid)}/${encodeURIComponent(pz.archetypeId)}`); },
+    }, icon("bulb", 14));
   }
 
   function trophyButton(pz, unknown) {
@@ -371,9 +372,13 @@ export async function renderTraining(params, root) {
           visibility.querySelector(".label").textContent = updated.isPublic ? "Public" : "Private";
           renderPublicLink();
           if (updated.isPublic) {
+            if (!updated.analysis) {
+              const analysis = fastCodeAnalysis({ code: updated.code, language: updated.language, problem: pz, submissions: [] });
+              Object.assign(solution, { analysis: await saveSolutionAnalysis(profile, pz.archetypeId, analysis, { source: "training" }) });
+            }
             const url = `${window.location.origin}/share/${updated.publicShareId}`;
-            try { await navigator.clipboard.writeText(url); toast("Public solution link copied.", "ok"); }
-            catch { prompt("Copy your public solution link:", url); }
+            try { await navigator.clipboard.writeText(url); toast("Public solution and analysis link copied.", "ok"); }
+            catch { prompt("Copy your public solution and analysis link:", url); }
           } else toast("Solution is private again.", "ok");
         } catch (error) {
           toggle.checked = !toggle.checked;
@@ -389,8 +394,10 @@ export async function renderTraining(params, root) {
               completed ? `${solution.completedSubmits || 1} accepted submit${(solution.completedSubmits || 1) === 1 ? "" : "s"} · best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete save${(solution.incompleteSaves || 1) === 1 ? "" : "s"}`)),
           h("span", { class: "pill" + (completed ? " pill-ok" : "") }, solution.language)),
         h("div", { class: "row gap-2 wrapflex mt-3" },
-          h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openSavedSolution(pz, solution) },
+          h("button", { class: "btn btn-sm solution-view-btn", onClick: () => openSavedSolution(pz, solution) },
             icon("pencil", 14), "View solution"),
+          h("button", { class: "btn btn-sm btn-primary", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(pz.archetypeId)}`) },
+            icon("bulb", 14), "Analyze My Code"),
           accomplishment, visibility),
         publicLinkHost,
       );
@@ -438,6 +445,7 @@ export async function renderTraining(params, root) {
           : `${solution.language} · ${solution.lastMode} · incomplete draft`),
       h("div", { class: "row gap-2 wrapflex mt-4" },
         h("button", { class: "btn btn-sm btn-primary", onClick: () => startTraining(solution.difficulty, solution.archetypeId) }, "Play puzzle"),
+        h("button", { class: "btn btn-sm", onClick: () => navigate(`/analysis/${encodeURIComponent(session.profile.uid)}/${encodeURIComponent(solution.archetypeId)}`) }, icon("bulb", 14), "Analyze My Code"),
         solution.isPublic ? h("span", { class: "pill pill-ok" }, "Public") : h("span", { class: "pill" }, "Private")),
       code,
       h("div", { class: "section-title mt-6" }, "// Submission history"),
@@ -634,9 +642,13 @@ export async function renderTraining(params, root) {
       try {
         Object.assign(solution, await setSolutionVisibility(profile, solution.archetypeId, toggle.checked));
         if (solution.isPublic) {
+          if (!solution.analysis) {
+            const analysis = fastCodeAnalysis({ code: solution.code, language: solution.language, problem: solution, submissions: [] });
+            Object.assign(solution, { analysis: await saveSolutionAnalysis(profile, solution.archetypeId, analysis, { source: "training" }) });
+          }
           const url = `${window.location.origin}/share/${solution.publicShareId}`;
-          try { await navigator.clipboard.writeText(url); toast("Public solution link copied.", "ok"); }
-          catch { prompt("Copy your public solution link:", url); }
+          try { await navigator.clipboard.writeText(url); toast("Public solution and analysis link copied.", "ok"); }
+          catch { prompt("Copy your public solution and analysis link:", url); }
         } else toast("Solution is private again.", "ok");
         paintSolutionsWorkspace();
       } catch (error) {
@@ -676,8 +688,10 @@ export async function renderTraining(params, root) {
         h("span", {}, completed ? `Best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete ${solution.incompleteSaves === 1 ? "draft" : "drafts"}`),
         h("span", {}, `${solution.saveCount || 1} saved`)),
       h("div", { class: "row gap-2 wrapflex mt-5" },
-        h("button", { class: "btn btn-sm btn-primary solution-view-btn", onClick: () => openSavedSolution(solution, solution) },
+        h("button", { class: "btn btn-sm solution-view-btn", onClick: () => openSavedSolution(solution, solution) },
           icon("pencil", 14), "View solution"),
+        h("button", { class: "btn btn-sm btn-primary", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(solution.archetypeId)}`) },
+          icon("bulb", 14), "Analyze My Code"),
         trash),
       h("div", { class: "row gap-2 wrapflex mt-3" }, accomplishment, visibility),
       publicLink ? h("div", { class: "solution-public-url mt-3" }, h("span", { class: "label" }, "Public link"), publicLink) : null);

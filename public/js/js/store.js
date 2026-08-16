@@ -674,6 +674,7 @@ export async function saveSolution(profile, puzzle, {
   const before = previous.exists() ? previous.data() : null;
   const now = Date.now();
   const source = String(code).slice(0, 100000);
+  const analysisStillMatches = String(before?.code || "") === source;
   const everCompleted = !!before?.completed || !!completed;
   const bestTimeMs = completed
     ? (Number.isFinite(before?.bestTimeMs) ? Math.min(before.bestTimeMs, timeMs) : timeMs)
@@ -700,9 +701,17 @@ export async function saveSolution(profile, puzzle, {
     pinned: !!before?.pinned,
     isPublic: !!before?.isPublic,
     publicShareId: before?.publicShareId ?? null,
+    analysis: analysisStillMatches ? (before?.analysis ?? null) : null,
+    analysisUpdatedAt: analysisStillMatches ? (before?.analysisUpdatedAt ?? null) : null,
     updatedAt: now,
   };
   await setDoc(ref, payload, { merge: true });
+  if (payload.isPublic && payload.publicShareId) {
+    await updateDoc(doc(db, "sharedSolutions", payload.publicShareId), {
+      code: source, language: payload.language, mode: payload.lastMode, bestTimeMs: payload.bestTimeMs,
+      analysis: payload.analysis, analysisUpdatedAt: payload.analysisUpdatedAt, createdAt: now,
+    }).catch(() => {});
+  }
   await addDoc(collection(db, "users", profile.uid, "solutions", puzzle.archetypeId, "history"), {
     code: source,
     language: payload.language,
@@ -740,6 +749,8 @@ function normalizeSolution(id, data = {}) {
     publicShareId: data.publicShareId ?? data.lastShareId ?? null,
     accomplishment: !!data.accomplishment,
     pinned: !!data.pinned,
+    analysis: data.analysis ?? null,
+    analysisUpdatedAt: data.analysisUpdatedAt ?? null,
   };
 }
 
@@ -837,6 +848,28 @@ export async function getSolutionHistory(uid, archetypeId, n = 30) {
 }
 
 /** Permanently remove one saved puzzle solution, its attempt history, and any public share. */
+export async function saveSolutionAnalysis(profile, archetypeId, analysis, context = {}) {
+  if (!profile || isGuestProfile(profile)) throw new Error("Sign in to save an analysis.");
+  const solution = await getSavedSolution(profile.uid, archetypeId);
+  if (!solution) throw new Error("Save code before creating an analysis.");
+  const now = Date.now();
+  const payload = {
+    ...analysis,
+    context: {
+      source: context.source || "training",
+      duelId: context.duelId || null,
+      analyzedAt: now,
+    },
+    analyzedAt: now,
+  };
+  await updateDoc(solutionRef(profile.uid, archetypeId), { analysis: payload, analysisUpdatedAt: now, updatedAt: now });
+  if (solution.isPublic && solution.publicShareId) {
+    const publicAnalysis = { ...payload, context: { source: context.source || "training", analyzedAt: now } };
+    await updateDoc(doc(db, "sharedSolutions", solution.publicShareId), { analysis: publicAnalysis, analysisUpdatedAt: now });
+  }
+  return payload;
+}
+
 export async function trashSavedSolution(profile, archetypeId) {
   if (!profile || isGuestProfile(profile)) throw new Error("Sign in to trash a solution.");
   const solution = await getSavedSolution(profile.uid, archetypeId);
@@ -954,6 +987,8 @@ export async function setSolutionVisibility(profile, archetypeId, isPublic) {
     mode: solution.lastMode,
     bestTimeMs: solution.bestTimeMs ?? null,
     accomplishment: !!solution.accomplishment,
+    analysis: solution.analysis ?? null,
+    analysisUpdatedAt: solution.analysisUpdatedAt ?? null,
     createdAt: Date.now(),
   };
   await setDoc(doc(db, "sharedSolutions", shareId), share);

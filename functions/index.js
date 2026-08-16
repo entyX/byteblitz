@@ -30,8 +30,8 @@ exports.sharePreview = onRequest(async (req, res) => {
 
   const owner = share.ownerUsername || "A ByteBlitz player";
   const title = share.title || "a coding problem";
-  const pageTitle = `View ${owner}'s solution to ${title} | ByteBlitz`;
-  const description = `View ${owner}'s solution to ${title} on ByteBlitz.`;
+  const pageTitle = `AI analysis: ${owner}'s solution to ${title} | ByteBlitz`;
+  const description = `View ${owner}'s submitted code and AI analysis for ${title} on ByteBlitz.`;
   const destination = `/#/share/${encodeURIComponent(id)}`;
   const canonical = `${req.protocol}://${req.get("host")}/share/${encodeURIComponent(id)}`;
   const html = `<!doctype html>

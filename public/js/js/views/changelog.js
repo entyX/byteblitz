@@ -6,9 +6,20 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
-    version: "v1.3 [C2 BETA]",
+    version: "v1.3 [C3 BETA]",
     date: "August 15, 2026",
     current: true,
+    items: [
+      "Chunk 3 introduces browser-local AI code analysis powered by Qwen and WebGPU. The first model load is cached by the browser, and source stays on-device while the analysis and coaching chat run.",
+      "Every saved solution can open a dedicated analysis URL with an efficiency score, estimated time and space complexity, code-quality review, strengths, weaknesses, optimization ideas, and an explanation of the approach.",
+      "Public solution links now combine source code and AI analysis. Private analysis links remain owner-only and clearly explain when a viewer must ask the owner to make the solution public.",
+      "Post-match analysis retains a bounded timeline of duel submissions, so players can review test progress, diagnose losses, compare an opponent’s final approach, and talk through improvements with ByteBlitz Coach.",
+    ],
+  },
+  {
+    version: "v1.3 [C2 BETA]",
+    date: "August 15, 2026",
+    current: false,
     items: [
       "Chunk 2 turns every Ranked and Casual duel result into a fuller post-match event, including the outcome, problem, opponent, solve times, tests passed, ELO movement, submissions, test runtime, and browser memory delta when the browser exposes it.",
       "After a duel, both participants can open a side-by-side comparison of the code they submitted during the match. The latest submitted source and performance summary are preserved only on the private duel record.",

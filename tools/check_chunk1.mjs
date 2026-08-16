@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 const read = (relative) => readFile(new URL(relative, root), "utf8");
 
-const [arena, game, store, training, profile, home, share, app, index, changelog, rules, duelPresence, firebase, css] = await Promise.all([
+const [arena, game, store, training, profile, home, share, analysis, analysisEngine, matchmaking, app, index, changelog, rules, duelPresence, firebase, css] = await Promise.all([
   read("public/js/js/arena.js"),
   read("public/js/js/game.js"),
   read("public/js/js/store.js"),
@@ -12,6 +12,9 @@ const [arena, game, store, training, profile, home, share, app, index, changelog
   read("public/js/js/views/profile.js"),
   read("public/js/js/views/home.js"),
   read("public/js/js/views/share.js"),
+  read("public/js/js/views/analysis.js"),
+  read("public/js/js/analysis-engine.js"),
+  read("public/js/js/matchmaking.js"),
   read("public/js/js/app.js"),
   read("public/index.html"),
   read("public/js/js/views/changelog.js"),
@@ -57,15 +60,18 @@ assert.match(profile, /createElementNS/, "rating graphs must use real SVG elemen
 assert.match(home, /home-news/, "the home dashboard must include the news panel");
 assert.match(home, /streak % 5 === 0/, "friend streak news must use five-day milestones");
 assert.match(share, /PUBLIC SOLUTION/, "the public share route needs a dedicated UI");
-assert.match(app, /route\("\/share\/:id", renderPublicSolution\)/, "the public share route must be registered");
+assert.match(app, /route\("\/share\/:id", renderPublicAnalysis\)/, "the public analysis share route must be registered");
+assert.match(app, /route\("\/analysis\/duel\/:id", renderDuelAnalysis\)/, "post-match analysis must have a dedicated URL");
+assert.match(app, /route\("\/analysis\/:uid\/:archetypeId", renderPrivateAnalysis\)/, "private solution analysis must have a dedicated URL");
 assert.match(rules, /match \/users\/\{uid\}\/solutions\/\{archetypeId\}/, "private solution documents need explicit rules");
 assert.match(rules, /match \/sharedSolutions\/\{shareId\}/, "public share snapshots need explicit rules");
-assert.match(index, /v1\.3 \[C2 BETA\]/, "page metadata must identify the active Chunk 2 beta");
-assert.match(app, /v1\.3 \[C2 BETA\]/, "navigation must identify the active Chunk 2 beta");
-assert.match(arena, /v1\.3 \[C2 BETA\]/, "arena boot copy must identify the active Chunk 2 beta");
-assert.match(changelog, /version: "v1\.3 \[C2 BETA\]"/, "changelog must identify the active Chunk 2 beta");
+assert.match(index, /v1\.3 \[C3 BETA\]/, "page metadata must identify the active Chunk 3 beta");
+assert.match(app, /v1\.3 \[C3 BETA\]/, "navigation must identify the active Chunk 3 beta");
+assert.match(arena, /v1\.3 \[C3 BETA\]/, "arena boot copy must identify the active Chunk 3 beta");
+assert.match(changelog, /version: "v1\.3 \[C3 BETA\]"/, "changelog must identify the active Chunk 3 beta");
+assert.match(changelog, /version: "v1\.3 \[C2 BETA\]"/, "changelog must retain the prior Chunk 2 beta history");
 assert.match(changelog, /version: "v1\.3 \[C1 BETA\]"/, "changelog must retain the prior Chunk 1 beta history");
-assert.match(changelog, /date: "August 15, 2026"/, "C2 beta must carry the requested August 15 release date");
+assert.match(changelog, /date: "August 15, 2026"/, "C3 beta must carry the requested August 15 release date");
 assert.match(game, /joinDuelPresence/, "duels must establish dedicated live presence");
 assert.match(duelPresence, /rtdbOnDisconnect/, "live presence must clean up on a real disconnect");
 assert.match(firebase, /getDatabase/, "Firebase bootstrap must expose Realtime Database");
@@ -76,5 +82,16 @@ assert.match(training, /icon\("trash"/, "My Solutions must expose a trash-icon c
 assert.match(profile, /Solve time/, "accomplishment cards must show best solve time");
 assert.match(css, /result-actions/, "post-game actions must have a centered action class");
 assert.match(css, /modal-postmatch-comparison/, "code comparison must request an enlarged responsive modal");
+assert.match(analysisEngine, /Qwen2\.5-Coder-1\.5B-Instruct/, "analysis must use the requested fast local Qwen coding model");
+assert.match(analysisEngine, /CreateMLCEngine/, "analysis must load the browser-local model through WebLLM");
+assert.match(analysisEngine, /askCodeCoach/, "analysis must provide a local coaching chat");
+assert.match(analysis, /This solution is private/, "private analysis links must show a clear access message");
+assert.match(analysis, /Submission progression/, "analysis must present all retained submission progress");
+assert.match(training, /Analyze My Code/, "Training Grounds must expose Analyze My Code");
+assert.match(training, /icon\("bulb"/, "Training analysis shortcuts must use the lightbulb icon");
+assert.match(game, /Analyze match/, "duel results must expose post-match analysis");
+assert.match(store, /export async function saveSolutionAnalysis/, "solution analysis must be persisted for owner and public-share views");
+assert.match(matchmaking, /getDuelSubmissionHistory/, "duels must retain full submission progression for analysis");
+assert.match(rules, /duels\/\{duelId\}\/submissions/, "duel submission history needs participant-only Firestore rules");
 
 console.log("v1.3 chunk 1 checks passed");

@@ -5,7 +5,7 @@
 // listening for the opponent, and writing the result to Firestore exactly once.
 // ============================================================================
 
-import { h, clear, modal, toast, fmtTime, confirmModal } from "./ui.js";
+import { h, clear, modal, toast, fmtTime, confirmModal, icon } from "./ui.js";
 import { openArena } from "./arena.js";
 import { joinDuelPresence } from "./duel-presence.js";
 
@@ -591,7 +591,7 @@ export async function enterDuel(duelId, identity = null) {
     onTestProgress: (n) => mm.reportTestProgress(duelId, playerNum, n),
     onSubmission: (r) => {
       latestSubmission = r;
-      mm.recordSubmission(duelId, playerNum, r);
+      mm.recordSubmission(duelId, playerNum, r, activeIdentity.uid);
     },
     onOfferDraw: async () => {
       try { await mm.offerDraw(duelId, profile.uid); toast("Draw offered.", "", 2200); }
@@ -831,6 +831,7 @@ function duelResultScreen(o) {
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       compare,
+      h("button", { class: "btn", disabled: !duel?.id, onClick: () => navigate(`/analysis/duel/${encodeURIComponent(duel.id)}`) }, icon("bulb", 14), "Analyze match"),
       h("button", { class: "btn btn-primary", onClick: o.onRematch }, "Rematch ▸"),
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena"),
     ),

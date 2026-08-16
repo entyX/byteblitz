@@ -127,6 +127,21 @@ service cloud.firestore {
          request.auth.uid == resource.data.player2.uid);
     }
 
+    // Full in-match submission histories power private C3 coaching. They are
+    // available only to the two duel participants, and a player may create only
+    // their own immutable snapshots.
+    match /duels/{duelId}/submissions/{submissionId} {
+      allow read: if verifiedUser() &&
+        exists(/databases/$(database)/documents/duels/$(duelId)) &&
+        (request.auth.uid == get(/databases/$(database)/documents/duels/$(duelId)).data.player1.uid ||
+         request.auth.uid == get(/databases/$(database)/documents/duels/$(duelId)).data.player2.uid);
+      allow create: if verifiedUser() && request.resource.data.uid == request.auth.uid &&
+        exists(/databases/$(database)/documents/duels/$(duelId)) &&
+        (request.auth.uid == get(/databases/$(database)/documents/duels/$(duelId)).data.player1.uid ||
+         request.auth.uid == get(/databases/$(database)/documents/duels/$(duelId)).data.player2.uid);
+      allow update, delete: if false;
+    }
+
     // ── Friend challenges ────────────────────────────────────────────────────
     match /challenges/{challengeId} {
       allow read:   if verifiedUser() &&
