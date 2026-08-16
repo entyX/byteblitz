@@ -40,7 +40,7 @@ export const RANKED_ELO_WINDOW = mm.ELO_WINDOW;
 // ════════════════════════════════════════════════════════════════════════════
 // UNRANKED — race the clock, own rating track, never touches ranked
 // ════════════════════════════════════════════════════════════════════════════
-export async function startSolo(preset) {
+export async function startSolo(preset, hooks = {}) {
   const player = session.profile;
 
   // No difficulty picker: unranked is a measurement, and you don't get to pick
@@ -59,9 +59,13 @@ export async function startSolo(preset) {
       existingPool,
       seenIds: Object.keys(seenMap(session.profile)),
       forceGenerated: c4QuestionMode() === "generated_only",
-      onGenerate: (progress) => { if (progress?.text) console.debug("C4 Burst", progress.text); },
+      onGenerate: (progress) => {
+        hooks.onProgress?.(progress);
+        if (progress?.text) console.debug("C4 Burst", progress.text);
+      },
     });
   } catch (e) {
+    hooks.onError?.(e);
     toast(e.message, "err");
     return;
   }

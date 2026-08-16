@@ -32,6 +32,8 @@ export async function renderHome(params, root) {
   // reads "choose a gamemode".
   let mode = sessionStorage.getItem(LS_MODE) || null;
   let myRank = null;
+  let unrankedLaunching = false;
+  let unrankedLaunchStatus = "";
 
   const railHost = h("div", { class: "rail" });
   const newsHost = h("aside", { class: "home-news" });
@@ -198,8 +200,10 @@ export async function renderHome(params, root) {
         icon(generatedOnly ? "bulb" : "target", 14), generatedOnly ? "AI-generated Burst only" : "Authored-first Burst"),
       h("p", { class: "label mt-2", style: { lineHeight: "1.5", textTransform: "none", letterSpacing: "0" } },
         generatedOnly ? "Debug mode: only validated local AI questions are selected." : "Existing authored questions are favored; Burst generation expands the pool as you progress."),
-      h("button", { class: "play-btn mt-4", onClick: onPlayUnranked },
-        p && !isPlaced(p) ? "Play placement" : "Play", icon("play", 20)),
+      unrankedLaunching
+        ? h("div", { class: "c4-launch-status", role: "status" }, h("span", { class: "spinner" }), unrankedLaunchStatus || "Preparing your Burst question…"),
+      h("button", { class: "play-btn mt-4", disabled: unrankedLaunching, onClick: onPlayUnranked },
+        unrankedLaunching ? "Loading…" : (p && !isPlaced(p) ? "Play placement" : "Play"), icon("play", 20)),
     );
   }
 
@@ -253,7 +257,26 @@ export async function renderHome(params, root) {
   }
 
   async function onPlayUnranked() {
-    startSolo();
+    if (unrankedLaunching) return;
+    unrankedLaunching = true;
+    unrankedLaunchStatus = "Loading authored problems…";
+    paintElo();
+    try {
+      await startSolo(undefined, {
+        onProgress: (progress) => {
+          unrankedLaunchStatus = progress?.text || "Preparing your Burst question…";
+          paintElo();
+        },
+        onError: (error) => {
+          unrankedLaunchStatus = error?.message || "Question selection failed.";
+          paintElo();
+        },
+      });
+    } finally {
+      unrankedLaunching = false;
+      if (!unrankedLaunchStatus || /^(Loading|Preparing|Fetching|Initializing)/i.test(unrankedLaunchStatus)) unrankedLaunchStatus = "";
+      paintElo();
+    }
   }
 
   async function onPlayRanked() {

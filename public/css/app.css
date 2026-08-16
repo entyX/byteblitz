@@ -535,6 +535,8 @@ select.input { cursor: pointer; }
 
 .home-side { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
 .home-main { display: flex; flex-direction: column; min-height: 0; }
+.c4-launch-status { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 30px; margin-top: 12px; padding: 8px 10px; border: 1px solid hsl(var(--primary-raw) / .34); background: hsl(var(--primary-raw) / .06); color: var(--muted-fg); font: 700 10px var(--font-mono); letter-spacing: .04em; text-align: center; }
+.c4-launch-status .spinner { width: 13px; height: 13px; border-width: 2px; flex: none; }
 
 /* ── Shortcut tiles ──────────────────────────────────────────────────────── */
 .side-tiles { display: flex; flex-direction: column; gap: 10px; flex: none; }
