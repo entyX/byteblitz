@@ -1726,6 +1726,8 @@ select.input { cursor: pointer; }
 .analysis-editor { display: grid; grid-template-rows: auto minmax(300px, 1fr) auto auto; align-content: start; gap: 12px; flex: 1; min-height: 0; }
 .analysis-editor-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .analysis-editor-head .btn { flex: none; align-self: flex-start; min-width: 112px; }
+.analysis-editor-actions { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.analysis-editor-actions .btn { min-width: auto; }
 .analysis-editor-head p, .analysis-editor-status { margin: 5px 0 0; color: var(--muted-fg); font: 10.5px/1.55 var(--font-mono); }
 .analysis-editor-input { width: 100%; min-height: 300px; height: clamp(300px, 48vh, 620px); resize: vertical; padding: 14px; border: 1px solid hsl(var(--primary-raw) / .42); outline: 0; background: hsl(240 8% 3%); color: hsl(0 0% 90%); font: 12px/1.7 var(--font-mono); tab-size: 2; white-space: pre; }
 .analysis-editor-input:focus { border-color: hsl(var(--primary-raw) / .82); box-shadow: 0 0 0 2px hsl(var(--primary-raw) / .12); }
@@ -1784,6 +1786,7 @@ select.input { cursor: pointer; }
 .analysis-chat-code { margin: 0; padding: 11px; overflow: auto; border: 0; background: transparent; font: 11px/1.65 var(--font-mono); white-space: pre; }
 .analysis-chat-list { margin: 9px 0 0; padding-left: 18px; color: var(--muted-fg); font-size: 11px; line-height: 1.65; }
 .analysis-chat-message code { padding: 1px 4px; background: hsl(var(--primary-raw) / .1); color: hsl(0 0% 92%); font: .94em var(--font-mono); }
+.analysis-coach-unchanged { margin: 9px 0 0; padding: 8px 10px; border-left: 2px solid var(--muted); color: var(--muted-fg); font: 10px/1.5 var(--font-mono); }
 @media (max-width: 1120px) {
   .analysis-workspace-grid { grid-template-columns: minmax(225px, .78fr) minmax(340px, 1.22fr) minmax(260px, .9fr); }
   .analysis-pane { padding: 14px; }
@@ -1801,6 +1804,9 @@ select.input { cursor: pointer; }
   .analysis-pane { border-right: 0; border-bottom: 1px solid var(--border); }
   .analysis-code-pane { min-height: 440px; }
   .analysis-workspace-code { min-height: 360px; font-size: 11px; }
+  .analysis-editor-head { flex-direction: column; }
+  .analysis-editor-actions { width: 100%; justify-content: stretch; }
+  .analysis-editor-actions .btn { flex: 1; }
   .analysis-actions { grid-template-columns: 1fr; }
   .solution-card-actions { grid-template-columns: 1fr; }
   .solution-analyze-btn { width: 100%; }

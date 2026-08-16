@@ -122,6 +122,10 @@ function normalizeCodeBlock(code) {
   return lines.map((line) => line.slice(commonIndent)).join("\n");
 }
 
+function materiallyDifferentCode(first, second) {
+  return String(first || "").replace(/\s+/g, "") !== String(second || "").replace(/\s+/g, "");
+}
+
 function inlineMarkdown(text) {
   return esc(text)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
@@ -151,6 +155,12 @@ function coachMessageBody(content, language = "", state, rerender) {
     const codeLanguage = match[1] || language;
     const code = normalizeCodeBlock(match[2]);
     const activeKey = state?.activeCodeTab || "mine";
+    const currentCode = state?.codeEdits?.[activeKey] ?? (activeKey === "opponent" ? state?.opponent?.code : state?.solution?.code) ?? "";
+    if (!materiallyDifferentCode(code, currentCode)) {
+      parts.push(h("p", { class: "analysis-coach-unchanged" }, "The coach returned the current code unchanged, so no duplicate snippet was applied."));
+      last = fence.lastIndex;
+      continue;
+    }
     const apply = state?.owner && activeKey === "mine" ? h("button", { class: "btn btn-sm", onClick: () => {
       state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: code };
       state.editorMode = true;
@@ -208,13 +218,19 @@ function codePane(state, rerender) {
   const share = shareControl(state, rerender);
   const improvement = state.improvements?.[activeKey];
   const changeRows = improvement?.steps?.slice(0, state.appliedSteps?.[activeKey] || 0).map((step, index) => h("div", { class: "analysis-code-change" }, h("strong", {}, `${index + 1}. ${step.title}`), h("p", {}, step.explanation))) || [];
-  const editorTextarea = h("textarea", { class: "analysis-editor-input", spellcheck: "false", onInput: (event) => { state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: event.target.value }; } });
+  let analyzeLocalButton = null;
+  const editorTextarea = h("textarea", { class: "analysis-editor-input", spellcheck: "false", onInput: (event) => {
+    state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: event.target.value };
+    if (analyzeLocalButton) analyzeLocalButton.disabled = !materiallyDifferentCode(event.target.value, submittedCode) || state.running;
+  } });
   editorTextarea.value = displayCode;
   const results = Array.isArray(state.editorResults) ? state.editorResults : [];
   const passed = results.filter((result) => result.pass).length;
   const resultRows = results.map((result) => h("article", { class: "analysis-editor-result " + (result.pass ? "pass" : "fail") }, h("strong", {}, result.index ? `Test ${result.index}${result.hidden ? " · hidden" : ""}` : "Run status"), h("span", {}, result.pass ? "Passed" : result.error || "Wrong answer"), !result.hidden && !result.pass && result.expected !== undefined ? h("pre", {}, `Expected: ${result.expected}\nReceived: ${result.output || "(empty)"}`) : null));
+  const hasLocalEdits = materiallyDifferentCode(displayCode, submittedCode);
+  analyzeLocalButton = h("button", { class: "btn btn-sm", disabled: state.running || !hasLocalEdits, onClick: () => runAnalysis(state, rerender) }, icon("bulb", 13), "Analyze local edits");
   const editorPanel = state.editorMode && canEdit ? h("section", { class: "analysis-editor" },
-    h("div", { class: "analysis-editor-head" }, h("div", {}, h("div", { class: "label" }, "// Local editor"), h("p", {}, "Edits and test runs stay in this browser. They never affect solve time, completion, or saved submissions.")), h("button", { class: "btn btn-sm btn-primary", disabled: state.editorRunning || !displayCode.trim(), onClick: () => runSandboxTests(state, activeKey, language, rerender) }, icon("play", 13), state.editorRunning ? "Running…" : "Run tests")),
+    h("div", { class: "analysis-editor-head" }, h("div", {}, h("div", { class: "label" }, "// Local editor"), h("p", {}, "Edits and test runs stay in this browser. They never affect solve time, completion, or saved submissions.")), h("div", { class: "analysis-editor-actions" }, analyzeLocalButton, h("button", { class: "btn btn-sm btn-primary", disabled: state.editorRunning || !displayCode.trim(), onClick: () => runSandboxTests(state, activeKey, language, rerender) }, icon("play", 13), state.editorRunning ? "Running…" : "Run tests"))),
     editorTextarea,
     state.editorRuntimeStatus ? h("p", { class: "analysis-editor-status" }, state.editorRuntimeStatus) : null,
     results.length ? h("div", { class: "analysis-editor-results" }, h("div", { class: "label mb-2" }, `// ${passed}/${results.length} tests passed`), ...resultRows) : null) : null;
@@ -277,10 +293,14 @@ function submissionTimeline(entries) {
 function selectedPayload(state) {
   const key = state.activeCodeTab || "mine";
   const selected = key === "opponent" ? state.opponent : state.solution;
-  const displayCode = state.codeEdits?.[key] ?? selected?.code ?? "";
+  const originalCode = String(selected?.code || "");
+  const displayCode = state.codeEdits?.[key] ?? originalCode;
   const other = key === "opponent" ? state.solution : state.opponent;
-  const analysis = state.analyses?.[key] ?? (key === "mine" ? state.analysis : null);
-  return { key, selected, displayCode, other, analysis };
+  const isLocalEdit = materiallyDifferentCode(displayCode, originalCode);
+  const originalAnalysis = state.analyses?.[key] ?? (key === "mine" ? state.analysis : null);
+  const localAnalysis = state.localAnalysisSources?.[key] === displayCode ? state.localAnalyses?.[key] || null : null;
+  const analysis = isLocalEdit ? localAnalysis : originalAnalysis;
+  return { key, selected, originalCode, displayCode, other, isLocalEdit, originalAnalysis, analysis };
 }
 
 function coachPanel(state, rerender) {
@@ -296,7 +316,7 @@ function coachPanel(state, rerender) {
     state.coachMessages = [...messages, { role: "user", content: question }, { role: "assistant", content: "Working on it…" }];
     rerender();
     try {
-      const reply = await askCodeCoach({ question, analysis: payload.analysis, code: payload.displayCode, problem: state.problem, history: messages, opponentCode: payload.other?.code || "", subjectLabel: payload.key === "opponent" ? "opponent code" : "your code" }, (progress) => { state.modelProgress = progress?.text || "Preparing response…"; rerender(); });
+      const reply = await askCodeCoach({ question, analysis: payload.analysis, code: payload.displayCode, originalCode: payload.originalCode, originalAnalysis: payload.originalAnalysis, problem: state.problem, history: messages, opponentCode: payload.other?.code || "", subjectLabel: payload.isLocalEdit ? "your unsaved local edits compared with the original submission" : payload.key === "opponent" ? "opponent code" : "your original submitted code" }, (progress) => { state.modelProgress = progress?.text || "Preparing response…"; rerender(); });
       state.coachMessages = [...messages, { role: "user", content: question }, { role: "assistant", content: reply }];
     } catch (error) {
       state.coachMessages = [...messages, { role: "user", content: question }, { role: "assistant", content: `I couldn't complete that explanation: ${error.message || "please try again"}` }];
@@ -321,18 +341,29 @@ async function runAnalysis(state, rerender) {
   state.analysisError = "";
   rerender();
   try {
-    const analyzed = await analyzeCode({ code: payload.displayCode, language: payload.selected?.language || state.solution.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext, subjectLabel }, (progress) => { state.modelProgress = progress?.text || "Analyzing…"; rerender(); });
-    state.analyses = { ...(state.analyses || {}), [payload.key]: analyzed };
-    if (payload.key === "mine") state.analysis = analyzed;
-    if (state.owner && payload.key === "mine") {
-      try { state.analysis = await saveSolutionAnalysis(session.profile, state.solution.archetypeId, analyzed, { source: state.matchContext?.duelId ? "duel" : "training", duelId: state.matchContext?.duelId }); state.analyses.mine = state.analysis; } catch {}
+    const analyzed = await analyzeCode({ code: payload.displayCode, originalCode: payload.originalCode, language: payload.selected?.language || state.solution.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext, subjectLabel: payload.isLocalEdit ? "your unsaved local edits compared with the original submission" : subjectLabel }, (progress) => { state.modelProgress = progress?.text || "Analyzing…"; rerender(); });
+    if (payload.isLocalEdit) {
+      state.localAnalyses = { ...(state.localAnalyses || {}), [payload.key]: analyzed };
+      state.localAnalysisSources = { ...(state.localAnalysisSources || {}), [payload.key]: payload.displayCode };
+    } else {
+      state.analyses = { ...(state.analyses || {}), [payload.key]: analyzed };
+      if (payload.key === "mine") state.analysis = analyzed;
+      if (state.owner && payload.key === "mine") {
+        try { state.analysis = await saveSolutionAnalysis(session.profile, state.solution.archetypeId, analyzed, { source: state.matchContext?.duelId ? "duel" : "training", duelId: state.matchContext?.duelId }); state.analyses.mine = state.analysis; } catch {}
+      }
     }
-    toast("Analysis ready.", "ok");
+    toast(payload.isLocalEdit ? "Local-edit analysis ready. Your saved original remains unchanged." : "Analysis ready.", "ok");
   } catch (error) {
     state.analysisError = error.message || "Analysis could not start.";
     const baseline = fastCodeAnalysis({ code: payload.displayCode, language: payload.selected?.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext });
-    state.analyses = { ...(state.analyses || {}), [payload.key]: baseline };
-    if (payload.key === "mine") state.analysis = baseline;
+    if (payload.isLocalEdit) {
+      state.localAnalyses = { ...(state.localAnalyses || {}), [payload.key]: baseline };
+      state.localAnalysisSources = { ...(state.localAnalysisSources || {}), [payload.key]: payload.displayCode };
+    }
+    else {
+      state.analyses = { ...(state.analyses || {}), [payload.key]: baseline };
+      if (payload.key === "mine") state.analysis = baseline;
+    }
     toast(state.analysisError, "err", 5000);
   } finally { state.running = false; state.modelProgress = ""; rerender(); }
 }
@@ -340,7 +371,7 @@ async function runAnalysis(state, rerender) {
 function analysisPane(state, rerender) {
   const payload = selectedPayload(state);
   const subjectLabel = payload.key === "opponent" ? "opponent code" : "your code";
-  const analyze = h("button", { class: "btn btn-primary", disabled: state.running || !String(payload.displayCode || "").trim(), onClick: () => runAnalysis(state, rerender) }, icon("bulb", 15), payload.analysis ? "Refresh analysis" : "Start analysis");
+  const analyze = h("button", { class: "btn btn-primary", disabled: state.running || !String(payload.displayCode || "").trim(), onClick: () => runAnalysis(state, rerender) }, icon("bulb", 15), payload.isLocalEdit ? "Analyze local edits" : payload.analysis ? "Refresh analysis" : "Start analysis");
   const improvement = state.improvements?.[payload.key];
   const improvementState = state.improvementStates?.[payload.key];
   const appliedCount = state.appliedSteps?.[payload.key] || 0;
@@ -362,7 +393,7 @@ function analysisPane(state, rerender) {
       const prepared = await improveCode({ code: payload.displayCode, language: payload.selected?.language || state.solution.language, problem: state.problem, analysis: payload.analysis, opponentCode: payload.other?.code || "" }, (progress) => { state.modelProgress = progress?.text || "Reviewing possible improvements…"; rerender(); });
       state.improvementStates = { ...(state.improvementStates || {}), [payload.key]: prepared };
       if (prepared.noChange) {
-        toast("No safe code changes are needed for this solution.", "ok");
+        toast("No distinct rewrite was prepared. Ask the coach for a focused explanation or edit locally to compare your own approach.", "ok");
       } else {
         state.improvements = { ...(state.improvements || {}), [payload.key]: prepared };
         state.appliedSteps = { ...(state.appliedSteps || {}), [payload.key]: 0 };
@@ -371,11 +402,11 @@ function analysisPane(state, rerender) {
     } catch (error) { toast(error.message || "Couldn't review improvements.", "err"); }
     finally { state.improving = false; state.modelProgress = ""; rerender(); }
   } }, icon("zap", 15), state.improving ? "Reviewing…" : improvementState?.noChange ? topTier ? "No rewrite needed" : "Request another review" : improvement ? appliedCount < improvement.steps.length ? `Apply improvement ${appliedCount + 1}` : "Request another review" : "Request improvements");
-  const improvementNote = improvementState?.summary ? h("section", { class: "analysis-improvement-note" }, h("div", { class: "label mb-2" }, improvementState.noChange ? topTier ? "// No rewrite needed" : "// Automatic rewrite unavailable" : "// Improvement plan"), h("p", {}, improvementState.summary), !improvementState.noChange && improvement?.steps?.[appliedCount] ? h("p", { class: "analysis-next-step" }, `Next: ${improvement.steps[appliedCount].title} — ${improvement.steps[appliedCount].explanation}`) : null) : null;
+  const improvementNote = improvementState?.summary && !improvementState.noChange ? h("section", { class: "analysis-improvement-note" }, h("div", { class: "label mb-2" }, "// Improvement plan"), h("p", {}, improvementState.summary), improvement?.steps?.[appliedCount] ? h("p", { class: "analysis-next-step" }, `Next: ${improvement.steps[appliedCount].title} — ${improvement.steps[appliedCount].explanation}`) : null) : null;
   const controls = h("div", { class: "analysis-actions" }, analyze, requestImprovement);
   const error = state.analysisError ? h("div", { class: "analysis-error" }, icon("x", 15), h("span", {}, state.analysisError)) : null;
   return h("aside", { class: "analysis-pane analysis-insights-pane" },
-    h("div", { class: "analysis-pane-head" }, h("span", { class: "label" }, "// Analysis"), h("span", { class: "label" }, subjectLabel)),
+    h("div", { class: "analysis-pane-head" }, h("span", { class: "label" }, payload.isLocalEdit ? "// Local edits vs original" : "// Analysis"), h("span", { class: "label" }, subjectLabel)),
     controls,
     progressBlock(state),
     error,
