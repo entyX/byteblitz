@@ -56,6 +56,12 @@ function analysisReport(analysis, context) {
     icon("bulb", 22),
     h("h2", { class: "head" }, "Ready for an AI review"),
     h("p", { class: "body-text" }, "Run the local Qwen analysis to receive a complexity review, efficiency score, detailed strengths, improvement ideas, and a submission-by-submission breakdown."));
+  const suggestionRows = (analysis.suggestions || []).map((tip, index) => h("div", { class: "analysis-suggestion" },
+    h("span", {}, String(index + 1).padStart(2, "0")),
+    h("p", {}, tip)));
+  const suggestionPanel = h("section", { class: "analysis-suggestions" },
+    h("div", { class: "label mb-2" }, "// Optimization suggestions"),
+    ...suggestionRows);
   return h("div", { class: "analysis-report" },
     h("section", { class: "analysis-score-card" },
       h("div", { class: "analysis-score-ring" }, h("strong", {}, String(analysis.efficiencyScore ?? "—")), h("span", {}, "/100")),
@@ -68,7 +74,7 @@ function analysisReport(analysis, context) {
     h("div", { class: "analysis-list-grid" },
       listPanel("Strengths", analysis.strengths, "good"),
       listPanel("Improve next", analysis.weaknesses, "warn")),
-    h("section", { class: "analysis-suggestions" }, h("div", { class: "label mb-2" }, "// Optimization suggestions"), ...((analysis.suggestions || []).map((tip, index) => h("div", { class: "analysis-suggestion" }, h("span", {}, String(index + 1).padStart(2, "0")), h("p", {}, tip))))),
+    suggestionPanel,
     context.hasOpponent ? h("section", { class: "analysis-opponent" }, h("div", { class: "label mb-2" }, "// Opponent comparison"), h("p", { class: "body-text" }, analysis.opponentComparison || "No direct comparison was generated.")) : null,
     context.match ? h("section", { class: "analysis-match-review" }, h("div", { class: "label mb-2" }, "// Match review"), h("p", { class: "body-text" }, analysis.matchReview || "Review your submission progression below.")) : null,
     context.match ? submissionTimeline(analysis.submissionProgress || context.submissions || []) : null,
@@ -76,17 +82,29 @@ function analysisReport(analysis, context) {
 }
 
 function submissionTimeline(entries) {
-  const rows = entries.length ? entries : [];
+  const rows = Array.isArray(entries) ? entries : [];
+  const timelineRows = rows.map((entry, index) => h("article", { class: "analysis-timeline-row" },
+    h("span", { class: "analysis-timeline-number" }, String(entry.submission || index + 1).padStart(2, "0")),
+    h("div", {},
+      h("strong", { class: "mono" }, `${entry.testsPassed || 0} tests passed`),
+      h("p", {}, entry.note || "Submission retained for review."))));
+  const body = timelineRows.length
+    ? h("div", { class: "analysis-timeline-list" }, ...timelineRows)
+    : h("p", { class: "body-text" }, "No per-submission snapshots were available for this older match.");
   return h("section", { class: "analysis-timeline" },
-    h("div", { class: "between gap-3 wrapflex mb-3" }, h("div", { class: "label" }, "// Submission progression"), h("span", { class: "label" }, `${rows.length} retained attempt${rows.length === 1 ? "" : "s"}`)),
-    rows.length ? h("div", { class: "analysis-timeline-list" }, ...rows.map((entry, index) => h("article", { class: "analysis-timeline-row" },
-      h("span", { class: "analysis-timeline-number" }, String(entry.submission || index + 1).padStart(2, "0")),
-      h("div", {}, h("strong", { class: "mono" }, `${entry.testsPassed || 0} tests passed`), h("p", {}, entry.note || "Submission retained for review.")))) : h("p", { class: "body-text" }, "No per-submission snapshots were available for this older match."));
+    h("div", { class: "between gap-3 wrapflex mb-3" },
+      h("div", { class: "label" }, "// Submission progression"),
+      h("span", { class: "label" }, `${rows.length} retained attempt${rows.length === 1 ? "" : "s"}`)),
+    body);
 }
 
 function coachPanel(state, rerender) {
   const messages = state.coachMessages || [];
   const input = h("textarea", { class: "input analysis-coach-input", placeholder: "Ask how to reduce complexity, handle an edge case, or improve the next submission…", rows: "3" });
+  const chatRows = messages.map((message) => h("article", { class: "analysis-chat-message " + message.role },
+    h("span", { class: "label" }, message.role === "user" ? "You" : "Coach"),
+    h("p", {}, message.content)));
+  const chatLog = chatRows.length ? h("div", { class: "analysis-chat-log mt-4" }, ...chatRows) : null;
   const send = h("button", { class: "btn btn-primary", onClick: async () => {
     const question = input.value.trim();
     if (!question || state.coachBusy) return;
@@ -103,7 +121,7 @@ function coachPanel(state, rerender) {
   return h("section", { class: "analysis-coach" },
     h("div", { class: "between gap-3 wrapflex" }, h("div", {}, h("div", { class: "label" }, "// ByteBlitz Coach"), h("h2", { class: "head mt-1" }, "Talk through the next improvement")), h("span", { class: "analysis-local-badge" }, icon("bulb", 13), "Local Qwen")),
     h("p", { class: "body-text mt-3" }, "Your source stays in this browser while the coach explains trade-offs and next steps."),
-    messages.length ? h("div", { class: "analysis-chat-log mt-4" }, ...messages.map((message) => h("article", { class: "analysis-chat-message " + message.role }, h("span", { class: "label" }, message.role === "user" ? "You" : "Coach"), h("p", {}, message.content))) : null,
+    chatLog,
     h("div", { class: "analysis-coach-compose mt-4" }, input, send),
     state.modelProgress ? h("p", { class: "mono mt-2", style: { fontSize: "11px", color: "var(--muted-fg)" } }, state.modelProgress) : null);
 }
