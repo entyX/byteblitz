@@ -1,4 +1,4 @@
-import { fastCodeAnalysis, gradeForScore, metricRating } from "../public/js/js/analysis-engine.js";
+import { fastCodeAnalysis, gradeForScore, metricRating, reviewDecision } from "../public/js/js/analysis-engine.js";
 
 const code = [
   "n = int(input())",
@@ -24,4 +24,9 @@ if (!gradeCases.every(([score, letter]) => gradeForScore(score).letter === lette
 if (metricRating("Likely O(N)", "O(N) single-pass target").letter !== "S" || metricRating("Likely O(N²)", "O(N) single-pass target").letter !== "C") {
   throw new Error("Complexity metric grades are not stable.");
 }
-console.log("analysis quality fallback, grades, and metric ratings: PASS");
+const complete = reviewDecision({ timeComplexity: "O(N)", bestTimeComplexity: "O(N) single-pass target", spaceComplexity: "O(1)", bestSpaceComplexity: "O(1) auxiliary-space target", actionableIssues: [], failureDiagnosis: "No detailed failed-test trace was recorded." });
+const oneIssue = reviewDecision({ timeComplexity: "O(N)", bestTimeComplexity: "O(N) single-pass target", spaceComplexity: "O(1)", bestSpaceComplexity: "O(1) auxiliary-space target", actionableIssues: ["Replace repeated output construction with one final join so the data flow stays explicit."], failureDiagnosis: "No detailed failed-test trace was recorded." });
+if (!complete.complete || complete.letter !== "S" || oneIssue.complete || oneIssue.letter !== "A" || !oneIssue.canImprove) {
+  throw new Error("Unified review rubric does not keep S completion and actionable A-tier issues consistent.");
+}
+console.log("analysis quality, grades, metric ratings, and review rubric: PASS");

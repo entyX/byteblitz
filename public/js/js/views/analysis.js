@@ -9,7 +9,7 @@ import { getSavedSolution, getPublicPuzzleSolution, getPublicSolutionShare, save
 import { getDuel, getDuelSubmissionHistory } from "../matchmaking.js";
 import { loadAllPools, problemById, outputMatches } from "../problems.js";
 import { navigate } from "../router.js";
-import { analyzeCode, askCodeCoach, fastCodeAnalysis, improveCode, gradeForScore, metricRating } from "../analysis-engine.js";
+import { analyzeCode, askCodeCoach, fastCodeAnalysis, improveCode, gradeForScore, metricRating, reviewDecision } from "../analysis-engine.js";
 import { runCode, getRunTimeout, warmRuntime, highlight } from "../runner.js";
 
 function setAnalysisMetadata(subject, canonicalPath) {
@@ -76,8 +76,8 @@ function listBlock(label, items, tone = "") {
     h("ul", {}, ...rows));
 }
 
-function metricCard(label, value, explanation, best = "") {
-  const rating = best ? metricRating(value, best) : null;
+function metricCard(label, value, explanation, best = "", decisionRating = null) {
+  const rating = decisionRating || (best ? metricRating(value, best) : null);
   return h("article", { class: `analysis-metric-card${rating ? ` metric-grade-${rating.tier}` : ""}` },
     h("div", { class: "between gap-2" }, h("div", { class: "label" }, label), rating ? h("span", { class: "analysis-metric-grade" }, `${rating.percent}% · ${rating.letter}`) : null),
     h("strong", { class: "mono" }, value || "—"),
@@ -255,22 +255,21 @@ function reportContent(analysis, state) {
     icon("bulb", 22),
     h("h2", { class: "head" }, "Ready when you are"),
     h("p", { class: "body-text" }, "Start an analysis to see complexity, quality, strategy, and practical next steps for the selected code."));
-  const grade = gradeForScore(analysis.efficiencyScore);
+  const decision = analysis.reviewDecision || reviewDecision(analysis);
+  const grade = gradeForScore(decision.score);
   const score = h("section", { class: `analysis-score-card grade-${grade.tier}` },
     h("div", { class: "analysis-score-ring" }, h("strong", {}, grade.letter)),
     h("div", {}, h("div", { class: "label" }, "// Code grade"), h("h2", { class: "head mt-1" }, grade.label), h("p", { class: "body-text mt-2" }, grade.description)));
   const metrics = h("div", { class: "analysis-metrics-grid" },
-    metricCard("Time complexity", analysis.timeComplexity, analysis.timeComplexityExplanation, analysis.bestTimeComplexity),
-    metricCard("Space complexity", analysis.spaceComplexity, analysis.spaceComplexityExplanation, analysis.bestSpaceComplexity),
+    metricCard("Time complexity", analysis.timeComplexity, analysis.timeComplexityExplanation, analysis.bestTimeComplexity, decision.time),
+    metricCard("Space complexity", analysis.spaceComplexity, analysis.spaceComplexityExplanation, analysis.bestSpaceComplexity, decision.space),
     metricCard("Code quality", analysis.codeQuality, analysis.codeQualityExplanation));
   const sections = [
     score,
     metrics,
     textBlock("Your approach", analysis.approach),
     listBlock("Strengths", analysis.strengths, "good"),
-    listBlock("Weaknesses", analysis.weaknesses, "warn"),
-    listBlock("Optimization suggestions", analysis.suggestions, "primary"),
-    textBlock("Why the other approach may be better", analysis.opponentComparison),
+    ...(decision.complete ? [textBlock("Review conclusion", "This solution is S tier under the current evidence: it meets the feasible targets and has no unresolved source-level issue. No code change is recommended.", "analysis-complete-block")] : [listBlock("Weaknesses", analysis.weaknesses, "warn"), listBlock("Optimization suggestions", analysis.suggestions, "primary"), textBlock("Why the other approach may be better", analysis.opponentComparison)]),
   ];
   if (state.matchContext?.duelId) {
     sections.push(textBlock("What happened in the match", analysis.matchReview));
@@ -376,8 +375,8 @@ function analysisPane(state, rerender) {
   const improvement = state.improvements?.[payload.key];
   const improvementState = state.improvementStates?.[payload.key];
   const appliedCount = state.appliedSteps?.[payload.key] || 0;
-  const topTier = gradeForScore(payload.analysis?.efficiencyScore).letter === "S";
-  const requestImprovement = h("button", { class: "btn", disabled: state.improving || !state.owner || !String(payload.displayCode || "").trim() || (improvementState?.noChange && topTier), onClick: async () => {
+  const topTier = !!payload.analysis && (payload.analysis.reviewDecision || reviewDecision(payload.analysis)).complete;
+  const requestImprovement = h("button", { class: "btn", disabled: state.improving || !state.owner || !String(payload.displayCode || "").trim() || topTier, onClick: async () => {
     if (improvement && appliedCount < improvement.steps.length) {
       const next = improvement.steps[appliedCount];
       state.codeEdits = { ...(state.codeEdits || {}), [payload.key]: next.code || payload.displayCode };
@@ -402,8 +401,8 @@ function analysisPane(state, rerender) {
       }
     } catch (error) { toast(error.message || "Couldn't review improvements.", "err"); }
     finally { state.improving = false; state.modelProgress = ""; rerender(); }
-  } }, icon("zap", 15), state.improving ? "Reviewing…" : improvementState?.noChange ? topTier ? "No rewrite needed" : "Request another review" : improvement ? appliedCount < improvement.steps.length ? `Apply improvement ${appliedCount + 1}` : "Request another review" : "Request improvements");
-  const improvementNote = improvementState?.summary && !improvementState.noChange ? h("section", { class: "analysis-improvement-note" }, h("div", { class: "label mb-2" }, "// Improvement plan"), h("p", {}, improvementState.summary), improvement?.steps?.[appliedCount] ? h("p", { class: "analysis-next-step" }, `Next: ${improvement.steps[appliedCount].title} — ${improvement.steps[appliedCount].explanation}`) : null) : null;
+  } }, icon("zap", 15), state.improving ? "Reviewing…" : topTier ? "S tier complete" : improvementState?.noChange ? "No safe rewrite found" : improvement ? appliedCount < improvement.steps.length ? `Apply improvement ${appliedCount + 1}` : "Request another review" : "Request improvements");
+  const improvementNote = !topTier && improvementState?.summary && !improvementState.noChange ? h("section", { class: "analysis-improvement-note" }, h("div", { class: "label mb-2" }, "// Improvement plan"), h("p", {}, improvementState.summary), improvement?.steps?.[appliedCount] ? h("p", { class: "analysis-next-step" }, `Next: ${improvement.steps[appliedCount].title} — ${improvement.steps[appliedCount].explanation}`) : null) : null;
   const controls = h("div", { class: "analysis-actions" }, analyze, requestImprovement);
   const error = state.analysisError ? h("div", { class: "analysis-error" }, icon("x", 15), h("span", {}, state.analysisError)) : null;
   return h("aside", { class: "analysis-pane analysis-insights-pane" },

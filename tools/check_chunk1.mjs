@@ -115,6 +115,8 @@ assert.match(analysis, /paneResizer/, "analysis panes must expose draggable hori
 assert.match(analysis, /Analyze local edits/, "the primary analysis action must be able to analyze unsaved changes");
 assert.match(analysis, /Best target:/, "time and space metrics must show their best feasible target");
 assert.match(analysis, /analysis-metric-grade/, "time and space metrics must show percentage and letter ratings");
+assert.match(analysis, /S tier complete/, "S-tier review controls must be visibly completed and disabled");
+assert.match(analysis, /Review conclusion/, "S-tier reports must state the final no-change conclusion instead of showing improvement lists");
 assert.match(analysis, /originalAnalysis/, "coaching and local analysis must retain the original review baseline");
 assert.match(analysis, /materiallyDifferentCode/, "unchanged coach snippets must be detected before application");
 assert.match(analysis, /localAnalysisSources/, "local analysis must be tied to the exact unsaved source being reviewed");
@@ -132,6 +134,9 @@ assert.match(analysisEngine, /materially different from CURRENT CODE/, "guided i
 assert.match(analysisEngine, /Original submitted baseline/, "coach context must retain the original source alongside local edits");
 assert.match(analysisEngine, /safeOutputConstructionRewrite/, "identified output-construction weaknesses must have a safe rewrite fallback");
 assert.match(analysisEngine, /metricRating/, "analysis must grade time and space efficiency against the best target");
+assert.match(analysisEngine, /reviewDecision/, "one review decision contract must govern grades, metrics, and improvements");
+assert.match(analysisEngine, /S means the visible solution/, "the model prompt must define S tier as complete with no actionable issue");
+assert.match(analysisEngine, /decision\.complete/, "S-tier decisions must prevent improvement generation and coach rewrite advice");
 assert.match(css, /analysis-workspace-grid/, "analysis workspace must be styled as a three-pane layout");
 assert.match(css, /\[data-tooltip\]/, "custom tooltip styling must exist for compact controls");
 assert.match(css, /analysis-editor-input/, "analysis editor must have dedicated local sandbox styling");

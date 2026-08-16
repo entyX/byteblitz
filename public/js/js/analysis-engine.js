@@ -94,8 +94,9 @@ function fallbackBestSpace(code) {
 }
 
 export function metricRating(actual, best) {
-  const text = String(actual || "").toLowerCase();
-  const target = String(best || "").toLowerCase();
+  const text = String(actual || "").toLowerCase().replace(/likely\s+/g, "").trim();
+  const target = String(best || "").toLowerCase().replace(/likely\s+/g, "").replace(/target|comparison-based|single-pass|auxiliary-space|when the required output is materialized/g, "").trim();
+  if (text && target && (text.includes(target.match(/o\([^)]*\)/)?.[0] || "__never__") || target.includes(text.match(/o\([^)]*\)/)?.[0] || "__never__"))) return { percent: 100, ...gradeForScore(100) };
   let percent = 76;
   if (/o\(1\)/.test(text)) percent = 100;
   else if (/o\(log/.test(text)) percent = 96;
@@ -104,6 +105,27 @@ export function metricRating(actual, best) {
   else if (/o\(n³\)|o\(n\^3\)|o\(n3\)/.test(text)) percent = 42;
   else if (/o\(n\)/.test(text)) percent = /o\(n\)/.test(target) ? 100 : 88;
   return { percent, ...gradeForScore(percent) };
+}
+
+function actionableIssueList(value) {
+  return cleanList(value, [], 4).filter((item) => item.length >= 25 && /\b(fix|change|replace|handle|guard|avoid|correct|rewrite|edge case|overflow|empty|zero|output|input|invariant)\b/i.test(item));
+}
+
+export function reviewDecision(analysis = {}) {
+  const time = metricRating(analysis.timeComplexity, analysis.bestTimeComplexity);
+  const space = metricRating(analysis.spaceComplexity, analysis.bestSpaceComplexity);
+  const issues = actionableIssueList(analysis.actionableIssues || analysis.suggestions || []);
+  const failed = /failed at|runtime error|wrong answer|timeout/i.test(String(analysis.failureDiagnosis || ""));
+  const perfectMetrics = time.percent === 100 && space.percent === 100;
+  let letter;
+  if (!failed && perfectMetrics && issues.length === 0) letter = "S";
+  else if (!failed && time.percent >= 88 && space.percent >= 88 && issues.length <= 2) letter = "A";
+  else if (!failed && time.percent >= 62 && space.percent >= 62) letter = "B";
+  else if (!failed && time.percent >= 42) letter = "C";
+  else if (!failed) letter = "D";
+  else letter = "F";
+  const scoreByTier = { S: 100, A: 88, B: 76, C: 64, D: 52, F: 32 };
+  return { letter, score: scoreByTier[letter], time, space, actionableIssues: issues, complete: letter === "S", canImprove: letter !== "S" && issues.length > 0 };
 }
 
 function submissionFailure(submissions) {
@@ -163,7 +185,7 @@ export function fastCodeAnalysis(input) {
   const insight = fallbackInsights(code);
   const timeComplexity = guessComplexity(code);
   const spaceComplexity = guessSpace(code);
-  return {
+  const base = {
     efficiencyScore: score,
     timeComplexity,
     timeComplexityExplanation: `This estimate describes how runtime grows as input grows. ${insight.loop ? `${lineReference(insight.loop)} is the visible dominant traversal.` : "No dominant loop is visible in the saved source."} ${hasRepeatedLoops ? "Check whether the iteration constructs are nested or represent separate passes." : "No second traversal is visible in the saved source."}`,
@@ -176,6 +198,7 @@ export function fastCodeAnalysis(input) {
     strengths: insight.strengths,
     weaknesses: insight.weaknesses,
     suggestions: insight.suggestions,
+    actionableIssues: insight.suggestions.filter((item) => /output|concatenation|accumulator|boundary|invariant/i.test(item)),
     approach: insight.approach,
     opponentComparison: input.opponentCode ? "Compare the opponent’s data flow and number of passes against the same constraints. Prefer the version with a simpler invariant or a proven lower cost, not merely different syntax." : "No opponent source was available for a direct comparison.",
     failureDiagnosis: submissionFailure(submissions),
@@ -184,12 +207,21 @@ export function fastCodeAnalysis(input) {
     codeReferences: insight.references,
     provider: "baseline",
   };
+  const decision = reviewDecision(base);
+  return {
+    ...base,
+    efficiencyScore: decision.score,
+    reviewDecision: decision,
+    weaknesses: decision.complete ? [] : base.weaknesses,
+    suggestions: decision.complete ? [] : base.suggestions,
+    actionableIssues: decision.actionableIssues,
+  };
 }
 
 function normalizeAnalysis(value, fallback) {
   if (!value || typeof value !== "object") return fallback;
   const number = Number(value.efficiencyScore);
-  return {
+  const merged = {
     efficiencyScore: Number.isFinite(number) ? clamp(Math.round(number), 0, 100) : fallback.efficiencyScore,
     timeComplexity: String(value.timeComplexity || fallback.timeComplexity),
     timeComplexityExplanation: String(value.timeComplexityExplanation || fallback.timeComplexityExplanation),
@@ -214,7 +246,17 @@ function normalizeAnalysis(value, fallback) {
           note: String(entry.note || "Submission retained for review."),
         }))
       : fallback.submissionProgress,
+    actionableIssues: actionableIssueList(value.actionableIssues || value.suggestions || fallback.actionableIssues || []),
     provider: "local",
+  };
+  const decision = reviewDecision(merged);
+  return {
+    ...merged,
+    efficiencyScore: decision.score,
+    reviewDecision: decision,
+    weaknesses: decision.complete ? [] : merged.weaknesses,
+    suggestions: decision.complete ? [] : merged.suggestions,
+    actionableIssues: decision.actionableIssues,
   };
 }
 
@@ -267,7 +309,7 @@ function analysisPrompt(input, subjectLabel) {
     failure: entry.failure || entry.failedTest || entry.error || null,
     code: index >= sourceWindowStart ? codeText(entry.code, 2200) : "Earlier source retained; metrics and any failure detail are included.",
   }));
-  return `Review ${subjectLabel}. Read the complete problem statement, constraints, input/output formats, and samples before judging the code. Be precise, educational, and refer to concrete functions, variables, loops, conditions, or line-like code fragments. Never invent a hidden-test input. If a failed-test record is available, explain exactly which assumption or code path likely caused it, and distinguish evidence from uncertainty. Compare both submissions only when opponent code is present. Every strengths, weaknesses, and suggestions item must be a complete sentence of at least 12 words and must identify a specific code fragment, variable, loop, condition, or observable behavior. Never return one-word labels such as “Efficient”, “Readable”, or “None”. Score consistently: scores below 92 must include at least one concrete, safe improvement or verification step, and scores below 82 must include at least one actionable code or algorithm refinement. Only return no-change reasoning for a 92+ review where no safer or clearer rewrite is justified. When a local edit is supplied, compare it to the original submission and explicitly explain what changed, what improved, and what still needs verification. Return exactly 2–4 strengths, exactly 2–4 weaknesses, and exactly 2–4 suggestions. ` + `Return ONLY strict JSON with: efficiencyScore (0-100 integer), timeComplexity, timeComplexityExplanation, bestTimeComplexity, spaceComplexity, spaceComplexityExplanation, bestSpaceComplexity, codeQuality, codeQualityExplanation, strengths (array), weaknesses (array), suggestions (array), approach, opponentComparison, failureDiagnosis, matchReview, codeReferences (array), submissionProgress (array of {submission, testsPassed, note}).\n\nPROBLEM\n${formatProblemBrief(input.problem)}\n\n${subjectLabel.toUpperCase()}\nLanguage: ${input.language || "code"}\n${codeText(input.code)}\n\nORIGINAL SUBMISSION BASELINE\n${codeText(input.originalCode, 12000) || "This is the original submission."}\n\nOTHER SUBMISSION FOR COMPARISON\n${codeText(input.opponentCode, 12000) || "Not available"}\n\nMATCH CONTEXT\n${JSON.stringify(input.matchContext || {})}\n\nSUBMISSION PROGRESSION\n${JSON.stringify(submissionTimeline)}`;
+  return `Review ${subjectLabel} as an exacting human competitive-programming reviewer. Read the complete problem statement, constraints, input/output formats, and samples before judging the code. Every claim must be grounded in a concrete line, control path, or supplied constraint; never invent a hidden test. First determine whether there is any unresolved source-level issue. A source-level issue is actionable only when a safe code change can directly address it. Do not call a comment preference, stylistic taste, or speculative edge case a weakness. Grade policy: S means the visible solution meets the best feasible time and space target, has no recorded failure, and has zero actionable issues; S must have no weaknesses, no optimization suggestions, and no code improvement. A means the solution is very good with one or two evidence-backed edge-case, robustness, clarity, or efficiency issues. B means it has a recorded failure, a meaningful efficiency gap, or several clear issues. C through F represent progressively more serious correctness or efficiency problems. Make complexity claims consistent with the supplied best targets. When a local edit is supplied, compare it to the original submission and explicitly explain what changed, what improved, and what still needs verification. Every strength, weakness, and suggestion must be a complete sentence of at least 12 words and identify a specific code fragment or behavior. Return exactly 2–4 strengths. Return 0 weaknesses and 0 suggestions for S; otherwise return 1–4 evidence-backed weaknesses and 1–4 matching suggestions. ` + `Return ONLY strict JSON with: efficiencyScore (0-100 integer), timeComplexity, timeComplexityExplanation, bestTimeComplexity, spaceComplexity, spaceComplexityExplanation, bestSpaceComplexity, actionableIssues (array of only source-level changes that are safe and necessary), codeQuality, codeQualityExplanation, strengths (array), weaknesses (array), suggestions (array), approach, opponentComparison, failureDiagnosis, matchReview, codeReferences (array), submissionProgress (array of {submission, testsPassed, note}).\n\nPROBLEM\n${formatProblemBrief(input.problem)}\n\n${subjectLabel.toUpperCase()}\nLanguage: ${input.language || "code"}\n${codeText(input.code)}\n\nORIGINAL SUBMISSION BASELINE\n${codeText(input.originalCode, 12000) || "This is the original submission."}\n\nOTHER SUBMISSION FOR COMPARISON\n${codeText(input.opponentCode, 12000) || "Not available"}\n\nMATCH CONTEXT\n${JSON.stringify(input.matchContext || {})}\n\nSUBMISSION PROGRESSION\n${JSON.stringify(submissionTimeline)}`;
 }
 
 export async function analyzeCode(input, onProgress = () => {}) {
@@ -288,6 +330,9 @@ export async function analyzeCode(input, onProgress = () => {}) {
 export async function improveCode({ code, language, problem, analysis, opponentCode = "" }, onProgress = () => {}) {
   const original = codeText(code);
   if (!original) throw new Error("There is no saved code to improve.");
+  const decision = analysis?.reviewDecision || reviewDecision(analysis || {});
+  if (decision.complete) return { noChange: true, complete: true, summary: "This review is S tier: the visible code meets the feasible targets with no unresolved, evidence-backed source-level issue. No code improvement should be proposed.", steps: [], improvedCode: original };
+  if (!decision.canImprove) return { noChange: true, complete: false, summary: "The review does not contain a safe, evidence-backed source-level change to apply. Ask the coach to explain the current approach or test a local experiment instead.", steps: [], improvedCode: original };
   const model = await loadLocalCodeModel(onProgress);
   const prompt = `Act as an educational competitive-programming coach. Improve the submitted ${language || "code"} solution only when a concrete improvement is justified by the problem and constraints. Preserve the required input/output interface and language. Return ONLY strict JSON with status, summary, and steps. status must be either "ready" or "no_change". When status is "ready", steps must be an array of {title, explanation, codeReference, code}; each step must contain a complete, runnable version of the code after one safe improvement, so the learner can apply it in sequence. When status is "no_change", steps must be [] and summary must explain specifically why the current code should remain unchanged or why the available problem details do not justify a rewrite. Do not return "no_change" when the current review efficiencyScore is below 92; in that case, prepare at least one safe clarity, robustness, edge-case, testing, or efficiency improvement that preserves the required input/output behavior. Inspect every stated weakness and suggestion before deciding; when a weakness has a safe source-level remedy, create a step for it. In particular, if the review identifies output construction, repeated conversion, or accumulator clarity, provide a concrete rewrite that resolves it instead of merely restating the observation. Every ready step must be materially different from CURRENT CODE after whitespace is ignored; never return the current solution merely reformatted, renamed, or described as improved. Never emit an empty or partial code field. Format code exactly as executable source: Python top-level statements must have no leading indentation and nested blocks must use exactly four spaces; JavaScript braces and nested blocks must align consistently. The explanation must teach the concept behind the change and clearly state when the original approach was already appropriate.\n\nPROBLEM\n${formatProblemBrief(problem)}\n\nCURRENT CODE\n${original}\n\nCURRENT REVIEW\n${JSON.stringify(analysis || {})}\n\nOTHER SUBMISSION (comparison only)\n${codeText(opponentCode, 8000) || "Not available"}`;
   const response = await model.chat.completions.create({
@@ -323,11 +368,13 @@ export async function improveCode({ code, language, problem, analysis, opponentC
 
 export async function askCodeCoach({ question, analysis, code, originalCode = "", originalAnalysis = null, problem, history = [], opponentCode = "", subjectLabel = "your code" }, onProgress = () => {}) {
   const source = codeText(code, 14_000);
+  const decision = analysis?.reviewDecision || reviewDecision(analysis || {});
+  if (decision.complete && /\b(improve|improvement|optimi[sz]e|better|rewrite|fix|change)\b/i.test(String(question || ""))) return "This submission is S tier under the current review: it meets the feasible complexity targets and has no evidence-backed source-level issue. I would not invent a code change. I can still explain the algorithm, proof, or tradeoffs if you want.";
   if (!localModelStatus().available) return "Analysis cannot start in this browser, but you can still use the written review above.";
   const model = await loadLocalCodeModel(onProgress);
   const response = await model.chat.completions.create({
     messages: [
-      { role: "system", content: "You are ByteBlitz Coach. Teach concepts clearly, reference specific supplied code, and stay within the problem constraints. Explain uncertainty instead of inventing test cases. Offer incremental improvements rather than dumping a replacement solution unless asked. Only include code when it is materially different from the selected code and directly answers the question; never present an unchanged copy of the selected source as an improvement. If no code edit is warranted, explain that in prose without a code block. When you include code, always use a fenced Markdown code block with triple backticks and the language label. Never leave code as ordinary paragraph text. Format executable code exactly: Python top-level statements must start at column zero and nested blocks use exactly four spaces; JavaScript braces and nested blocks must align consistently." },
+      { role: "system", content: "You are ByteBlitz Coach. Teach concepts clearly, reference specific supplied code, and stay within the problem constraints. Explain uncertainty instead of inventing test cases. Obey the review decision: if it says S tier or no actionable issues, do not suggest, imply, or show an improvement; explain the existing approach or tradeoffs instead. Otherwise, only offer incremental changes tied to the supplied actionable issues. Only include code when it is materially different from the selected code and directly answers the question; never present an unchanged copy of the selected source as an improvement. If no code edit is warranted, explain that in prose without a code block. When you include code, always use a fenced Markdown code block with triple backticks and the language label. Never leave code as ordinary paragraph text. Format executable code exactly: Python top-level statements must start at column zero and nested blocks use exactly four spaces; JavaScript braces and nested blocks must align consistently." },
       ...history.slice(-6).map((entry) => ({ role: entry.role === "assistant" ? "assistant" : "user", content: String(entry.content || "") })),
       { role: "user", content: `Problem:\n${formatProblemBrief(problem)}\n\nSelected subject: ${subjectLabel}\n\nReview:\n${JSON.stringify(analysis || {})}\n\nSelected code:\n${source}\n\nOriginal submitted baseline:\n${codeText(originalCode, 14_000) || source}\n\nOriginal analysis baseline:\n${JSON.stringify(originalAnalysis || {})}\n\nOther code for comparison:\n${codeText(opponentCode, 9000) || "Not available"}\n\nQuestion: ${question}` },
     ],
