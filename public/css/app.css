@@ -1570,3 +1570,31 @@ select.input { cursor: pointer; }
   .postmatch-code { min-height: 230px; max-height: 42vh; font-size: 11px; line-height: 1.55; }
   .profile-accomplishment-cards { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ── Polished Unranked post-match layout ─────────────────────────────────── */
+.unranked-postmatch { max-width: min(860px, 100%); margin: 0 auto; }
+.postmatch-hero { text-align: center; padding: 4px 12px 18px; }
+.postmatch-subtitle { max-width: 680px; margin: 0 auto; color: var(--muted-fg); font-size: 12.5px; line-height: 1.65; }
+.unranked-problem { grid-template-columns: auto minmax(0, 1fr) auto; }
+.postmatch-problem-mark { display: grid; place-items: center; width: 34px; height: 34px; color: var(--primary); border: 1px solid hsl(var(--primary-raw) / .46); background: hsl(var(--primary-raw) / .1); }
+.postmatch-problem-copy { display: grid; gap: 4px; min-width: 0; }
+.postmatch-problem-copy .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.postmatch-section-label { margin: 0 0 8px; color: var(--muted-fg); font: 700 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+.postmatch-metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.postmatch-metric-grid .stat { min-width: 0; min-height: 76px; display: grid; align-content: center; justify-items: center; text-align: center; border: 1px solid var(--border); background: linear-gradient(145deg, hsl(240 7% 10% / .92), hsl(240 7% 7% / .78)); }
+.postmatch-metric-grid .stat .v { overflow: hidden; max-width: 100%; font-size: clamp(17px, 2.4vw, 23px); text-overflow: ellipsis; white-space: nowrap; }
+.postmatch-metric-grid .stat .k { margin-top: 5px; font-size: 9px; }
+.unranked-elo { max-width: 540px; margin-left: auto; margin-right: auto; text-align: center; }
+.postmatch-placement { padding: 14px 16px; border: 1px solid hsl(var(--primary-raw) / .34); background: hsl(var(--primary-raw) / .06); }
+.postmatch-placement .mono { min-width: 0; color: var(--muted-fg); font-size: 11.5px; }
+.postmatch-callout { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; color: var(--ok); border: 1px solid hsl(140 70% 50% / .4); background: hsl(140 70% 50% / .07); font: 700 11.5px var(--font-mono); text-align: center; }
+@media (max-width: 620px) {
+  .postmatch-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .postmatch-metric-grid .stat:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 430px) {
+  .unranked-problem { grid-template-columns: auto minmax(0, 1fr); }
+  .unranked-problem > .pill { grid-column: 2; justify-self: start; }
+  .postmatch-metric-grid .stat { min-height: 68px; padding: 12px 8px; }
+  .postmatch-metric-grid .stat .v { font-size: 16px; }
+}

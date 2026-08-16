@@ -282,7 +282,7 @@ export async function renderTraining(params, root) {
       title: solution.completed ? "View your saved solution" : "View your incomplete draft",
       "aria-label": "View your saved solution for " + pz.title,
       onClick: (e) => { e.stopPropagation(); openSavedSolution(pz, solution); },
-    }, icon("terminal", 14));
+    }, icon("pencil", 14));
   }
 
   function trophyButton(pz, unknown) {

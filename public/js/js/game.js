@@ -127,58 +127,62 @@ function soloResultScreen(o) {
   const { solved, reason, timeMs, difficulty, problem, res, submission, placement, signedOut, autoSaved } = o;
   const delta = res ? Math.round(res.rating) - res.before : 0;
   const par = PAR_TIME[difficulty];
+  const totalTests = problem.testCases?.length || 0;
+  const status = solved ? "Solved" : reason === "neutralExit" ? "Run paused" : reason === "left" || reason === "resigned" ? "Resigned" : "Time up";
+  const statusColor = solved ? "var(--ok)" : reason === "neutralExit" ? "var(--warn)" : "var(--primary)";
 
-  return h("div", { style: { maxWidth: "560px", width: "100%" } },
-    h("div", { class: "eyebrow mb-2" }, placement ? "// Unranked placement complete" : "// Unranked run complete"),
-    h("h1", { class: "head mb-2" },
-      solved ? h("span", { style: { color: "var(--ok)" } }, "Solved")
-             : h("span", { class: "accent" }, reason === "neutralExit" ? "Run paused" : reason === "left" ? "Resigned" : reason === "resigned" ? "Resigned" : "Time up")),
-    h("p", { class: "mono mb-6", style: { fontSize: "13px", color: "var(--muted-fg)" } },
-      signedOut
-        ? `${problem.title} — signed-out runs are practice only and do not affect ELO.`
-        : solved
-          ? `${problem.title} — ${fmtTime(timeMs)}${par ? ` (par ${par}s)` : ""}`
-          : reason === "neutralExit"
-          ? "You left the arena, so this Unranked run was not recorded and your ELO is unchanged."
-          : `${problem.title} — better luck next run.`),
-
-    h("div", { class: "postmatch-problem mb-5" },
-      h("span", { class: "label" }, "Problem"),
-      h("span", { class: "mono" }, problem.title),
-      h("span", { class: "label" }, difficulty)),
-    h("div", { class: "stats postmatch-metrics mb-5" },
+  return h("div", { class: "postmatch-result unranked-postmatch" },
+    h("div", { class: "postmatch-hero" },
+      h("div", { class: "eyebrow mb-2" }, placement ? "// Unranked placement complete" : "// Unranked run complete"),
+      h("h1", { class: "head mb-2", style: { color: statusColor } }, status),
+      h("p", { class: "mono postmatch-subtitle" },
+        signedOut
+          ? `${problem.title} — signed-out runs are practice only and do not affect ELO.`
+          : solved
+            ? `${problem.title} · ${fmtTime(timeMs)}${par ? ` · par ${par}s` : ""}`
+            : reason === "neutralExit"
+              ? "This run was not recorded, so your Unranked ELO is unchanged."
+              : `${problem.title} · better luck next run.`)),
+    h("div", { class: "postmatch-problem unranked-problem mb-5" },
+      h("span", { class: "postmatch-problem-mark" }, icon("target", 16)),
+      h("div", { class: "postmatch-problem-copy" },
+        h("span", { class: "label" }, "Problem"),
+        h("span", { class: "mono" }, problem.title)),
+      h("span", { class: "pill" }, difficulty)),
+    h("div", { class: "postmatch-section-label" }, "// Performance snapshot"),
+    h("div", { class: "postmatch-metric-grid mb-5" },
       stat(solved ? fmtTime(timeMs) : "—", "Time to solve"),
       stat(String(submission?.submissionCount || 0), "Submissions"),
       stat(formatRuntime(submission?.runtimeMs), "Test runtime"),
       stat(formatMemory(submission?.memoryBytes), "Memory delta"),
-      stat(`${submission?.passed || 0}/${problem.testCases?.length || 0}`, "Tests passed"),
-    ),
-    h("div", { class: "stats mb-6" },
-      stat(par ? par + "s" : "—", "Par time"),
-      stat(res ? animatedElo(res.before, res.rating, (value) => displayPlacementRating(value, res.rd, { placementGames: res.placementGames })) : "—", "Unranked ELO"),
-      stat(res ? (delta >= 0 ? "+" : "") + delta : "0", res ? "Change" : "No ELO change", res && delta >= 0 ? "var(--ok)" : res ? "var(--primary)" : "var(--muted)"),
-    ),
-
+      stat(`${submission?.passed || 0}/${totalTests}`, "Tests passed"),
+      stat(par ? par + "s" : "—", "Par time")),
+    res
+      ? h("div", { class: "postmatch-elo unranked-elo mb-5" },
+          h("div", { class: "label mb-2" }, "// Unranked ELO"),
+          h("div", { class: "row gap-3", style: { justifyContent: "center", alignItems: "baseline" } },
+            h("span", { class: "mono dim tnum", style: { fontSize: "18px" } }, res.before),
+            h("span", { class: "dim" }, "→"),
+            animatedElo(res.before, res.rating, (value) => displayPlacementRating(value, res.rd, { placementGames: res.placementGames })),
+            h("span", { class: "mono tnum " + (delta >= 0 ? "delta-up" : "delta-down"), style: { fontSize: "17px" } }, `${delta >= 0 ? "+" : ""}${delta}`)),
+          res.rd > 110 ? h("p", { class: "mono mt-3 center", style: { fontSize: "11px", color: "var(--muted)" } }, "Your rating is provisional while placement settles.") : null)
+      : h("div", { class: "postmatch-elo unranked-elo mb-5" },
+          h("div", { class: "label" }, "// ELO"),
+          h("p", { class: "mono center mt-2", style: { fontSize: "12px", color: "var(--muted-fg)" } }, "No ELO change for this run.")),
     placement && res
-      ? h("div", { class: "panel mb-6", style: { padding: "12px 16px", borderColor: "hsl(var(--primary-raw) / .45)" } },
+      ? h("div", { class: "postmatch-placement mb-5" },
           h("div", { class: "between gap-3" },
-            h("span", { class: "mono", style: { fontSize: "12px", color: "var(--muted-fg)" } },
-              res.placementComplete ? "Placement complete — Ranked is unlocked." : `${PLACEMENT_GAMES - res.placementGames} placement ${PLACEMENT_GAMES - res.placementGames === 1 ? "game" : "games"} remaining.`),
-            h("span", { class: "label", style: { color: "var(--primary)" } }, `Confidence ${res.placementConfidence}/10`)),
+            h("span", { class: "mono" }, res.placementComplete ? "Placement complete — Ranked is unlocked." : `${PLACEMENT_GAMES - res.placementGames} placement ${PLACEMENT_GAMES - res.placementGames === 1 ? "game" : "games"} remaining.`),
+            h("span", { class: "label" }, `Confidence ${res.placementConfidence}/10`)),
           h("div", { class: "bar mt-3" }, h("i", { style: { width: `${res.placementConfidence * 10}%`, background: "var(--primary)" } })))
       : null,
-
     res?.newRecord
-      ? h("div", { class: "panel mb-6", style: { padding: "12px 16px", borderColor: "hsl(140 70% 50% / .4)" } },
-          h("span", { class: "mono", style: { fontSize: "12px", color: "var(--ok)" } },
-            "★ New personal best for ", difficulty, "."))
+      ? h("div", { class: "postmatch-callout mb-5" }, icon("trophy", 15), h("span", {}, "New personal best for ", difficulty, "."))
       : null,
-
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Run again ▸"),
-      h("button", { class: "btn", onClick: o.onHome }, "Back to arena"),
-    ),
+      h("button", { class: "btn", onClick: o.onHome }, "Back to arena")),
   );
 }
 
