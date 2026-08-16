@@ -135,7 +135,7 @@ export async function startSolo(preset, hooks = {}) {
       }
     }
 
-    const canAnalyze = !!profile?.uid && !!String(r?.code || "").trim();
+    const canAnalyze = !!profile?.uid && !profile.isGuest && !profile.isAnonymous && !!String(r?.code || "").trim();
     if (canAnalyze) cacheAnalysisAttempt(profile, problem, r, "unranked");
     const autoSaved = await autoSaveAttempt(profile, problem, r, { mode: "unranked", completed: solved });
     arena.showResult(soloResultScreen({
@@ -145,6 +145,7 @@ export async function startSolo(preset, hooks = {}) {
       meUid: profile?.uid || null,
       canAnalyze,
       autoSaved,
+      onAnalyze: () => { arena.destroy(); navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(problem.archetypeId)}`); },
       onAgain: () => { arena.destroy(); startSolo(); },
       onHome: () => arena.exit(),
     }));
@@ -210,7 +211,7 @@ function soloResultScreen(o) {
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Run again ▸"),
-      canAnalyze && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
+      canAnalyze && meUid ? h("button", { class: "btn", onClick: o.onAnalyze }, icon("bulb", 14), "Analyze solution") : null,
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena")),
   );
 }
@@ -383,13 +384,14 @@ export async function startTraining(difficulty, archetypeId) {
       }
     }
 
-    const canAnalyze = !!profile?.uid && !!String(r?.code || "").trim();
+    const canAnalyze = !!profile?.uid && !profile.isGuest && !profile.isAnonymous && !!String(r?.code || "").trim();
     if (canAnalyze) cacheAnalysisAttempt(profile, problem, r, "training");
     const autoSaved = await autoSaveAttempt(profile, problem, r, { mode: "training", completed: solved });
     arena.showResult(trainingResultScreen({
       solved, reason: r.reason, timeMs: r.timeMs, problem, outcome, board,
       anon: !profile || profile.isGuest || profile.isAnonymous,
       meUid: profile?.uid, canAnalyze, autoSaved,
+      onAnalyze: () => { arena.destroy(); navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(problem.archetypeId)}`); },
       onAgain: () => { arena.destroy(); startTraining(difficulty, archetypeId); },
       onBack: () => arena.exit(),
     }));
@@ -434,7 +436,7 @@ function trainingResultScreen(o) {
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Try again ▸"),
-      canAnalyze && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
+      canAnalyze && meUid ? h("button", { class: "btn", onClick: o.onAnalyze }, icon("bulb", 14), "Analyze solution") : null,
       h("button", { class: "btn", onClick: o.onBack }, "Training grounds"),
     ),
   );

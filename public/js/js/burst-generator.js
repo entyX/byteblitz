@@ -11,6 +11,7 @@ const ARCHETYPES_URL = "/data/byteblitz_archetypes.md";
 const TEMPLATES_URL = "/data/byteblitz_question_templates.md";
 // v5 invalidates model-authored Burst cache entries; rank-gated templates now build every question locally.
 const CACHE_KEY = "bb_c4_generated_burst_pool_v5";
+const PLAYED_BURST_KEY = "bb_c4_played_burst_ids_v1";
 const USAGE_KEY = "bb_c4_archetype_usage_v1";
 const LIBRARY_CACHE_KEY = "bb_c4_generation_library_v2";
 const MAX_ACCEPTED = 240;
@@ -106,6 +107,16 @@ function writeCache(key, value) {
 function generatedPool() {
   const value = readCache(CACHE_KEY, []);
   return Array.isArray(value) ? value.filter(Boolean) : [];
+}
+function playedBurstIds() {
+  const value = readCache(PLAYED_BURST_KEY, []);
+  return Array.isArray(value) ? value.filter(Boolean) : [];
+}
+function markBurstPlayed(problem) {
+  const id = problem?.archetypeId || problem?.id;
+  if (!id) return;
+  const prior = playedBurstIds().filter((item) => item !== id);
+  writeCache(PLAYED_BURST_KEY, [...prior, id].slice(-MAX_ACCEPTED));
 }
 function usageMap() { return readCache(USAGE_KEY, {}); }
 
@@ -563,7 +574,7 @@ export async function warmBurstQuestionModel(onProgress = () => {}) {
 }
 
 export function generatedQuestions(difficulty = "", seenIds = []) {
-  const seen = new Set(seenIds || []);
+  const seen = new Set([...(seenIds || []), ...playedBurstIds()]);
   return generatedPool().filter((item) => item && (!difficulty || item.difficulty === difficulty) && !seen.has(item.archetypeId || item.id));
 }
 
@@ -576,12 +587,20 @@ export async function selectBurstQuestion({ difficulty, mode = "unranked", seed 
   const generatedAllowed = forceGenerated || bothMostlyComplete || myMostlyComplete;
   const roll = Math.abs(Math.floor(seed)) % 5;
   if (generatedAllowed && (forceGenerated || roll === 0) && generated.length) {
-    return generated[roll % generated.length];
+    const selected = generated[roll % generated.length];
+    markBurstPlayed(selected);
+    return selected;
   }
   if (generatedAllowed && (forceGenerated || roll === 1 || !generated.length)) {
-    return generateBurstQuestion({ difficulty, seed, existingProblems: existing, onProgress: onGenerate });
+    const selected = await generateBurstQuestion({ difficulty, seed, existingProblems: existing, onProgress: onGenerate });
+    markBurstPlayed(selected);
+    return selected;
   }
-  if (!existing.length) return generateBurstQuestion({ difficulty, seed, existingProblems: existing, onProgress: onGenerate });
+  if (!existing.length) {
+    const selected = await generateBurstQuestion({ difficulty, seed, existingProblems: existing, onProgress: onGenerate });
+    markBurstPlayed(selected);
+    return selected;
+  }
   const seen = new Set(seenIds || []);
   const fresh = existing.filter((item) => !seen.has(item.archetypeId || item.id));
   return (fresh.length ? fresh : existing)[Math.abs(Math.floor(seed / 11)) % (fresh.length || existing.length)];

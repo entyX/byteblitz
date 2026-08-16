@@ -13,7 +13,7 @@ globalThis.fetch = async (url) => {
   return new Response(await readFile(path, "utf8"), { status: 200 });
 };
 
-const { generateBurstQuestion } = await import("../public/js/js/burst-generator.js");
+const { generateBurstQuestion, selectBurstQuestion } = await import("../public/js/js/burst-generator.js");
 const { TIER_COLORS } = await import("../public/js/js/glicko.js");
 const expected = {
   Bronze: new Set(["sign", "count_even", "sum_positive", "reverse", "max_index", "filter_even", "run_count", "alternating_sum", "clamp", "rotate", "first_above"]),
@@ -36,4 +36,8 @@ for (const [index, difficulty] of Object.keys(expected).entries()) {
   console.log(`${difficulty}: ${problem.operation} ✓`);
 }
 
+const firstBurst = await selectBurstQuestion({ difficulty: "Silver", forceGenerated: true, seed: 8001, existingPool: [] });
+const secondBurst = await selectBurstQuestion({ difficulty: "Silver", forceGenerated: true, seed: 8002, existingPool: [] });
+if (firstBurst.archetypeId === secondBurst.archetypeId) throw new Error("Consecutive forced AI Bursts repeated the same generated question.");
+console.log("Generated Burst repeat-exclusion check passed.");
 console.log("Rank-gated deterministic Burst checks passed.");

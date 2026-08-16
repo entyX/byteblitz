@@ -528,8 +528,8 @@ export async function renderPrivateAnalysis(params, root) {
     return;
   }
   const savedSolution = await getSavedSolution(profile.uid, params.archetypeId).catch(() => null);
-  // Generated Bursts intentionally stay out of My Solutions. If its private
-  // write has not arrived yet, use the same-session post-match snapshot instead.
+  // Generated Bursts appear in My Solutions as analysis-only records. If its
+  // private write has not arrived yet, use the same-session post-match snapshot instead.
   const solution = savedSolution || getCachedAnalysisAttempt(profile.uid, params.archetypeId);
   if (!solution) { root.append(h("div", { class: "wrap analysis-private-wrap" }, emptyState("No saved code is available for this analysis."))); return; }
   const problem = await resolveProblem(solution.archetypeId, solution.difficulty, solution.problemSnapshot);

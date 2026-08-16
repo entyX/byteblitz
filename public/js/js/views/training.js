@@ -641,8 +641,9 @@ export async function renderTraining(params, root) {
 
   function solutionCard(solution) {
     const profile = session.profile;
+    const analysisOnly = !!solution.analysisOnly;
     const completed = !!solution.completed;
-    const status = completed ? "Completed" : "Incomplete";
+    const status = analysisOnly ? "AI Burst" : (completed ? "Completed" : "Incomplete");
     const trash = h("button", { class: "icon-btn ui-tooltip solution-trash-icon", "data-tooltip": "Trash solution", "aria-label": "Trash solution", onClick: async () => {
       const confirmed = await confirmModal("Trash solution", "This permanently removes the saved code, submission history, public share, and accomplishment badge for this puzzle.", "Trash solution");
       if (!confirmed) return;
@@ -657,14 +658,15 @@ export async function renderTraining(params, root) {
         trash.disabled = false;
       }
     } }, icon("trash", 15));
-    const play = h("button", { class: "icon-btn ui-tooltip solution-play-icon", "data-tooltip": "Play puzzle", "aria-label": "Play puzzle", onClick: () => startTraining(solution.difficulty, solution.archetypeId) }, icon("play", 13));
+    const play = !analysisOnly ? h("button", { class: "icon-btn ui-tooltip solution-play-icon", "data-tooltip": "Play puzzle", "aria-label": "Play puzzle", onClick: () => startTraining(solution.difficulty, solution.archetypeId) }, icon("play", 13)) : null;
     const analyze = h("button", { class: "btn btn-sm btn-primary solution-analyze-btn", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(solution.archetypeId)}?auto=1`) }, icon("bulb", 14), "Analyze");
-    return h("article", { class: "solution-card" + (completed ? " completed" : " incomplete") },
+    return h("article", { class: "solution-card" + (completed ? " completed" : " incomplete") + (analysisOnly ? " analysis-only" : "") },
       h("div", { class: "between gap-3" },
-        h("div", { class: "row gap-2" }, h("span", { class: "pill" + (completed ? " pill-ok" : "") }, status), play, trash),
-        solution.isPublic ? h("span", { class: "solution-public-label" }, "Public") : h("span", { class: "label" }, "Private")),
+        h("div", { class: "row gap-2" }, h("span", { class: "pill" + (completed && !analysisOnly ? " pill-ok" : "") }, status), play, trash),
+        analysisOnly ? h("span", { class: "label" }, "Analysis-only") : (solution.isPublic ? h("span", { class: "solution-public-label" }, "Public") : h("span", { class: "label" }, "Private"))),
       h("h3", { class: "mono mt-4", style: { fontSize: "15px", marginBottom: "0" } }, solution.title),
       h("p", { class: "label mt-2", style: { textTransform: "none", letterSpacing: "0" } }, `${solution.difficulty} · ${(solution.category || "general").replace(/_/g, " ")} · ${solution.lastMode}`),
+      analysisOnly ? h("p", { class: "mono mt-3", style: { fontSize: "11px", color: "var(--muted-fg)", lineHeight: "1.55", marginBottom: "0" } }, "Generated Burst retained for code analysis only. It is not a Training Grounds puzzle or leaderboard entry.") : null,
       h("div", { class: "solution-card-meta mt-4" }, h("span", {}, completed ? `Best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete ${solution.incompleteSaves === 1 ? "draft" : "drafts"}`), h("span", {}, `${solution.saveCount || 1} saved`)),
       h("div", { class: "solution-card-actions mt-5" },
         h("button", { class: "btn btn-sm solution-view-btn", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(solution.archetypeId)}`) }, icon("pencil", 14), "View solution"),

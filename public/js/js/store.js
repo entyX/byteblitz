@@ -636,6 +636,10 @@ export async function syncSavedSolutionsToPuzzleRecords(profile) {
   const saved = await getSavedSolutions(profile.uid, 250);
   let repaired = 0;
   for (const solution of saved) {
+    // Generated Burst attempts are analysis records, not authored Training
+    // puzzles. They may appear in My Solutions but must never create a puzzle
+    // record, leaderboard entry, or discovered Training Grounds problem.
+    if (solution.analysisOnly) continue;
     const existing = await getPuzzleRecord(solution.archetypeId, profile.uid);
     if (existing?.solved && !solution.completed) {
       const completedAt = Number(existing.updatedAt) || Date.now();
@@ -870,7 +874,6 @@ export async function getSavedSolutions(uid, n = 100) {
   // preserves both formats until every player writes a new solution summary.
   const snap = await getDocs(collection(db, "users", uid, "solutions"));
   return snap.docs.map((entry) => normalizeSolution(entry.id, entry.data()))
-    .filter((solution) => !solution.analysisOnly)
     .sort((a, b) => Number(b.lastSavedAt || 0) - Number(a.lastSavedAt || 0))
     .slice(0, n);
 }
