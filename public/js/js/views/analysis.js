@@ -7,9 +7,10 @@ import { h, clear, emptyState, icon, fmtTime, toast, esc } from "../ui.js";
 import { session } from "../session.js";
 import { getSavedSolution, getPublicPuzzleSolution, getPublicSolutionShare, saveSolutionAnalysis, setSolutionVisibility } from "../store.js";
 import { getDuel, getDuelSubmissionHistory } from "../matchmaking.js";
-import { loadAllPools, problemById } from "../problems.js";
+import { loadAllPools, problemById, outputMatches } from "../problems.js";
 import { navigate } from "../router.js";
-import { analyzeCode, askCodeCoach, fastCodeAnalysis, improveCode } from "../analysis-engine.js";
+import { analyzeCode, askCodeCoach, fastCodeAnalysis, improveCode, gradeForScore } from "../analysis-engine.js";
+import { runCode, getRunTimeout, warmRuntime, highlight } from "../runner.js";
 
 function setAnalysisMetadata(subject, canonicalPath) {
   const owner = subject.ownerUsername || subject.username || "A ByteBlitz player";
@@ -99,18 +100,39 @@ function problemPane(problem, state, rerender) {
     coachPanel(state, rerender));
 }
 
-function syntaxCode(source, language = "") {
-  const protectedTokens = [];
-  const hold = (className, value) => `@@BBTOKEN${protectedTokens.push(`<span class="${className}">${value}</span>`) - 1}@@`;
-  let html = esc(String(source || ""));
-  html = html.replace(/(&quot;[^\n]*?&quot;|&#39;[^\n]*?&#39;|`[^\n]*?`|\/\/[^\n]*|#[^\n]*)/g, (match) => hold(match.startsWith("#") || match.startsWith("//") ? "syn-comment" : "syn-string", match));
-  html = html.replace(/\b(def|function|class|return|if|else|elif|for|while|in|of|from|import|const|let|var|new|async|await|try|catch|throw|switch|case|break|continue|true|false|null|None|and|or|not|print|input)\b/g, "<span class=\"syn-keyword\">$1</span>");
-  html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, "<span class=\"syn-number\">$1</span>");
-  html = html.replace(/@@BBTOKEN(\d+)@@/g, (_, index) => protectedTokens[Number(index)] || "");
-  return html;
+function runnerLanguage(language = "") {
+  return /javascript|\bjs\b/i.test(String(language)) ? "javascript" : "python";
 }
 
-function coachMessageBody(content, language = "") {
+function syntaxCode(source, language = "") {
+  return highlight(String(source || ""), runnerLanguage(language));
+}
+
+function normalizeCodeBlock(code) {
+  const lines = String(code || "").replace(/^\n+|\n+$/g, "").split("\n");
+  const indents = lines.filter((line) => line.trim()).map((line) => (line.match(/^\s*/) || [""])[0].length);
+  const commonIndent = indents.length ? Math.min(...indents) : 0;
+  return lines.map((line) => line.slice(commonIndent)).join("\n");
+}
+
+function inlineMarkdown(text) {
+  return esc(text)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
+}
+
+function coachProse(text) {
+  const blocks = String(text || "").trim().split(/\n\s*\n/).filter(Boolean);
+  return blocks.flatMap((block) => {
+    const lines = block.split("\n").map((line) => line.trimEnd());
+    const bullets = lines.length && lines.every((line) => /^[-*]\s+/.test(line));
+    if (bullets) return [h("ul", { class: "analysis-chat-list" }, ...lines.map((line) => h("li", { html: inlineMarkdown(line.replace(/^[-*]\s+/, "")) })))];
+    return [h("p", { html: inlineMarkdown(lines.join("\n")).replace(/\n/g, "<br>") })];
+  });
+}
+
+function coachMessageBody(content, language = "", state, rerender) {
   const source = String(content || "");
   const parts = [];
   const fence = /```([\w+-]*)\s*\n?([\s\S]*?)```/g;
@@ -118,14 +140,46 @@ function coachMessageBody(content, language = "") {
   let match;
   while ((match = fence.exec(source))) {
     const prose = source.slice(last, match.index).trim();
-    if (prose) parts.push(h("p", {}, prose));
+    if (prose) parts.push(...coachProse(prose));
     const codeLanguage = match[1] || language;
-    parts.push(h("pre", { class: "analysis-chat-code" }, h("code", { class: `syntax-code language-${codeLanguage || "plain"}`, html: syntaxCode(match[2].trim(), codeLanguage) })));
+    const code = normalizeCodeBlock(match[2]);
+    const activeKey = state?.activeCodeTab || "mine";
+    const apply = state?.owner && activeKey === "mine" ? h("button", { class: "btn btn-sm", onClick: () => {
+      state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: code };
+      state.editorMode = true;
+      toast("Coach snippet loaded into the local editor. It has not been saved or submitted.", "ok");
+      rerender?.();
+    } }, icon("pencil", 13), "Apply to editor") : null;
+    parts.push(h("section", { class: "analysis-chat-code-wrap" }, h("div", { class: "analysis-chat-code-head" }, h("span", { class: "label" }, codeLanguage || "code"), apply), h("pre", { class: "analysis-chat-code" }, h("code", { class: `syntax-code language-${codeLanguage || "plain"}`, html: syntaxCode(code, codeLanguage) }))));
     last = fence.lastIndex;
   }
   const tail = source.slice(last).trim();
-  if (tail) parts.push(h("p", {}, tail));
+  if (tail) parts.push(...coachProse(tail));
   return parts.length ? parts : [h("p", {}, "No response was returned.")];
+}
+
+async function runSandboxTests(state, activeKey, language, rerender) {
+  const code = state.codeEdits?.[activeKey] ?? (activeKey === "opponent" ? state.opponent?.code : state.solution?.code) ?? "";
+  const tests = Array.isArray(state.problem?.testCases) ? state.problem.testCases : [];
+  if (!tests.length) { state.editorResults = [{ pass: false, error: "No test cases are available for this problem." }]; rerender(); return; }
+  state.editorRunning = true;
+  state.editorResults = [];
+  state.editorRuntimeStatus = "Preparing local sandbox…";
+  rerender();
+  try {
+    const lang = runnerLanguage(language);
+    await warmRuntime(lang, (text) => { state.editorRuntimeStatus = text; rerender(); });
+    const results = [];
+    for (let index = 0; index < tests.length; index++) {
+      const test = tests[index];
+      const result = await runCode(lang, code, test.input, getRunTimeout(lang));
+      results.push({ index: index + 1, hidden: !!test.hidden, pass: !result.error && outputMatches(result.output, test.expected), output: result.output, expected: test.expected, error: result.error || "" });
+    }
+    state.editorResults = results;
+    state.editorRuntimeStatus = "Local sandbox finished. These runs do not affect solves, timing, or saved submissions.";
+  } catch (error) {
+    state.editorResults = [{ pass: false, error: error.message || "Local test run failed." }];
+  } finally { state.editorRunning = false; rerender(); }
 }
 
 function codePane(state, rerender) {
@@ -139,17 +193,31 @@ function codePane(state, rerender) {
     tabButtons.push(h("button", { class: "analysis-code-tab" + (activeKey === "mine" ? " active" : ""), onClick: () => { state.activeCodeTab = "mine"; rerender(); } }, "Your code"));
     tabButtons.push(h("button", { class: "analysis-code-tab" + (activeKey === "opponent" ? " active" : ""), onClick: () => { state.activeCodeTab = "opponent"; rerender(); } }, "Opponent code"));
   }
-  const restore = tooltipButton({ icon: "x", tooltip: "Restore submitted code", disabled: displayCode === submittedCode, onClick: () => { state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: submittedCode }; state.improvements = { ...(state.improvements || {}), [activeKey]: null }; state.improvementStates = { ...(state.improvementStates || {}), [activeKey]: null }; rerender(); } });
-  const copy = tooltipButton({ icon: "clipboard", tooltip: "Copy code", onClick: async () => { try { await navigator.clipboard.writeText(displayCode); toast("Code copied.", "ok"); } catch { toast("Couldn't copy code.", "err"); } } });
+  const language = selected?.language || state.solution.language || "python";
+  const canEdit = !!state.owner && activeKey === "mine";
+  const restore = tooltipButton({ icon: "x", tooltip: "Restore submitted code", onClick: () => { state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: submittedCode }; state.improvements = { ...(state.improvements || {}), [activeKey]: null }; state.improvementStates = { ...(state.improvementStates || {}), [activeKey]: null }; rerender(); } });
+  const copy = tooltipButton({ icon: "clipboard", tooltip: "Copy code", onClick: async () => { try { await navigator.clipboard.writeText(state.codeEdits?.[activeKey] ?? submittedCode); toast("Code copied.", "ok"); } catch { toast("Couldn't copy code.", "err"); } } });
+  const editor = tooltipButton({ icon: "pencil", tooltip: canEdit ? (state.editorMode ? "Exit local editor" : "Open local editor") : "Only your submitted code can be edited", disabled: !canEdit, onClick: () => { state.editorMode = !state.editorMode; rerender(); } });
   const share = shareControl(state, rerender);
   const improvement = state.improvements?.[activeKey];
   const changeRows = improvement?.steps?.slice(0, state.appliedSteps?.[activeKey] || 0).map((step, index) => h("div", { class: "analysis-code-change" }, h("strong", {}, `${index + 1}. ${step.title}`), h("p", {}, step.explanation))) || [];
+  const editorTextarea = h("textarea", { class: "analysis-editor-input", spellcheck: "false", onInput: (event) => { state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: event.target.value }; } });
+  editorTextarea.value = displayCode;
+  const results = Array.isArray(state.editorResults) ? state.editorResults : [];
+  const passed = results.filter((result) => result.pass).length;
+  const resultRows = results.map((result) => h("article", { class: "analysis-editor-result " + (result.pass ? "pass" : "fail") }, h("strong", {}, result.index ? `Test ${result.index}${result.hidden ? " · hidden" : ""}` : "Run status"), h("span", {}, result.pass ? "Passed" : result.error || "Wrong answer"), !result.hidden && !result.pass && result.expected !== undefined ? h("pre", {}, `Expected: ${result.expected}\nReceived: ${result.output || "(empty)"}`) : null));
+  const editorPanel = state.editorMode && canEdit ? h("section", { class: "analysis-editor" },
+    h("div", { class: "analysis-editor-head" }, h("div", {}, h("div", { class: "label" }, "// Local editor"), h("p", {}, "Edits and test runs stay in this browser. They never affect solve time, completion, or saved submissions.")), h("button", { class: "btn btn-sm btn-primary", disabled: state.editorRunning || !displayCode.trim(), onClick: () => runSandboxTests(state, activeKey, language, rerender) }, icon("play", 13), state.editorRunning ? "Running…" : "Run tests")),
+    editorTextarea,
+    state.editorRuntimeStatus ? h("p", { class: "analysis-editor-status" }, state.editorRuntimeStatus) : null,
+    results.length ? h("div", { class: "analysis-editor-results" }, h("div", { class: "label mb-2" }, `// ${passed}/${results.length} tests passed`), ...resultRows) : null) : null;
+  const codeView = state.editorMode && canEdit ? editorPanel : h("pre", { class: "solution-code analysis-workspace-code" }, h("code", { class: `syntax-code language-${language}`, html: syntaxCode(displayCode || "// No saved source is available.", language) }));
   return h("main", { class: "analysis-pane analysis-code-pane" },
     h("div", { class: "analysis-code-top" },
       h("div", { class: "analysis-code-tabs" }, ...(tabButtons.length ? tabButtons : [h("span", { class: "label" }, "// Your submitted code")])),
-      h("div", { class: "row gap-2 analysis-code-actions" }, h("span", { class: "pill" }, selected?.language || state.solution.language || "code"), copy, share?.button, restore)),
+      h("div", { class: "row gap-2 analysis-code-actions" }, h("span", { class: "pill" }, language), copy, editor, share?.button, restore)),
     share?.panel,
-    h("pre", { class: "solution-code analysis-workspace-code" }, h("code", { class: `syntax-code language-${selected?.language || state.solution.language || "plain"}`, html: syntaxCode(displayCode || "// No saved source is available.", selected?.language || state.solution.language) })),
+    codeView,
     changeRows.length ? h("section", { class: "analysis-code-changes" }, h("div", { class: "label mb-2" }, "// Applied improvements"), ...changeRows) : null);
 }
 
@@ -165,9 +233,10 @@ function reportContent(analysis, state) {
     icon("bulb", 22),
     h("h2", { class: "head" }, "Ready when you are"),
     h("p", { class: "body-text" }, "Start an analysis to see complexity, quality, strategy, and practical next steps for the selected code."));
-  const score = h("section", { class: "analysis-score-card" },
-    h("div", { class: "analysis-score-ring" }, h("strong", {}, String(analysis.efficiencyScore ?? "—")), h("span", {}, "/100")),
-    h("div", {}, h("div", { class: "label" }, "// Efficiency score"), h("h2", { class: "head mt-1" }, analysis.efficiencyScore >= 80 ? "Strong foundation" : analysis.efficiencyScore >= 60 ? "Solid, with room to improve" : "A useful first pass"), h("p", { class: "body-text mt-2" }, "This score combines algorithmic efficiency, correctness signals, readability, and fit with the problem constraints.")));
+  const grade = gradeForScore(analysis.efficiencyScore);
+  const score = h("section", { class: `analysis-score-card grade-${grade.tier}` },
+    h("div", { class: "analysis-score-ring" }, h("strong", {}, grade.letter)),
+    h("div", {}, h("div", { class: "label" }, "// Code grade"), h("h2", { class: "head mt-1" }, grade.label), h("p", { class: "body-text mt-2" }, grade.description)));
   const metrics = h("div", { class: "analysis-metrics-grid" },
     metricCard("Time complexity", analysis.timeComplexity, analysis.timeComplexityExplanation),
     metricCard("Space complexity", analysis.spaceComplexity, analysis.spaceComplexityExplanation),
@@ -186,7 +255,6 @@ function reportContent(analysis, state) {
     sections.push(textBlock("Failed-test diagnosis", analysis.failureDiagnosis, "analysis-failure-block"));
     sections.push(submissionTimeline(analysis.submissionProgress || state.submissions || []));
   }
-  if (analysis.codeReferences?.length) sections.push(listBlock("Specific code references", analysis.codeReferences, "primary"));
   return h("div", { class: "analysis-report" }, ...sections);
 }
 
@@ -211,7 +279,7 @@ function selectedPayload(state) {
 function coachPanel(state, rerender) {
   const messages = state.coachMessages || [];
   const input = h("textarea", { class: "input analysis-coach-input", placeholder: "Ask about an algorithm, constraint, edge case, or an improvement…", rows: "3" });
-  const chatRows = messages.map((message) => h("article", { class: "analysis-chat-message " + message.role }, h("span", { class: "label" }, message.role === "user" ? "You" : "Coach"), ...(message.role === "assistant" ? coachMessageBody(message.content, state.solution?.language) : [h("p", {}, message.content)])));
+  const chatRows = messages.map((message) => h("article", { class: "analysis-chat-message " + message.role }, h("span", { class: "label" }, message.role === "user" ? "You" : "Coach"), ...(message.role === "assistant" ? coachMessageBody(message.content, state.solution?.language, state, rerender) : [h("p", {}, message.content)])));
   const chatLog = chatRows.length ? h("div", { class: "analysis-chat-log mt-4" }, ...chatRows) : null;
   const send = h("button", { class: "btn btn-primary", onClick: async () => {
     const question = input.value.trim();
@@ -276,6 +344,7 @@ function analysisPane(state, rerender) {
       rerender();
       return;
     }
+    state.editorMode = true;
     state.improving = true;
     state.modelProgress = "Reviewing possible improvements…";
     rerender();

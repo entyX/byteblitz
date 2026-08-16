@@ -104,13 +104,23 @@ assert.match(analysis, /coachMessageBody/, "analysis coaching must format fenced
 assert.match(analysis, /syntaxCode/, "analysis code panes must use syntax-color rendering");
 assert.match(analysis, /loadAllPools/, "analysis must resolve saved solutions against every authored problem pool");
 assert.match(analysis, /Share and privacy settings/, "analysis must expose compact share controls beside code actions");
+assert.match(analysis, /runSandboxTests/, "analysis must provide a local-only editor test runner");
+assert.match(analysis, /Edits and test runs stay in this browser/, "editor changes must clearly remain local-only");
+assert.match(analysis, /Apply to editor/, "coach code snippets must be applicable to the local editor");
+assert.match(analysis, /coachProse/, "coach replies must render rich Markdown prose");
+assert.match(analysis, /Code grade/, "analysis must render a letter grade instead of exposing a numeric score");
+assert.doesNotMatch(analysis, /Specific code references/, "analysis must not render the redundant code-reference panel");
 assert.match(analysisEngine, /function formatProblemBrief/, "analysis prompts must include complete problem context and constraints");
 assert.match(analysisEngine, /failureDiagnosis/, "analysis must explain recorded failed-test evidence");
 assert.match(analysisEngine, /export async function improveCode/, "analysis must generate guided code improvements");
 assert.match(analysisEngine, /no_change/, "guided improvements must communicate when no safe rewrite is needed");
 assert.match(analysisEngine, /detailedList/, "analysis must reject shallow one-word observations");
 assert.match(analysisEngine, /lineReference/, "fallback analysis must cite concrete source lines");
+assert.match(analysisEngine, /gradeForScore/, "analysis must compute consistent letter grades");
+assert.match(analysisEngine, /below 92/, "sub-top-tier reviews must request a concrete improvement");
 assert.match(css, /analysis-workspace-grid/, "analysis workspace must be styled as a three-pane layout");
 assert.match(css, /\[data-tooltip\]/, "custom tooltip styling must exist for compact controls");
+assert.match(css, /analysis-editor-input/, "analysis editor must have dedicated local sandbox styling");
+assert.match(css, /grade-s/, "analysis grades must include S-tier styling");
 
 console.log("v1.3 chunk 1 checks passed");
