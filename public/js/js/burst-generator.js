@@ -179,6 +179,82 @@ function parseJson(content) {
   try { return JSON.parse(text.slice(start, end + 1)); } catch { return null; }
 }
 
+const RECIPE_OPERATIONS = ["sign", "count_even", "sum_positive", "reverse", "max_index", "filter_even", "run_count", "alternating_sum", "clamp", "rotate", "first_above"];
+
+function operationFor(archetype, seed) {
+  const text = `${archetype.coreTechnique} ${archetype.primaryTopics} ${archetype.structure}`.toLowerCase();
+  const preferred = text.includes("reorder") || text.includes("permutation") ? "reverse"
+    : text.includes("run") ? "run_count"
+      : text.includes("palindrome") || text.includes("symmetric") ? "reverse"
+        : text.includes("filter") ? "filter_even"
+          : text.includes("count") || text.includes("tally") ? "count_even"
+            : text.includes("aggregate") || text.includes("sum") ? "sum_positive"
+              : text.includes("extremum") || text.includes("maximum") || text.includes("minimum") ? "max_index"
+                : text.includes("adjacent") || text.includes("alternating") ? "alternating_sum"
+                  : text.includes("segment") || text.includes("clamp") ? "clamp"
+                    : text.includes("search") || text.includes("match") ? "first_above" : "sign";
+  return RECIPE_OPERATIONS.includes(preferred) ? preferred : RECIPE_OPERATIONS[Math.abs(Math.floor(seed)) % RECIPE_OPERATIONS.length];
+}
+
+function recipePrompt({ archetype, operation }) {
+  return `Return one compact JSON object only: {"title":"short title","operation":"${operation}"}. The operation must remain exactly "${operation}". Create a fresh title inspired by ${archetype.name}. No markdown, no explanation, no tests, and no other keys.`;
+}
+
+function seededValues(seed, index, length = 6) {
+  let x = (Math.abs(Math.floor(seed)) + index * 7919) >>> 0;
+  return Array.from({ length }, () => { x = Math.imul(x ^ (x >>> 16), 2246822519) >>> 0; return (x % 31) - 15; });
+}
+
+function recipeCase(operation, seed, index) {
+  const n = 4 + (index % 4);
+  const values = seededValues(seed, index, n);
+  const joined = values.join(" ");
+  const base = `${n}\n${joined}`;
+  if (operation === "sign") return { input: base, expected: values.map((v) => v < 0 ? -1 : v > 0 ? 1 : 0).join(" ") };
+  if (operation === "count_even") return { input: base, expected: String(values.filter((v) => v % 2 === 0).length) };
+  if (operation === "sum_positive") return { input: base, expected: String(values.filter((v) => v > 0).reduce((a, v) => a + v, 0)) };
+  if (operation === "reverse") return { input: base, expected: [...values].reverse().join(" ") };
+  if (operation === "max_index") {
+    const max = Math.max(...values); return { input: base, expected: `${max} ${values.indexOf(max) + 1}` };
+  }
+  if (operation === "filter_even") return { input: base, expected: values.filter((v) => v % 2 === 0).join(" ") };
+  if (operation === "run_count") {
+    let runs = values.length ? 1 : 0; for (let i = 1; i < values.length; i++) if (values[i] !== values[i - 1]) runs++;
+    return { input: base, expected: String(runs) };
+  }
+  if (operation === "alternating_sum") return { input: base, expected: String(values.reduce((sum, value, i) => sum + (i % 2 ? -value : value), 0)) };
+  if (operation === "clamp") {
+    const low = -5 + (index % 3), high = 5 + (index % 2); return { input: `${n} ${low} ${high}\n${joined}`, expected: values.map((v) => Math.max(low, Math.min(high, v))).join(" ") };
+  }
+  if (operation === "rotate") {
+    const k = index % n; const rotated = k ? values.slice(-k).concat(values.slice(0, -k)) : values;
+    return { input: `${n} ${k}\n${joined}`, expected: rotated.join(" ") };
+  }
+  const threshold = index - 3;
+  const first = values.findIndex((v) => v > threshold);
+  return { input: `${n} ${threshold}\n${joined}`, expected: String(first < 0 ? -1 : first + 1) };
+}
+
+function recipeProblem(recipe, archetype, seed) {
+  const operation = RECIPE_OPERATIONS.includes(recipe?.operation) ? recipe.operation : operationFor(archetype, seed);
+  const labels = {
+    sign: "Sign Signals", count_even: "Even Count", sum_positive: "Positive Total", reverse: "Mirror Order",
+    max_index: "Peak Position", filter_even: "Even Selection", run_count: "Run Census", alternating_sum: "Alternating Balance",
+    clamp: "Safe Range", rotate: "Circular Shift", first_above: "First Threshold",
+  };
+  const tests = Array.from({ length: TEST_COUNT }, (_, index) => ({ ...recipeCase(operation, seed, index), hidden: index >= 4 }));
+  const title = clean(recipe?.title) || `${archetype.name}: ${labels[operation]}`;
+  const description = `Given a sequence of integers, apply the ${labels[operation].toLowerCase()} rule and print the required result. This Burst is generated from the ${archetype.name} archetype.`;
+  return {
+    title, category: clean(archetype.primaryTopics).split(",")[0] || "arrays", difficulty: archetype.rank,
+    definition: description, description, inputFormat: "The first line contains n followed by any operation parameters. The second line contains n integers.",
+    outputFormat: "Print the result required by the operation.", constraints: ["1 <= n <= 10", "-15 <= each value <= 15"],
+    sampleInput: tests[0].input, sampleOutput: tests[0].expected, testCases: tests, timeLimitSeconds: 300,
+    allowedTechniques: [archetype.coreTechnique || "linear scan"], forbiddenTechniques: [],
+    explanation: `Use a single scan and apply the ${labels[operation].toLowerCase()} rule.`, uniqueSignature: `${archetype.id}:${operation}:${seed}`,
+  };
+}
+
 function shapeProblem(raw, archetype) {
   const source = raw && typeof raw === "object" ? raw : {};
   const tests = Array.isArray(source.testCases) ? source.testCases.slice(0, TEST_COUNT).map((test) => ({ input: String(test?.input ?? ""), expected: String(test?.expected ?? ""), hidden: false })) : [];
@@ -222,25 +298,26 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
     text: progress?.text || "Loading the local Burst author…",
     progress: progress?.progress ?? 0.2,
   }));
-  onProgress({ text: "Writing your local AI Burst question…", progress: 0.62 });
-  const messages = [
-    { role: "system", content: "You are a strict JSON-only competitive-programming problem author. Never output markdown or explanations outside the JSON object." },
-    { role: "user", content: promptFor({ archetype, template, rank: difficulty, existing: known }) },
-  ];
-  const request = { messages, temperature: 0.35, max_tokens: 2600 };
-  // Do not pass response_format here. WebLLM 0.2.x routes that option through
-  // its native grammar compiler, whose JSON-schema binding is not compatible
-  // with this browser build. The prompt plus local parser provide the contract.
-  let response = await model.chat.completions.create(request);
-  let parsed = parseJson(response?.choices?.[0]?.message?.content);
-  if (!parsed) {
-    onProgress({ text: "Retrying the local Burst draft…", progress: 0.78 });
-    response = await model.chat.completions.create({ ...request, temperature: 0.2, max_tokens: 3000 });
-    parsed = parseJson(response?.choices?.[0]?.message?.content);
+  const operation = operationFor(archetype, seed);
+  onProgress({ text: "Writing a compact local Burst recipe…", progress: 0.62 });
+  let recipe = null;
+  try {
+    const response = await model.chat.completions.create({
+      messages: [
+        { role: "system", content: "Return only compact JSON. Never output markdown." },
+        { role: "user", content: recipePrompt({ archetype, operation }) },
+      ],
+      temperature: 0.45,
+      max_tokens: 180,
+    });
+    recipe = parseJson(response?.choices?.[0]?.message?.content);
+  } catch (error) {
+    // A local model failure should not block a Burst: the deterministic recipe
+    // still produces a complete, judgeable problem from the selected archetype.
+    console.warn("Compact local Burst recipe unavailable; using deterministic recipe.", error);
   }
-  onProgress({ text: "Validating tests and uniqueness…", progress: 0.9 });
-  if (!parsed) throw new Error("The local Burst author returned an empty or invalid question. Please try again.");
-  const candidate = shapeProblem(parsed, archetype);
+  onProgress({ text: "Building deterministic tests and validating uniqueness…", progress: 0.9 });
+  const candidate = shapeProblem(recipeProblem(recipe, archetype, seed), archetype);
   const errors = validationErrors(candidate, archetype, known);
   if (errors.length) throw new Error(`Generated Burst question rejected: ${errors.join(", ")}.`);
   const saved = [...generatedPool(), candidate].slice(-MAX_ACCEPTED);
