@@ -9,7 +9,8 @@ import { loadLocalBurstModel, warmLocalBurstModel } from "./burst-local-model.js
 
 const ARCHETYPES_URL = "/data/byteblitz_archetypes.md";
 const TEMPLATES_URL = "/data/byteblitz_question_templates.md";
-const CACHE_KEY = "bb_c4_generated_burst_pool_v1";
+// v2 invalidates pre-template Burst questions such as SHORT TITLE and generic formats.
+const CACHE_KEY = "bb_c4_generated_burst_pool_v2";
 const USAGE_KEY = "bb_c4_archetype_usage_v1";
 const LIBRARY_CACHE_KEY = "bb_c4_generation_library_v2";
 const MAX_ACCEPTED = 240;
