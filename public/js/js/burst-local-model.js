@@ -4,11 +4,24 @@
 // ============================================================================
 
 const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm@0.2.84";
-// A compact instruct model is sufficient for constrained JSON problem drafts and
-// starts materially faster than the 1.5B code-review model.
-const MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+// SmolLM2 360M is the fast path for constrained JSON drafts. Qwen 0.5B
+// remains available as a quality fallback via localStorage for stronger devices.
+const FAST_MODEL_ID = "SmolLM2-360M-Instruct-q4f16_1-MLC";
+const QUALITY_MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+const MODEL_ID = (() => {
+  try { return localStorage.getItem("bb_burst_model") === "quality" ? QUALITY_MODEL_ID : FAST_MODEL_ID; }
+  catch { return FAST_MODEL_ID; }
+})();
 let engine = null;
 let enginePromise = null;
+
+export function setLocalBurstModelPreference(preference) {
+  try { localStorage.setItem("bb_burst_model", preference === "quality" ? "quality" : "fast"); } catch {}
+}
+
+export function localBurstModelPreference() {
+  try { return localStorage.getItem("bb_burst_model") === "quality" ? "quality" : "fast"; } catch { return "fast"; }
+}
 
 export function localBurstModelStatus() {
   if (!navigator.gpu) {
@@ -24,12 +37,19 @@ export async function loadLocalBurstModel(onProgress = () => {}) {
     enginePromise = (async () => {
       onProgress({ text: "Preparing the local Burst author…", progress: 0 });
       const webllm = await import(WEBLLM_URL);
-      engine = await webllm.CreateMLCEngine(MODEL_ID, {
+      const create = (modelId, fallback = false) => webllm.CreateMLCEngine(modelId, {
         initProgressCallback: (event) => onProgress({
-          text: event?.text || "Loading the local Burst author…",
+          text: fallback ? "Loading the compatible local Burst author…" : (event?.text || "Loading the local Burst author…"),
           progress: event?.progress ?? 0,
         }),
       });
+      try {
+        engine = await create(MODEL_ID);
+      } catch (fastError) {
+        if (MODEL_ID === QUALITY_MODEL_ID) throw fastError;
+        console.warn("Fast local Burst model unavailable; falling back to Qwen 0.5B.", fastError);
+        engine = await create(QUALITY_MODEL_ID, true);
+      }
       onProgress({ text: "Local Burst author ready.", progress: 1 });
       return engine;
     })().catch((error) => {

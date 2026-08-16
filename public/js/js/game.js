@@ -66,8 +66,13 @@ export async function startSolo(preset, hooks = {}) {
     });
   } catch (e) {
     hooks.onError?.(e);
-    toast(e.message, "err");
-    return;
+    throw e;
+  }
+
+  if (!problem || typeof problem !== "object" || !problem.archetypeId || !Array.isArray(problem.testCases)) {
+    const error = new Error("The Burst question could not be prepared. Please try again.");
+    hooks.onError?.(error);
+    throw error;
   }
 
   // Meeting a problem in a real run is what reveals it in Training Grounds.

@@ -22,6 +22,7 @@ import { renderMessages } from "./views/messages.js";
 import { renderProfile } from "./views/profile.js";
 import { renderChangelog } from "./views/changelog.js";
 import { renderPublicAnalysis, renderPrivateAnalysis, renderDuelAnalysis } from "./views/analysis.js";
+import { renderBurstLoading } from "./views/burst-loading.js";
 
 const NAV = [
   { path: "/", label: "Play" },
@@ -263,6 +264,7 @@ function wireUserStreams() {
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 route("/", renderHome);
+route("/burst-loading", renderBurstLoading);
 route("/training", renderTraining);
 route("/leaderboard", renderLeaderboard);
 route("/messages", renderMessages);

@@ -102,7 +102,10 @@ function readCache(key, fallback) {
 function writeCache(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode */ }
 }
-function generatedPool() { return readCache(CACHE_KEY, []); }
+function generatedPool() {
+  const value = readCache(CACHE_KEY, []);
+  return Array.isArray(value) ? value.filter(Boolean) : [];
+}
 function usageMap() { return readCache(USAGE_KEY, {}); }
 
 function hashText(text) {
@@ -112,7 +115,8 @@ function hashText(text) {
 }
 function normalizeText(text) { return clean(text).toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim(); }
 function fingerprint(problem) {
-  return hashText([problem.title, problem.description, problem.inputFormat, problem.outputFormat].map(normalizeText).join("|"));
+  const item = problem || {};
+  return hashText([item.title, item.description, item.inputFormat, item.outputFormat].map(normalizeText).join("|"));
 }
 function tokens(problem) {
   return new Set(normalizeText(`${problem.title} ${problem.description} ${problem.inputFormat} ${problem.outputFormat}`).split(" ").filter((token) => token.length > 2));
@@ -127,10 +131,10 @@ function similarity(a, b) {
 
 function exactDuplicate(candidate, existing) {
   const id = fingerprint(candidate);
-  return existing.find((item) => item.fingerprint === id || fingerprint(item) === id) || null;
+  return existing.filter(Boolean).find((item) => item.fingerprint === id || fingerprint(item) === id) || null;
 }
 function semanticDuplicate(candidate, existing) {
-  return existing.find((item) => item.difficulty === candidate.difficulty && similarity(candidate, item) >= 0.82) || null;
+  return existing.filter(Boolean).find((item) => item.difficulty === candidate.difficulty && similarity(candidate, item) >= 0.82) || null;
 }
 
 function validationErrors(problem, archetype, existing) {
@@ -162,7 +166,7 @@ TEMPLATE
 ${template}
 
 EXISTING TITLES TO AVOID
-${existing.slice(-80).map((item) => item.title).join("\n")}`;
+${existing.filter(Boolean).slice(-40).map((item) => item.title).filter(Boolean).join("\n")}`;
 }
 
 function parseJson(content) {
@@ -174,27 +178,28 @@ function parseJson(content) {
 }
 
 function shapeProblem(raw, archetype) {
-  const tests = Array.isArray(raw?.testCases) ? raw.testCases.slice(0, TEST_COUNT).map((test) => ({ input: String(test.input ?? ""), expected: String(test.expected ?? ""), hidden: false })) : [];
-  const generatedId = `AI-${archetype.id}-${hashText(`${raw?.title || ""}|${Date.now()}|${Math.random()}`)}`;
+  const source = raw && typeof raw === "object" ? raw : {};
+  const tests = Array.isArray(source.testCases) ? source.testCases.slice(0, TEST_COUNT).map((test) => ({ input: String(test?.input ?? ""), expected: String(test?.expected ?? ""), hidden: false })) : [];
+  const generatedId = `AI-${archetype.id}-${hashText(`${source.title || ""}|${Date.now()}|${Math.random()}`)}`;
   return {
-    ...raw,
+    ...source,
     id: generatedId,
     archetypeId: generatedId,
     sourceArchetypeId: archetype.id,
     generated: true,
     difficulty: archetype.rank,
     color: "#F97316",
-    definition: clean(raw?.definition),
-    description: clean(raw?.description),
-    constraints: Array.isArray(raw?.constraints) ? raw.constraints.map(clean).filter(Boolean) : [],
-    sampleInput: clean(raw?.sampleInput),
-    sampleOutput: clean(raw?.sampleOutput),
+    definition: clean(source.definition),
+    description: clean(source.description),
+    constraints: Array.isArray(source.constraints) ? source.constraints.map(clean).filter(Boolean) : [],
+    sampleInput: clean(source.sampleInput),
+    sampleOutput: clean(source.sampleOutput),
     testCases: tests.map((test, index) => ({ ...test, hidden: index >= 4 })),
     timeLimitSeconds: 300,
     timeLimit: 300,
-    allowedTechniques: Array.isArray(raw?.allowedTechniques) ? raw.allowedTechniques.map(clean).filter(Boolean) : [],
-    forbiddenTechniques: Array.isArray(raw?.forbiddenTechniques) ? raw.forbiddenTechniques.map(clean).filter(Boolean) : [],
-    fingerprint: fingerprint(raw),
+    allowedTechniques: Array.isArray(source.allowedTechniques) ? source.allowedTechniques.map(clean).filter(Boolean) : [],
+    forbiddenTechniques: Array.isArray(source.forbiddenTechniques) ? source.forbiddenTechniques.map(clean).filter(Boolean) : [],
+    fingerprint: fingerprint(source),
   };
 }
 
@@ -221,11 +226,14 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
       { role: "system", content: "You generate safe, original, automatically judgeable competitive-programming problems. Output strict JSON only." },
       { role: "user", content: promptFor({ archetype, template, rank: difficulty, existing: known }) },
     ],
-    temperature: 0.7,
-    max_tokens: 2200,
+    temperature: 0.45,
+    max_tokens: 1800,
   });
   onProgress({ text: "Validating tests and uniqueness…", progress: 0.9 });
-  const candidate = shapeProblem(parseJson(response.choices?.[0]?.message?.content), archetype);
+  const content = response?.choices?.[0]?.message?.content;
+  const parsed = parseJson(content);
+  if (!parsed) throw new Error("The local Burst author returned an empty or invalid question. Please try again.");
+  const candidate = shapeProblem(parsed, archetype);
   const errors = validationErrors(candidate, archetype, known);
   if (errors.length) throw new Error(`Generated Burst question rejected: ${errors.join(", ")}.`);
   const saved = [...generatedPool(), candidate].slice(-MAX_ACCEPTED);
@@ -250,7 +258,7 @@ export function warmBurstQuestionModel(onProgress = () => {}) {
   return warmLocalBurstModel(onProgress);
 }
 
-export function generatedQuestions(difficulty = "") { return generatedPool().filter((item) => !difficulty || item.difficulty === difficulty); }
+export function generatedQuestions(difficulty = "") { return generatedPool().filter((item) => item && (!difficulty || item.difficulty === difficulty)); }
 
 export async function selectBurstQuestion({ difficulty, mode = "unranked", seed = Date.now(), existingPool = [], seenIds = [], opponentSeenIds = [], forceGenerated = false, onGenerate = () => {} } = {}) {
   const generated = generatedQuestions(difficulty);

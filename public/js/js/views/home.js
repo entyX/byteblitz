@@ -276,27 +276,9 @@ export async function renderHome(params, root) {
     return h("div", { class: "elo-fact" }, h("span", { class: "k" }, k), node);
   }
 
-  async function onPlayUnranked() {
+  function onPlayUnranked() {
     if (unrankedLaunching) return;
-    unrankedLaunching = true;
-    unrankedLaunchStatus = "Loading authored problems…";
-    paintElo();
-    try {
-      await startSolo(undefined, {
-        onProgress: (progress) => {
-          unrankedLaunchStatus = progress?.text || "Preparing your Burst question…";
-          paintElo();
-        },
-        onError: (error) => {
-          unrankedLaunchStatus = error?.message || "Question selection failed.";
-          paintElo();
-        },
-      });
-    } finally {
-      unrankedLaunching = false;
-      if (!unrankedLaunchStatus || /^(Loading|Preparing|Fetching|Initializing)/i.test(unrankedLaunchStatus)) unrankedLaunchStatus = "";
-      paintElo();
-    }
+    navigate("/burst-loading");
   }
 
   async function onPlayRanked() {
