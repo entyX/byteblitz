@@ -228,12 +228,10 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
     { role: "user", content: promptFor({ archetype, template, rank: difficulty, existing: known }) },
   ];
   const request = { messages, temperature: 0.35, max_tokens: 2600 };
-  let response;
-  try {
-    response = await model.chat.completions.create({ ...request, response_format: { type: "json_object" } });
-  } catch {
-    response = await model.chat.completions.create(request);
-  }
+  // Do not pass response_format here. WebLLM 0.2.x routes that option through
+  // its native grammar compiler, whose JSON-schema binding is not compatible
+  // with this browser build. The prompt plus local parser provide the contract.
+  let response = await model.chat.completions.create(request);
   let parsed = parseJson(response?.choices?.[0]?.message?.content);
   if (!parsed) {
     onProgress({ text: "Retrying the local Burst draft…", progress: 0.78 });
