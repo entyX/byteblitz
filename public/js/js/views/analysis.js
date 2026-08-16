@@ -3,11 +3,11 @@
 // and a responsive three-pane layout for problem, code, and assistant insights.
 // ============================================================================
 
-import { h, clear, emptyState, icon, fmtTime, toast } from "../ui.js";
+import { h, clear, emptyState, icon, fmtTime, toast, esc } from "../ui.js";
 import { session } from "../session.js";
 import { getSavedSolution, getPublicPuzzleSolution, getPublicSolutionShare, saveSolutionAnalysis, setSolutionVisibility } from "../store.js";
 import { getDuel, getDuelSubmissionHistory } from "../matchmaking.js";
-import { loadPool, problemById } from "../problems.js";
+import { loadAllPools, problemById } from "../problems.js";
 import { navigate } from "../router.js";
 import { analyzeCode, askCodeCoach, fastCodeAnalysis, improveCode } from "../analysis-engine.js";
 
@@ -31,12 +31,17 @@ function setAnalysisMetadata(subject, canonicalPath) {
   });
 }
 
-async function resolveProblem(archetypeId) {
+async function resolveProblem(archetypeId, difficulty = "") {
+  const fallback = { archetypeId, title: archetypeId || "Coding problem", difficulty: difficulty || "Practice", description: "Problem details are unavailable for this saved solution." };
   try {
-    await loadPool();
-    return problemById(archetypeId) || { archetypeId, title: archetypeId, description: "" };
+    if (difficulty) {
+      const direct = await problemById(difficulty, archetypeId);
+      if (direct) return direct;
+    }
+    const pools = await loadAllPools();
+    return Object.values(pools).flat().find((problem) => problem.id === archetypeId || problem.archetypeId === archetypeId) || fallback;
   } catch {
-    return { archetypeId, title: archetypeId, description: "" };
+    return fallback;
   }
 }
 
@@ -94,6 +99,35 @@ function problemPane(problem, state, rerender) {
     coachPanel(state, rerender));
 }
 
+function syntaxCode(source, language = "") {
+  const protectedTokens = [];
+  const hold = (className, value) => `@@BBTOKEN${protectedTokens.push(`<span class="${className}">${value}</span>`) - 1}@@`;
+  let html = esc(String(source || ""));
+  html = html.replace(/(&quot;[^\n]*?&quot;|&#39;[^\n]*?&#39;|`[^\n]*?`|\/\/[^\n]*|#[^\n]*)/g, (match) => hold(match.startsWith("#") || match.startsWith("//") ? "syn-comment" : "syn-string", match));
+  html = html.replace(/\b(def|function|class|return|if|else|elif|for|while|in|of|from|import|const|let|var|new|async|await|try|catch|throw|switch|case|break|continue|true|false|null|None|and|or|not|print|input)\b/g, "<span class=\"syn-keyword\">$1</span>");
+  html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, "<span class=\"syn-number\">$1</span>");
+  html = html.replace(/@@BBTOKEN(\d+)@@/g, (_, index) => protectedTokens[Number(index)] || "");
+  return html;
+}
+
+function coachMessageBody(content, language = "") {
+  const source = String(content || "");
+  const parts = [];
+  const fence = /```([\w+-]*)\s*\n?([\s\S]*?)```/g;
+  let last = 0;
+  let match;
+  while ((match = fence.exec(source))) {
+    const prose = source.slice(last, match.index).trim();
+    if (prose) parts.push(h("p", {}, prose));
+    const codeLanguage = match[1] || language;
+    parts.push(h("pre", { class: "analysis-chat-code" }, h("code", { class: `syntax-code language-${codeLanguage || "plain"}`, html: syntaxCode(match[2].trim(), codeLanguage) })));
+    last = fence.lastIndex;
+  }
+  const tail = source.slice(last).trim();
+  if (tail) parts.push(h("p", {}, tail));
+  return parts.length ? parts : [h("p", {}, "No response was returned.")];
+}
+
 function codePane(state, rerender) {
   const isDuel = !!state.opponent;
   const activeKey = state.activeCodeTab || "mine";
@@ -105,15 +139,17 @@ function codePane(state, rerender) {
     tabButtons.push(h("button", { class: "analysis-code-tab" + (activeKey === "mine" ? " active" : ""), onClick: () => { state.activeCodeTab = "mine"; rerender(); } }, "Your code"));
     tabButtons.push(h("button", { class: "analysis-code-tab" + (activeKey === "opponent" ? " active" : ""), onClick: () => { state.activeCodeTab = "opponent"; rerender(); } }, "Opponent code"));
   }
-  const restore = tooltipButton({ icon: "x", tooltip: "Restore submitted code", disabled: displayCode === submittedCode, onClick: () => { state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: submittedCode }; state.improvements = { ...(state.improvements || {}), [activeKey]: null }; rerender(); } });
-  const copy = tooltipButton({ icon: "pencil", tooltip: "Copy code to clipboard", onClick: async () => { try { await navigator.clipboard.writeText(displayCode); toast("Code copied.", "ok"); } catch { toast("Couldn't copy code.", "err"); } } });
+  const restore = tooltipButton({ icon: "x", tooltip: "Restore submitted code", disabled: displayCode === submittedCode, onClick: () => { state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: submittedCode }; state.improvements = { ...(state.improvements || {}), [activeKey]: null }; state.improvementStates = { ...(state.improvementStates || {}), [activeKey]: null }; rerender(); } });
+  const copy = tooltipButton({ icon: "clipboard", tooltip: "Copy code", onClick: async () => { try { await navigator.clipboard.writeText(displayCode); toast("Code copied.", "ok"); } catch { toast("Couldn't copy code.", "err"); } });
+  const share = shareControl(state, rerender);
   const improvement = state.improvements?.[activeKey];
   const changeRows = improvement?.steps?.slice(0, state.appliedSteps?.[activeKey] || 0).map((step, index) => h("div", { class: "analysis-code-change" }, h("strong", {}, `${index + 1}. ${step.title}`), h("p", {}, step.explanation))) || [];
   return h("main", { class: "analysis-pane analysis-code-pane" },
     h("div", { class: "analysis-code-top" },
       h("div", { class: "analysis-code-tabs" }, ...(tabButtons.length ? tabButtons : [h("span", { class: "label" }, "// Your submitted code")])),
-      h("div", { class: "row gap-2" }, h("span", { class: "pill" }, selected?.language || state.solution.language || "code"), copy, restore)),
-    h("pre", { class: "solution-code analysis-workspace-code" }, displayCode || "// No saved source is available."),
+      h("div", { class: "row gap-2 analysis-code-actions" }, h("span", { class: "pill" }, selected?.language || state.solution.language || "code"), copy, share?.button, restore)),
+    share?.panel,
+    h("pre", { class: "solution-code analysis-workspace-code" }, h("code", { class: `syntax-code language-${selected?.language || state.solution.language || "plain"}`, html: syntaxCode(displayCode || "// No saved source is available.", selected?.language || state.solution.language) })),
     changeRows.length ? h("section", { class: "analysis-code-changes" }, h("div", { class: "label mb-2" }, "// Applied improvements"), ...changeRows) : null);
 }
 
@@ -175,7 +211,7 @@ function selectedPayload(state) {
 function coachPanel(state, rerender) {
   const messages = state.coachMessages || [];
   const input = h("textarea", { class: "input analysis-coach-input", placeholder: "Ask about an algorithm, constraint, edge case, or an improvement…", rows: "3" });
-  const chatRows = messages.map((message) => h("article", { class: "analysis-chat-message " + message.role }, h("span", { class: "label" }, message.role === "user" ? "You" : "Coach"), h("p", {}, message.content)));
+  const chatRows = messages.map((message) => h("article", { class: "analysis-chat-message " + message.role }, h("span", { class: "label" }, message.role === "user" ? "You" : "Coach"), ...(message.role === "assistant" ? coachMessageBody(message.content, state.solution?.language) : [h("p", {}, message.content)])));
   const chatLog = chatRows.length ? h("div", { class: "analysis-chat-log mt-4" }, ...chatRows) : null;
   const send = h("button", { class: "btn btn-primary", onClick: async () => {
     const question = input.value.trim();
@@ -228,48 +264,60 @@ function analysisPane(state, rerender) {
   const payload = selectedPayload(state);
   const subjectLabel = payload.key === "opponent" ? "opponent code" : "your code";
   const analyze = h("button", { class: "btn btn-primary", disabled: state.running || !String(payload.displayCode || "").trim(), onClick: () => runAnalysis(state, rerender) }, icon("bulb", 15), payload.analysis ? "Refresh analysis" : "Start analysis");
-  const improve = h("button", { class: "btn", disabled: state.improving || !state.owner || !String(payload.displayCode || "").trim(), onClick: async () => {
+  const improvement = state.improvements?.[payload.key];
+  const improvementState = state.improvementStates?.[payload.key];
+  const appliedCount = state.appliedSteps?.[payload.key] || 0;
+  const requestImprovement = h("button", { class: "btn", disabled: state.improving || !state.owner || !String(payload.displayCode || "").trim() || improvementState?.noChange, onClick: async () => {
+    if (improvement && appliedCount < improvement.steps.length) {
+      const next = improvement.steps[appliedCount];
+      state.codeEdits = { ...(state.codeEdits || {}), [payload.key]: next.code || payload.displayCode };
+      state.appliedSteps = { ...(state.appliedSteps || {}), [payload.key]: appliedCount + 1 };
+      toast("Applied the next guided improvement to the code pane.", "ok");
+      rerender();
+      return;
+    }
     state.improving = true;
-    state.modelProgress = "Preparing a guided improvement…";
+    state.modelProgress = "Reviewing possible improvements…";
     rerender();
     try {
-      let improvement = state.improvements?.[payload.key];
-      let stepIndex = state.appliedSteps?.[payload.key] || 0;
-      if (!improvement || stepIndex >= improvement.steps.length) {
-        improvement = await improveCode({ code: payload.displayCode, language: payload.selected?.language || state.solution.language, problem: state.problem, analysis: payload.analysis, opponentCode: payload.other?.code || "" }, (progress) => { state.modelProgress = progress?.text || "Preparing improvement…"; rerender(); });
-        state.improvements = { ...(state.improvements || {}), [payload.key]: improvement };
-        stepIndex = 0;
+      const prepared = await improveCode({ code: payload.displayCode, language: payload.selected?.language || state.solution.language, problem: state.problem, analysis: payload.analysis, opponentCode: payload.other?.code || "" }, (progress) => { state.modelProgress = progress?.text || "Reviewing possible improvements…"; rerender(); });
+      state.improvementStates = { ...(state.improvementStates || {}), [payload.key]: prepared };
+      if (prepared.noChange) {
+        toast("No safe code changes are needed for this solution.", "ok");
+      } else {
+        state.improvements = { ...(state.improvements || {}), [payload.key]: prepared };
+        state.appliedSteps = { ...(state.appliedSteps || {}), [payload.key]: 0 };
+        toast("Improvement plan ready. Review it, then apply the first change.", "ok");
       }
-      const next = improvement.steps[stepIndex];
-      state.codeEdits = { ...(state.codeEdits || {}), [payload.key]: next.code || payload.displayCode };
-      state.appliedSteps = { ...(state.appliedSteps || {}), [payload.key]: stepIndex + 1 };
-      toast("Applied the next guided improvement to the code pane.", "ok");
-    } catch (error) { toast(error.message || "Couldn't prepare an improvement.", "err"); }
+    } catch (error) { toast(error.message || "Couldn't review improvements.", "err"); }
     finally { state.improving = false; state.modelProgress = ""; rerender(); }
-  } }, icon("zap", 15), state.improving ? "Preparing…" : "Apply next improvement");
-  const controls = h("div", { class: "analysis-actions" }, analyze, improve);
+  } }, icon("zap", 15), state.improving ? "Reviewing…" : improvementState?.noChange ? "No changes needed" : improvement ? appliedCount < improvement.steps.length ? `Apply improvement ${appliedCount + 1}` : "Request another review" : "Request improvements");
+  const improvementNote = improvementState?.summary ? h("section", { class: "analysis-improvement-note" }, h("div", { class: "label mb-2" }, improvementState.noChange ? "// No rewrite needed" : "// Improvement plan"), h("p", {}, improvementState.summary), !improvementState.noChange && improvement?.steps?.[appliedCount] ? h("p", { class: "analysis-next-step" }, `Next: ${improvement.steps[appliedCount].title} — ${improvement.steps[appliedCount].explanation}`) : null) : null;
+  const controls = h("div", { class: "analysis-actions" }, analyze, requestImprovement);
   const error = state.analysisError ? h("div", { class: "analysis-error" }, icon("x", 15), h("span", {}, state.analysisError)) : null;
   return h("aside", { class: "analysis-pane analysis-insights-pane" },
     h("div", { class: "analysis-pane-head" }, h("span", { class: "label" }, "// Analysis"), h("span", { class: "label" }, subjectLabel)),
     controls,
     progressBlock(state),
     error,
+    improvementNote,
     reportContent(payload.analysis, state));
 }
 
-function shareControl(state) {
+function shareControl(state, rerender) {
   const solution = state.solution || {};
-  const link = h("div", { class: "analysis-share-link" });
-  const renderLink = () => {
-    const sharePath = state.solution?.publicShareId ? `/share/${encodeURIComponent(state.solution.publicShareId)}` : state.sharePath;
-    clear(link);
-    if (!sharePath || (!state.publicView && !state.solution?.isPublic)) return;
-    const url = `${window.location.origin}${sharePath}`;
-    link.append(h("span", { class: "label" }, state.publicView ? "Public analysis link" : "Share link"), h("a", { href: sharePath, target: "_blank", rel: "noopener", class: "solution-share-link" }, url));
-  };
-  renderLink();
-  if (state.publicView) return link;
-  if (!state.owner) return null;
+  const sharePath = state.solution?.publicShareId ? `/share/${encodeURIComponent(state.solution.publicShareId)}` : state.sharePath;
+  if (!state.owner && !state.publicView) return null;
+  const button = tooltipButton({ icon: "share", tooltip: state.publicView ? "Copy public analysis link" : "Share and privacy settings", onClick: async () => {
+    if (state.publicView && sharePath) {
+      const url = `${window.location.origin}${sharePath}`;
+      try { await navigator.clipboard.writeText(url); toast("Public link copied.", "ok"); } catch { prompt("Copy public link:", url); }
+      return;
+    }
+    state.shareOpen = !state.shareOpen;
+    rerender();
+  } });
+  if (state.publicView || !state.shareOpen) return { button, panel: null };
   const visibility = h("label", { class: "solution-visibility-switch compact", "data-tooltip": solution.completed ? "Make code and analysis public" : "Complete the solution before sharing" },
     h("input", { type: "checkbox", checked: !!solution.isPublic, disabled: !solution.completed }),
     h("span", { class: "solution-switch-ui" }),
@@ -281,15 +329,19 @@ function shareControl(state) {
       const updated = await setSolutionVisibility(session.profile, solution.archetypeId, toggle.checked);
       state.solution = { ...state.solution, ...updated };
       state.sharePath = updated.publicShareId ? `/share/${encodeURIComponent(updated.publicShareId)}` : null;
-      visibility.querySelector(".label").textContent = state.solution.isPublic ? "Public" : "Private";
-      renderLink();
       toast(state.solution.isPublic ? "Public code and analysis link ready." : "Solution is private again.", "ok");
+      rerender();
     } catch (error) {
       toggle.checked = !toggle.checked;
       toast(error.message || "Couldn't update visibility.", "err");
     } finally { toggle.disabled = !state.solution.completed; }
   });
-  return h("div", { class: "analysis-share-control" }, visibility, link);
+  const publicPath = state.solution?.publicShareId ? `/share/${encodeURIComponent(state.solution.publicShareId)}` : state.sharePath;
+  const link = publicPath && state.solution?.isPublic
+    ? h("div", { class: "analysis-share-link" }, h("span", { class: "label" }, "Public code + analysis link"), h("a", { href: publicPath, target: "_blank", rel: "noopener", class: "solution-share-link" }, `${window.location.origin}${publicPath}`))
+    : null;
+  const privateHint = link ? null : h("p", { class: "analysis-share-private" }, solution.completed ? "Private. Turn on public sharing to create a link." : "Complete this solution before a public link can be created.");
+  return { button, panel: h("section", { class: "analysis-share-popover" }, visibility, link, privateHint) };
 }
 
 function renderWorkspace(root, state) {
@@ -299,13 +351,8 @@ function renderWorkspace(root, state) {
   const page = h("div", { class: "analysis-workspace" });
   root.append(page);
   const rerender = () => renderWorkspace(root, state);
-  const title = state.solution.title || state.problem.title || "Code analysis";
-  const returnLabel = state.publicView ? "Try a problem" : "Training Grounds";
-  const header = h("header", { class: "analysis-workspace-head" },
-    h("div", {}, h("div", { class: "eyebrow mb-2" }, state.matchContext?.duelId ? "// Post-match review" : state.publicView ? "// Public solution review" : "// Personal code review"), h("h1", { class: "head" }, title)),
-    h("div", { class: "row gap-2 wrapflex" }, shareControl(state), h("span", { class: "pill" }, state.solution.language || "code"), h("button", { class: "btn btn-sm", onClick: () => navigate("/training") }, returnLabel)));
   const body = h("div", { class: "analysis-workspace-grid" }, problemPane(state.problem, state, rerender), codePane(state, rerender), analysisPane(state, rerender));
-  page.append(header, body);
+  page.append(body);
   if (state.autoAnalyze && !state.autoAnalyzeStarted) {
     state.autoAnalyzeStarted = true;
     setTimeout(() => runAnalysis(state, rerender), 0);
@@ -318,21 +365,21 @@ export async function renderPrivateAnalysis(params, root) {
   if (profile.uid !== params.uid) {
     const share = await getPublicPuzzleSolution(params.uid, params.archetypeId).catch(() => null);
     if (!share) { privateMessage(root); return; }
-    const problem = await resolveProblem(share.archetypeId);
+    const problem = await resolveProblem(share.archetypeId, share.difficulty);
     setAnalysisMetadata(share, `/share/${encodeURIComponent(share.id)}`);
     renderWorkspace(root, { owner: false, publicView: true, sharePath: `/share/${encodeURIComponent(share.id)}`, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
     return;
   }
   const solution = await getSavedSolution(profile.uid, params.archetypeId).catch(() => null);
   if (!solution) { root.append(h("div", { class: "wrap analysis-private-wrap" }, emptyState("No saved code is available for this analysis."))); return; }
-  const problem = await resolveProblem(solution.archetypeId);
+  const problem = await resolveProblem(solution.archetypeId, solution.difficulty);
   renderWorkspace(root, { owner: true, publicView: false, autoAnalyze: params.query?.auto === "1", sharePath: solution.publicShareId ? `/share/${encodeURIComponent(solution.publicShareId)}` : null, solution, problem, analysis: solution.analysis || null, analyses: { mine: solution.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
 }
 
 export async function renderPublicAnalysis(params, root) {
   const share = await getPublicSolutionShare(params.id).catch(() => null);
   if (!share) { root.append(h("div", { class: "wrap analysis-private-wrap" }, emptyState("This solution link is unavailable or has been removed."))); return; }
-  const problem = await resolveProblem(share.archetypeId);
+  const problem = await resolveProblem(share.archetypeId, share.difficulty);
   setAnalysisMetadata(share, `/share/${encodeURIComponent(params.id)}`);
   renderWorkspace(root, { owner: false, publicView: true, sharePath: `/share/${encodeURIComponent(share.id)}`, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
 }
@@ -347,7 +394,7 @@ export async function renderDuelAnalysis(params, root) {
   const opponentSubmission = mineIsP1 ? duel.p2Submission : duel.p1Submission;
   const compactHistory = mineIsP1 ? duel.p1SubmissionHistory : duel.p2SubmissionHistory;
   const duelProblem = await resolveProblemFromDuel(duel);
-  const problem = await resolveProblem(duelProblem.archetypeId);
+  const problem = await resolveProblem(duelProblem.archetypeId, duelProblem.difficulty || duel.difficulty);
   const saved = await getSavedSolution(profile.uid, problem.archetypeId).catch(() => null);
   const fullHistory = await getDuelSubmissionHistory(duel.id, profile.uid).catch(() => []);
   const solution = { ...(saved || {}), ...(ownSubmission || {}), archetypeId: problem.archetypeId, title: problem.title, difficulty: problem.difficulty, lastMode: "ranked" };

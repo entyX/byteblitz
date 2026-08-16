@@ -14,6 +14,10 @@ const asText = (value) => Array.isArray(value) ? value.filter(Boolean).join("\n"
 const cleanList = (value, fallback, limit = 6) => Array.isArray(value)
   ? value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, limit)
   : fallback;
+const detailedList = (value, fallback, limit = 6) => {
+  const items = cleanList(value, [], limit).filter((item) => item.length >= 38 && /\s/.test(item));
+  return items.length >= 2 ? items : fallback;
+};
 
 function codeText(value, limit = MAX_CODE_CHARS) {
   const source = String(value || "").trim();
@@ -76,10 +80,42 @@ function submissionFailure(submissions) {
   return `Submission ${failed.submissionCount || ""} failed at ${failure.hidden ? "a hidden test" : `test ${failure.testIndex ?? ""}`}. Recorded detail: ${detail}`.trim();
 }
 
+function codeLineEntries(code) {
+  return String(code || "").split("\n").map((text, index) => ({ number: index + 1, text: text.trim() })).filter((entry) => entry.text);
+}
+
+function lineReference(entry) {
+  return entry ? `line ${entry.number}: \`${entry.text.slice(0, 110)}\`` : "the visible solution";
+}
+
+function fallbackInsights(code) {
+  const lines = codeLineEntries(code);
+  const input = lines.find((entry) => /\b(input|readline|scanf|cin)\b/i.test(entry.text));
+  const loop = lines.find((entry) => /\b(for|while)\b/.test(entry.text));
+  const output = lines.find((entry) => /\b(print|console\.log|cout|return)\b/i.test(entry.text));
+  const concat = lines.find((entry) => /(?:\+=\s*str|\.append\(|push\(|concat\()/i.test(entry.text));
+  const condition = lines.find((entry) => /\b(if|elif|else|switch|case)\b/.test(entry.text));
+  const references = [input, loop, condition, concat, output].filter(Boolean).map(lineReference).filter((value, index, all) => all.indexOf(value) === index).slice(0, 5);
+  const strengths = [
+    input ? `${lineReference(input)} establishes the input shape before the algorithm begins, which makes the rest of the solution easier to follow.` : "The solution stays focused on one clear input-to-output path instead of introducing unnecessary helper state.",
+    loop ? `${lineReference(loop)} expresses the main traversal directly, so the visible running-time cost is easy to reason about.` : "The visible code has a compact control flow, which keeps the core algorithm straightforward to inspect.",
+  ];
+  const weaknesses = concat && loop
+    ? [`${lineReference(concat)} builds output during the main traversal. For very large output, repeated concatenation can obscure the intended cost; accumulating pieces and joining once is easier to justify.`, `The loop invariant around ${lineReference(loop)} is implicit. A brief comment or a named accumulator invariant would make boundary reasoning more transparent.`]
+    : [`No concrete correctness flaw is visible in the saved source, but the invariant around ${lineReference(loop)} should be stated or tested against boundary input so future edits remain safe.`, condition ? `${lineReference(condition)} handles a branch, but the expected behavior for the opposite branch is not documented in the visible code.` : "The code would be easier to review with one short comment explaining why its main state is sufficient."];
+  const suggestions = concat && loop
+    ? [`Consider replacing repeated output construction at ${lineReference(concat)} with a collection of pieces followed by one join, if the problem permits the same output format.`, `Keep ${lineReference(loop)} as the single traversal, then add a short invariant comment explaining what the accumulator represents after each iteration.`]
+    : [`No algorithmic rewrite is clearly required from the visible source. Preserve the current approach and add a focused boundary test around ${lineReference(loop)} before changing it.`, "If you request an improvement, prefer a readability or proof-oriented change over a speculative rewrite that could alter the required input/output behavior."];
+  const approach = loop
+    ? `The solution reads the input${input ? ` at ${lineReference(input)}` : ""}, processes it through ${lineReference(loop)}, and produces the required result${output ? ` at ${lineReference(output)}` : ""}.`
+    : `The visible code maps the supplied input to an output directly${output ? ` through ${lineReference(output)}` : ""}.`;
+  return { input, loop, output, concat, references, strengths, weaknesses, suggestions, approach };
+}
+
 export function fastCodeAnalysis(input) {
   const code = String(input.code || "");
-  const lines = code.split("\n").filter((line) => line.trim());
-  const hasNames = /\b(result|count|index|left|right|seen|total|answer)\b/i.test(code);
+  const lines = codeLineEntries(code);
+  const hasNames = /\b(result|count|index|left|right|seen|total|answer|output|nums)\b/i.test(code);
   const hasComments = /(^|\s)(#|\/\/)/m.test(code);
   const hasRepeatedLoops = (code.match(/\b(for|while)\b/g) || []).length >= 2;
   const score = clamp(58 + (hasNames ? 9 : 0) + (hasComments ? 6 : 0) - (hasRepeatedLoops ? 9 : 0) - (lines.length > 120 ? 5 : 0), 35, 92);
@@ -89,30 +125,26 @@ export function fastCodeAnalysis(input) {
     testsPassed: Number(item.passed || item.testsPassed || 0),
     note: item.failure ? "A recorded failing test is available for review." : (index === submissions.length - 1 ? "Final recorded submission." : "Earlier attempt retained for progression review."),
   }));
+  const insight = fallbackInsights(code);
   const timeComplexity = guessComplexity(code);
   const spaceComplexity = guessSpace(code);
   return {
     efficiencyScore: score,
     timeComplexity,
-    timeComplexityExplanation: `This estimate describes how the running time is expected to grow as the input grows. The current code contains ${hasRepeatedLoops ? "multiple iteration constructs, so check whether nested or repeated passes are necessary" : "a limited number of iteration constructs"}.`,
+    timeComplexityExplanation: `This estimate describes how runtime grows as input grows. ${insight.loop ? `${lineReference(insight.loop)} is the visible dominant traversal.` : "No dominant loop is visible in the saved source."} ${hasRepeatedLoops ? "Check whether the iteration constructs are nested or represent separate passes." : "No second traversal is visible in the saved source."}`,
     spaceComplexity,
-    spaceComplexityExplanation: "This estimate covers additional working memory beyond the input itself. Review every collection or recursion path that grows with the input.",
-    codeQuality: hasNames ? "Readable structure with mostly meaningful identifiers." : "A compact first draft that would benefit from clearer naming around the core state.",
-    codeQualityExplanation: "Code quality considers clarity, maintainability, separation of responsibilities, and whether a future reader can verify the algorithm’s key invariant.",
-    strengths: [
-      hasNames ? "Uses recognizable state and result variables." : "Keeps the implementation focused on the core task.",
-      hasComments ? "Includes comments that help explain intent." : "Keeps the solution relatively concise.",
-    ],
-    weaknesses: hasRepeatedLoops ? ["Multiple iterations may create avoidable repeated work."] : ["The key invariant and boundary behavior are not explicitly documented."],
-    suggestions: hasRepeatedLoops
-      ? ["Check whether the repeated passes can be merged into one traversal.", "Use a lookup structure when it replaces repeated searching."]
-      : ["State the loop invariant in a comment and test boundary inputs explicitly.", "Keep a small set of adversarial examples for this pattern."],
-    approach: "The current approach transforms the input into an answer directly and validates the implementation against the available tests.",
-    opponentComparison: input.opponentCode ? "Compare the opponent’s data flow and number of passes. A better result may come from fewer traversals, a simpler invariant, or tighter handling of edge cases." : "No opponent source was available for a direct comparison.",
+    spaceComplexityExplanation: `${insight.concat ? `${lineReference(insight.concat)} may grow with the produced output, so its memory cost should be considered alongside the input.` : "This estimate counts working memory beyond the input and any required output."} Review collections or recursion only when they grow with the input size.`,
+    codeQuality: hasNames ? "Readable structure with named state." : "Compact implementation with room for clearer state names.",
+    codeQualityExplanation: `${insight.loop ? `${lineReference(insight.loop)} keeps the central control flow visible.` : "The central control flow is compact."} Code quality also depends on whether a reviewer can identify the invariant and boundary behavior without guessing.`,
+    strengths: insight.strengths,
+    weaknesses: insight.weaknesses,
+    suggestions: insight.suggestions,
+    approach: insight.approach,
+    opponentComparison: input.opponentCode ? "Compare the opponent’s data flow and number of passes against the same constraints. Prefer the version with a simpler invariant or a proven lower cost, not merely different syntax." : "No opponent source was available for a direct comparison.",
     failureDiagnosis: submissionFailure(submissions),
-    matchReview: input.matchContext?.lost ? "Review the first submission that stopped improving and compare its assumptions with the problem constraints. The timeline below highlights the progression that led to the loss." : "Use the submission timeline to preserve the changes that improved test coverage and identify any unnecessary detours.",
+    matchReview: input.matchContext?.lost ? "Review the first submission that stopped improving and compare its recorded assumptions with the problem constraints. The timeline below preserves the progression that led to the loss." : "Use the submission timeline to preserve changes that improved test coverage and identify any unnecessary detours.",
     submissionProgress: progress,
-    codeReferences: [],
+    codeReferences: insight.references,
     provider: "baseline",
   };
 }
@@ -128,9 +160,9 @@ function normalizeAnalysis(value, fallback) {
     spaceComplexityExplanation: String(value.spaceComplexityExplanation || fallback.spaceComplexityExplanation),
     codeQuality: String(value.codeQuality || fallback.codeQuality),
     codeQualityExplanation: String(value.codeQualityExplanation || fallback.codeQualityExplanation),
-    strengths: cleanList(value.strengths, fallback.strengths),
-    weaknesses: cleanList(value.weaknesses, fallback.weaknesses),
-    suggestions: cleanList(value.suggestions, fallback.suggestions),
+    strengths: detailedList(value.strengths, fallback.strengths),
+    weaknesses: detailedList(value.weaknesses, fallback.weaknesses),
+    suggestions: detailedList(value.suggestions, fallback.suggestions),
     approach: String(value.approach || fallback.approach),
     opponentComparison: String(value.opponentComparison || fallback.opponentComparison),
     failureDiagnosis: String(value.failureDiagnosis || fallback.failureDiagnosis),
@@ -187,7 +219,7 @@ function analysisPrompt(input, subjectLabel) {
     failure: entry.failure || entry.failedTest || entry.error || null,
     code: index >= sourceWindowStart ? codeText(entry.code, 2200) : "Earlier source retained; metrics and any failure detail are included.",
   }));
-  return `Review ${subjectLabel}. Read the complete problem statement, constraints, input/output formats, and samples before judging the code. Be precise, educational, and refer to concrete functions, variables, loops, conditions, or line-like code fragments. Never invent a hidden-test input. If a failed-test record is available, explain exactly which assumption or code path likely caused it, and distinguish evidence from uncertainty. Compare both submissions only when opponent code is present. Return ONLY strict JSON with: efficiencyScore (0-100 integer), timeComplexity, timeComplexityExplanation, spaceComplexity, spaceComplexityExplanation, codeQuality, codeQualityExplanation, strengths (array), weaknesses (array), suggestions (array), approach, opponentComparison, failureDiagnosis, matchReview, codeReferences (array), submissionProgress (array of {submission, testsPassed, note}).\n\nPROBLEM\n${formatProblemBrief(input.problem)}\n\n${subjectLabel.toUpperCase()}\nLanguage: ${input.language || "code"}\n${codeText(input.code)}\n\nOTHER SUBMISSION FOR COMPARISON\n${codeText(input.opponentCode, 12000) || "Not available"}\n\nMATCH CONTEXT\n${JSON.stringify(input.matchContext || {})}\n\nSUBMISSION PROGRESSION\n${JSON.stringify(submissionTimeline)}`;
+  return `Review ${subjectLabel}. Read the complete problem statement, constraints, input/output formats, and samples before judging the code. Be precise, educational, and refer to concrete functions, variables, loops, conditions, or line-like code fragments. Never invent a hidden-test input. If a failed-test record is available, explain exactly which assumption or code path likely caused it, and distinguish evidence from uncertainty. Compare both submissions only when opponent code is present. Every strengths, weaknesses, and suggestions item must be a complete sentence of at least 12 words and must identify a specific code fragment, variable, loop, condition, or observable behavior. Never return one-word labels such as “Efficient”, “Readable”, or “None”. If no optimization is needed, explain why the current approach is appropriate and propose a verification or readability step instead. Return exactly 2–4 strengths, exactly 2–4 weaknesses, and exactly 2–4 suggestions. ` + `Return ONLY strict JSON with: efficiencyScore (0-100 integer), timeComplexity, timeComplexityExplanation, spaceComplexity, spaceComplexityExplanation, codeQuality, codeQualityExplanation, strengths (array), weaknesses (array), suggestions (array), approach, opponentComparison, failureDiagnosis, matchReview, codeReferences (array), submissionProgress (array of {submission, testsPassed, note}).\n\nPROBLEM\n${formatProblemBrief(input.problem)}\n\n${subjectLabel.toUpperCase()}\nLanguage: ${input.language || "code"}\n${codeText(input.code)}\n\nOTHER SUBMISSION FOR COMPARISON\n${codeText(input.opponentCode, 12000) || "Not available"}\n\nMATCH CONTEXT\n${JSON.stringify(input.matchContext || {})}\n\nSUBMISSION PROGRESSION\n${JSON.stringify(submissionTimeline)}`;
 }
 
 export async function analyzeCode(input, onProgress = () => {}) {
@@ -209,7 +241,7 @@ export async function improveCode({ code, language, problem, analysis, opponentC
   const original = codeText(code);
   if (!original) throw new Error("There is no saved code to improve.");
   const model = await loadLocalCodeModel(onProgress);
-  const prompt = `Act as an educational competitive-programming coach. Improve the submitted ${language || "code"} solution only when a concrete improvement is justified by the problem and constraints. Preserve the required input/output interface and language. Return ONLY JSON with summary and steps (array of {title, explanation, codeReference, code}). Each step must contain a complete, runnable version of the code after that single improvement, so the learner can apply it in sequence. The explanation must teach the concept behind the change and clearly state when the original approach was already appropriate.\n\nPROBLEM\n${formatProblemBrief(problem)}\n\nCURRENT CODE\n${original}\n\nCURRENT REVIEW\n${JSON.stringify(analysis || {})}\n\nOTHER SUBMISSION (comparison only)\n${codeText(opponentCode, 8000) || "Not available"}`;
+  const prompt = `Act as an educational competitive-programming coach. Improve the submitted ${language || "code"} solution only when a concrete improvement is justified by the problem and constraints. Preserve the required input/output interface and language. Return ONLY strict JSON with status, summary, and steps. status must be either "ready" or "no_change". When status is "ready", steps must be an array of {title, explanation, codeReference, code}; each step must contain a complete, runnable version of the code after one safe improvement, so the learner can apply it in sequence. When status is "no_change", steps must be [] and summary must explain specifically why the current code should remain unchanged or why the available problem details do not justify a rewrite. Never emit an empty or partial code field. The explanation must teach the concept behind the change and clearly state when the original approach was already appropriate.\n\nPROBLEM\n${formatProblemBrief(problem)}\n\nCURRENT CODE\n${original}\n\nCURRENT REVIEW\n${JSON.stringify(analysis || {})}\n\nOTHER SUBMISSION (comparison only)\n${codeText(opponentCode, 8000) || "Not available"}`;
   const response = await model.chat.completions.create({
     messages: [
       { role: "system", content: "Return strict JSON only. Never change the language or invent unavailable APIs." },
@@ -224,9 +256,12 @@ export async function improveCode({ code, language, problem, analysis, opponentC
     explanation: String(step.explanation || "Review the updated code in the editor pane."),
     codeReference: String(step.codeReference || ""),
     code: String(step.code || "").slice(0, MAX_CODE_CHARS),
-  })).filter((step) => step.code.trim()) : [];
-  if (!steps.length) throw new Error("The improvement could not be prepared. Please try again.");
-  return { summary: String(parsed.summary || "A guided improvement was prepared for this solution."), steps, improvedCode: steps[steps.length - 1].code };
+  })).filter((step) => step.code.trim() && step.code.trim() !== original.trim()) : [];
+  const noChange = parsed?.status === "no_change" || !steps.length;
+  if (noChange) {
+    return { noChange: true, summary: String(parsed?.summary || "No safe code rewrite is justified by the visible problem details and current solution. Keep this approach, then verify it with boundary-focused tests."), steps: [], improvedCode: original };
+  }
+  return { noChange: false, summary: String(parsed.summary || "A guided improvement was prepared for this solution."), steps, improvedCode: steps[steps.length - 1].code };
 }
 
 export async function askCodeCoach({ question, analysis, code, problem, history = [], opponentCode = "", subjectLabel = "your code" }, onProgress = () => {}) {
@@ -235,7 +270,7 @@ export async function askCodeCoach({ question, analysis, code, problem, history 
   const model = await loadLocalCodeModel(onProgress);
   const response = await model.chat.completions.create({
     messages: [
-      { role: "system", content: "You are ByteBlitz Coach. Teach concepts clearly, reference specific supplied code, and stay within the problem constraints. Explain uncertainty instead of inventing test cases. Offer incremental improvements rather than dumping a replacement solution unless asked." },
+      { role: "system", content: "You are ByteBlitz Coach. Teach concepts clearly, reference specific supplied code, and stay within the problem constraints. Explain uncertainty instead of inventing test cases. Offer incremental improvements rather than dumping a replacement solution unless asked. When you include code, always use a fenced Markdown code block with triple backticks and the language label. Never leave code as ordinary paragraph text." },
       ...history.slice(-6).map((entry) => ({ role: entry.role === "assistant" ? "assistant" : "user", content: String(entry.content || "") })),
       { role: "user", content: `Problem:\n${formatProblemBrief(problem)}\n\nSelected subject: ${subjectLabel}\n\nReview:\n${JSON.stringify(analysis || {})}\n\nSelected code:\n${source}\n\nOther code for comparison:\n${codeText(opponentCode, 9000) || "Not available"}\n\nQuestion: ${question}` },
     ],

@@ -99,10 +99,17 @@ assert.match(training, /ui-tooltip/, "solution icon controls must provide custom
 assert.match(game, /Analyze solution/, "completed Training and Unranked results must provide direct analysis access");
 assert.match(analysis, /analysis-workspace-grid/, "analysis must use the requested three-pane workspace");
 assert.match(analysis, /Opponent code/, "duel analysis must expose an opponent-code tab");
-assert.match(analysis, /Apply next improvement/, "analysis must support step-by-step code improvements");
+assert.match(analysis, /Request improvements/, "analysis must require an explicit improvement request before applying code changes");
+assert.match(analysis, /coachMessageBody/, "analysis coaching must format fenced code blocks separately from prose");
+assert.match(analysis, /syntaxCode/, "analysis code panes must use syntax-color rendering");
+assert.match(analysis, /loadAllPools/, "analysis must resolve saved solutions against every authored problem pool");
+assert.match(analysis, /Share and privacy settings/, "analysis must expose compact share controls beside code actions");
 assert.match(analysisEngine, /function formatProblemBrief/, "analysis prompts must include complete problem context and constraints");
 assert.match(analysisEngine, /failureDiagnosis/, "analysis must explain recorded failed-test evidence");
 assert.match(analysisEngine, /export async function improveCode/, "analysis must generate guided code improvements");
+assert.match(analysisEngine, /no_change/, "guided improvements must communicate when no safe rewrite is needed");
+assert.match(analysisEngine, /detailedList/, "analysis must reject shallow one-word observations");
+assert.match(analysisEngine, /lineReference/, "fallback analysis must cite concrete source lines");
 assert.match(css, /analysis-workspace-grid/, "analysis workspace must be styled as a three-pane layout");
 assert.match(css, /\[data-tooltip\]/, "custom tooltip styling must exist for compact controls");
 
