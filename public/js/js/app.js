@@ -39,7 +39,7 @@ const outlet = h("main", { id: "outlet" });
 function buildShell() {
   const nav = h("nav", { class: "nav" },
     h("div", { class: "nav-inner" },
-      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.3 [C3 BETA]")),
+      h("a", { class: "logo", href: "#/" }, "Byte", h("span", { class: "accent" }, "Blitz"), h("span", { class: "logo-version" }, "v1.3 [C4 BETA]")),
       navLinks,
       h("div", { class: "nav-right" },
         playerSearchBox({ onExpandedChange: (open) => nav.classList.toggle("search-open", open) }),

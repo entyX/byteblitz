@@ -1,0 +1,35 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+
+const root = new URL("..", import.meta.url).pathname;
+const read = (file) => fs.readFileSync(`${root}/${file}`, "utf8");
+const generator = read("public/js/js/burst-generator.js");
+const game = read("public/js/js/game.js");
+const matchmaking = read("public/js/js/matchmaking.js");
+const training = read("public/js/js/views/training.js");
+const home = read("public/js/js/views/home.js");
+const changelog = read("public/js/js/views/changelog.js");
+const archetypes = read("public/data/byteblitz_archetypes.md");
+const templates = read("public/data/byteblitz_question_templates.md");
+
+assert.ok((archetypes.match(/^##\s+/gm) || []).length >= 70, "C4 archetype guide must contain the supplied archetype catalogue");
+assert.ok((templates.match(/^##\s+/gm) || []).length >= 70, "C4 template guide must contain the supplied template catalogue");
+assert.match(generator, /loadLocalCodeModel/, "Burst generation must reuse the browser-local model");
+assert.match(generator, /timeLimitSeconds !== 300/, "generated questions must enforce the five-minute limit");
+assert.match(generator, /testCases\.length !== TEST_COUNT/, "generated questions must require the complete test set");
+assert.match(generator, /exactDuplicate/, "generated questions must have exact duplicate protection");
+assert.match(generator, /semanticDuplicate/, "generated questions must have semantic duplicate protection");
+assert.match(generator, /USAGE_KEY/, "archetype usage must be tracked");
+assert.match(generator, /existing_first|generated_only/, "C4 must support authored-first and generated-only selection modes");
+assert.match(generator, /bothMostlyComplete/, "ranked selection must consider both players' completion coverage");
+assert.match(generator, /myMostlyComplete/, "unranked selection must consider the player's completion coverage");
+assert.match(game, /selectBurstQuestion/, "solo play must use the C4 selection policy");
+assert.match(game, /generatedProblem/, "duels must carry generated problem snapshots safely");
+assert.match(matchmaking, /selectBurstQuestion/, "duel creation must select one shared C4 question");
+assert.match(matchmaking, /seenIds/, "duel selection must receive each player's discovery coverage");
+assert.match(training, /C4 opens the complete authored catalogue/, "Training Ground must explain that all problems are open");
+assert.match(training, /const revealed = pool/, "Training Ground must render the complete pool");
+assert.match(home, /AI-generated Burst only/, "Unranked must expose the generated-only debug switch");
+assert.match(home, /Authored-first Burst/, "Unranked must expose the authored-first default");
+assert.match(changelog, /v1\.3 \[C4 BETA\]/, "the changelog must identify C4 as current");
+console.log("C4 generator, selection, unlock, and mode checks passed");

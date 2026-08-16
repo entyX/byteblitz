@@ -230,7 +230,7 @@ class Arena {
               h("div", { class: "bar" }, bar))))),
     );
 
-        push("BYTEBLITZ // CODE BURST v1.3 [C3 BETA]");
+        push("BYTEBLITZ // CODE BURST v1.3 [C4 BETA]");
 
     await wait(180); push("> Establishing secure session…"); bump(15);
     await wait(220); push("> Session authenticated. ✓"); bump(30);

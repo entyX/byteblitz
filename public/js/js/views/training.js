@@ -1,11 +1,9 @@
 // ============================================================================
 // Training Grounds — drill individual puzzles, chase your best time.
 //
-// Nothing here is locked behind a match count. Each difficulty hands you its
-// first tenth for free so there's always something to play, and everything
-// beyond that unlocks by meeting the puzzle in Unranked or Ranked. Locked
-// puzzles sit in the grid as "???", giving nothing away: the catalogue's size
-// stays honest, its contents are earned.
+// C4 opens the complete authored catalogue from the first visit. Discovery
+// history is still retained for selection preference and analytics, but it no
+// longer hides or locks any Training Ground problem.
 // ============================================================================
 
 import { h, add, clear, emptyState, icon, fmtTime, fmtClock, fmtAgo, modal, confirmModal, debounce, avatar, toast } from "../ui.js";
@@ -66,7 +64,7 @@ export async function renderTraining(params, root) {
         h("span", { style: { position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", color: "var(--muted)", display: "flex" } }, icon("search", 15)),
         searchInput)),
     h("p", { class: "body-text mb-8", style: { maxWidth: "680px" } },
-      "Every difficulty is open from day one and starts you with its first 10% unlocked. The rest reveal themselves as you meet them in an Unranked run or a Ranked duel — until then they stay ???. Times are recorded per puzzle and ranked on their own board. Training never moves a rating."),
+      "Every problem in every difficulty is available immediately. Times are recorded per puzzle and ranked on their own board. Training never moves a rating."),
     tabsHost,
     h("div", { class: "training-content-layout" },
       h("div", { class: "training-content-main" }, progressHost, bodyHost),
@@ -131,20 +129,18 @@ export async function renderTraining(params, root) {
     }
     if (epoch !== paintEpoch) return;
 
-    const seen = seenMap(session.profile);
     const tier = TIERS.find((t) => t.name === active);
-    const starters = starterCount(pool.length);
-    const revealed = pool.filter((pz, i) => isRevealed(seen, pz, i, pool.length));
-    const categories = [...new Set(revealed.map((pz) => pz.category).filter(Boolean))].sort();
-    const pct = pool.length ? (revealed.length / pool.length) * 100 : 0;
+    const revealed = pool;
+    const categories = [...new Set(pool.map((pz) => pz.category).filter(Boolean))].sort();
+    const pct = pool.length ? 100 : 0;
 
     progressHost.append(
       h("div", { class: "panel" },
         h("div", { class: "discovery-bar" },
           h("div", { class: "row gap-4 wrapflex" },
             h("span", { class: "tier-badge", style: { color: tier.color } }, active),
-            h("span", { class: "label label-bright" }, `${revealed.length} of ${pool.length} unlocked`),
-            h("span", { class: "label" }, `${starters} free to start`),
+            h("span", { class: "label label-bright" }, `${revealed.length} of ${pool.length} available`),
+            h("span", { class: "label" }, "All problems open"),
             h("span", { class: "label" }, `${fmtClock(TIME_LIMITS[active])} limit`))),
         h("div", { class: "bar" },
           h("i", { style: { width: pct + "%", background: tier.color } }))),
@@ -171,9 +167,7 @@ export async function renderTraining(params, root) {
         (pz.category || "").toLowerCase().includes(q));
     });
     // Category filtering never reveals metadata for undiscovered puzzles.
-    const unknown = (q || showOnly === "found" || categoryFilter !== "all")
-      ? []
-      : pool.filter((pz, i) => !isRevealed(seen, pz, i, pool.length));
+    const unknown = [];
 
     if (known.length) {
       const grid = h("div", { class: "puz-grid" });
@@ -183,9 +177,8 @@ export async function renderTraining(params, root) {
       bodyHost.append(emptyState("No unlocked puzzle matches that filter."));
     }
 
-    // The undiscovered half is listed so the catalogue's real size is visible,
-    // but compactly and folded up — a wall of 200 identical ??? cards is noise.
-    const shown = unknown.slice(0, unknownLimit);
+    // C4 no longer renders a locked/unknown section. The complete catalogue is visible above.
+    const shown = [];
     if (unknown.length) {
       const grid = h("div", { class: "puz-grid puz-grid-compact" });
       shown.forEach((pz) => grid.append(unknownCard(pz)));

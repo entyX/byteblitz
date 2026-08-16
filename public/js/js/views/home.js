@@ -17,6 +17,7 @@ import {
 } from "../store.js";
 import { startSolo, startTutorial, findRankedMatch, challengeFriend, RANKED_ELO_WINDOW } from "../game.js";
 import { watchLobbyCount } from "../matchmaking.js";
+import { c4QuestionMode, setC4QuestionMode } from "../burst-generator.js";
 import { navigate } from "../router.js";
 
 const LS_MODE = "bb_mode";
@@ -173,6 +174,8 @@ export async function renderHome(params, root) {
 
   function paintUnrankedElo(p) {
     const tier = tierFor(p?.soloRating ?? 1500);
+    const generatedOnly = c4QuestionMode() === "generated_only";
+    const toggleMode = () => { setC4QuestionMode(generatedOnly ? "existing_first" : "generated_only"); paintElo(); };
 
     add(eloHost,
       h("div", { class: "label" }, "Your unranked ELO"),
@@ -191,7 +194,11 @@ export async function renderHome(params, root) {
         fact("Best time", p?.soloBest?.[tier.name] != null ? fmtTime(p.soloBest[tier.name]) : "—"),
       ),
 
-      h("button", { class: "play-btn mt-6", onClick: onPlayUnranked },
+      h("button", { class: "btn btn-block mt-4 c4-generation-toggle", onClick: toggleMode, "aria-pressed": generatedOnly ? "true" : "false" },
+        icon(generatedOnly ? "bulb" : "target", 14), generatedOnly ? "AI-generated Burst only" : "Authored-first Burst"),
+      h("p", { class: "label mt-2", style: { lineHeight: "1.5", textTransform: "none", letterSpacing: "0" } },
+        generatedOnly ? "Debug mode: only validated local AI questions are selected." : "Existing authored questions are favored; Burst generation expands the pool as you progress."),
+      h("button", { class: "play-btn mt-4", onClick: onPlayUnranked },
         p && !isPlaced(p) ? "Play placement" : "Play", icon("play", 20)),
     );
   }

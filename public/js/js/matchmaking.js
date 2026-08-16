@@ -11,6 +11,8 @@ import {
   serverTimestamp, getDoc, getDocs, addDoc, query, where, runTransaction,
 } from "./firebase.js";
 import { tierFor, TIME_LIMITS } from "./glicko.js";
+import { loadPool } from "./problems.js";
+import { selectBurstQuestion } from "./burst-generator.js";
 
 // Both clients need to fetch the problem set and boot a Python runtime before
 // the shared clock starts, and that clock waits for nobody.
@@ -26,6 +28,7 @@ export function lobbyPlayer(profile) {
     gamesPlayed: profile.gamesPlayed ?? 0,
     rankedEligible: true,
     anonymous: !!profile.anonymous,
+    seenIds: Object.keys(profile.seen || {}),
     joinedAt: Date.now(),
   };
 }
@@ -34,7 +37,7 @@ export function lobbyPlayer(profile) {
 export function anonymousLobbyPlayer(uid) {
   return {
     uid, username: "Anonymous player", rating: 1500, rd: 350, vol: 0.06,
-    gamesPlayed: 0, rankedEligible: true, anonymous: true, joinedAt: Date.now(),
+    gamesPlayed: 0, rankedEligible: true, anonymous: true, seenIds: [], joinedAt: Date.now(),
   };
 }
 
@@ -221,6 +224,20 @@ export async function createDuel(a, b, duelId, fromLobby, mode = "rated") {
   const [p1, p2] = a.uid < b.uid ? [a, b] : [b, a];
   const seed = Math.floor(Math.random() * 1_000_000_000);
   const difficulty = tierFor(Math.min(a.rating ?? 1500, b.rating ?? 1500)).name;
+  let selectedProblem = null;
+  try {
+    const existingPool = await loadPool(difficulty);
+    selectedProblem = await selectBurstQuestion({
+      difficulty,
+      mode,
+      seed,
+      existingPool,
+      seenIds: a.seenIds || [],
+      opponentSeenIds: b.seenIds || [],
+    });
+  } catch (error) {
+    console.warn("C4 question selection fell back to seeded authored pool", error);
+  }
 
   const anonymousPairing = !!a.anonymous || !!b.anonymous;
   const payload = {
@@ -233,6 +250,9 @@ export async function createDuel(a, b, duelId, fromLobby, mode = "rated") {
     mode: anonymousPairing ? "casual" : mode,
     anonymousPairing,
     problemSeed: seed,
+    problemId: selectedProblem?.generated ? null : (selectedProblem?.archetypeId || null),
+    generatedProblem: selectedProblem?.generated ? selectedProblem : null,
+    questionSource: selectedProblem?.generated ? "generated" : "authored",
     timeLimit: TIME_LIMITS[difficulty] ?? 300,
     startTime: fromLobby ? null : Date.now() + COUNTDOWN_MS,
     status: fromLobby ? "waiting" : "ready",
@@ -279,6 +299,7 @@ function stripPlayer(p) {
     rd: Math.round(p.rd ?? 350),
     vol: p.vol ?? 0.06,
     gamesPlayed: p.gamesPlayed ?? 0,
+    seenIds: Array.isArray(p.seenIds) ? p.seenIds.slice(0, 2000) : [],
   };
 }
 

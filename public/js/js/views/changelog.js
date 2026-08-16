@@ -6,9 +6,20 @@ import { h } from "../ui.js";
 
 const RELEASES = [
   {
+    version: "v1.3 [C4 BETA]",
+    date: "August 16, 2026",
+    current: true,
+    items: [
+      "Chunk 4 adds browser-local Burst question generation guided by the supplied archetype and five-template library. Generated questions must satisfy their rank, topic, difficulty, five-minute limit, allowed and forbidden techniques, strict schema, and eight-test validation gates.",
+      "Accepted Burst questions are cached in a local generated pool with exact and semantic duplicate detection plus archetype usage tracking, while authored problems remain preferred until a player or both duelists have substantially covered their division.",
+      "Training Grounds now opens every authored problem immediately. Discovery history remains available for selection preference and analytics but no longer locks or hides puzzle statements.",
+      "Unranked includes a debugging switch for authored-first play or AI-generated-only play. Ranked and standard Unranked selection still favor existing authored questions by default and only expand into validated Burst generation when the configured completion thresholds are met.",
+    ],
+  },
+  {
     version: "v1.3 [C3 BETA]",
     date: "August 15, 2026",
-    current: true,
+    current: false,
     items: [
       "Chunk 3 introduces browser-local AI code analysis powered by Qwen and WebGPU. The first model load is cached by the browser, and source stays on-device while the analysis and coaching chat run.",
       "Every saved solution can open a dedicated analysis URL with an efficiency score, estimated time and space complexity, code-quality review, strengths, weaknesses, optimization ideas, and an explanation of the approach.",

@@ -559,9 +559,15 @@ export async function renderDuelAnalysis(params, root) {
 
 async function resolveProblemFromDuel(duel) {
   try {
+    if (duel.generatedProblem) return duel.generatedProblem;
+    if (duel.problemId) {
+      const { problemById } = await import("../problems.js");
+      const authored = await problemById(duel.difficulty, duel.problemId);
+      if (authored) return authored;
+    }
     const { problemForSeed } = await import("../problems.js");
     return await problemForSeed(duel.difficulty, duel.problemSeed);
   } catch {
-    return { archetypeId: duel.id, title: "Match problem", difficulty: duel.difficulty, description: "" };
+    return { archetypeId: duel.problemId || duel.id, title: "Match problem", difficulty: duel.difficulty, description: "" };
   }
 }

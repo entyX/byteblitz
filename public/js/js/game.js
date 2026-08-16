@@ -10,15 +10,16 @@ import { openArena } from "./arena.js";
 import { joinDuelPresence } from "./duel-presence.js";
 
 import {
-  randomProblem, problemForSeed, problemById, TESTS_PER_PROBLEM,
+  randomProblem, problemForSeed, problemById, loadPool, TESTS_PER_PROBLEM,
 } from "./problems.js";
+import { selectBurstQuestion, c4QuestionMode } from "./burst-generator.js";
 import {
   TIME_LIMITS, tierFor, scoresFor, displayRating, displayPlacementRating, PAR_TIME,
   isPlaced, placementLeft, PLACEMENT_GAMES,
 } from "./glicko.js";
 import {
   applySoloResult, applyDuelResult, recordPuzzleTime, puzzleLeaderboard,
-  saveSolution, getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence,
+  saveSolution, getProfile, setChallengeStatus, markProblemSeen, markTutorialComplete, setPresence, seenMap,
 
 } from "./store.js";
 import { session, requireAccount, requireAnySession, refreshGuest } from "./session.js";
@@ -50,7 +51,16 @@ export async function startSolo(preset) {
 
   let problem;
   try {
-    problem = await randomProblem(difficulty);
+    const existingPool = await loadPool(difficulty);
+    problem = await selectBurstQuestion({
+      difficulty,
+      mode: "unranked",
+      seed: Date.now() + Math.random() * 100000,
+      existingPool,
+      seenIds: Object.keys(seenMap(session.profile)),
+      forceGenerated: c4QuestionMode() === "generated_only",
+      onGenerate: (progress) => { if (progress?.text) console.debug("C4 Burst", progress.text); },
+    });
   } catch (e) {
     toast(e.message, "err");
     return;
@@ -551,7 +561,9 @@ export async function enterDuel(duelId, identity = null) {
 
   let problem;
   try {
-    problem = await problemForSeed(duel.difficulty, duel.problemSeed);
+    if (duel.generatedProblem) problem = duel.generatedProblem;
+    else if (duel.problemId) problem = await problemById(duel.difficulty, duel.problemId);
+    else problem = await problemForSeed(duel.difficulty, duel.problemSeed);
   } catch (e) {
     toast(e.message, "err");
     navigate("/");
