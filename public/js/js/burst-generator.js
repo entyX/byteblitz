@@ -5,13 +5,12 @@
 // authored CSV files.
 // ============================================================================
 
-import { loadLocalBurstModel, warmLocalBurstModel } from "./burst-local-model.js";
 import { TIER_COLORS } from "./glicko.js";
 
 const ARCHETYPES_URL = "/data/byteblitz_archetypes.md";
 const TEMPLATES_URL = "/data/byteblitz_question_templates.md";
-// v4 invalidates pre-rank-gated Burst questions that could use Bronze logic at higher tiers.
-const CACHE_KEY = "bb_c4_generated_burst_pool_v4";
+// v5 invalidates model-authored Burst cache entries; rank-gated templates now build every question locally.
+const CACHE_KEY = "bb_c4_generated_burst_pool_v5";
 const USAGE_KEY = "bb_c4_archetype_usage_v1";
 const LIBRARY_CACHE_KEY = "bb_c4_generation_library_v2";
 const MAX_ACCEPTED = 240;
@@ -296,7 +295,7 @@ function recipeCase(operation, seed, index) {
     return { input: base, expected: String(tails.length) };
   }
   if (operation === "grid_shortest_path") {
-    const rows = 4, cols = 4; const grid = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => (r === 0 && c === 0) || (r === rows - 1 && c === cols - 1) ? 0 : (Math.abs(seededValues(seed, index + r * cols + c, 1)[0]) % 4 === 0 ? 1 : 0));
+    const rows = 4, cols = 4; const grid = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => (r === 0 && c === 0) || (r === rows - 1 && c === cols - 1) ? 0 : (Math.abs(seededValues(seed, index + r * cols + c, 1)[0]) % 4 === 0 ? 1 : 0)));
     const queue = [[0, 0, 0]], seen = new Set(["0,0"]); let distance = -1; while (queue.length) { const [r, c, d] = queue.shift(); if (r === rows - 1 && c === cols - 1) { distance = d; break; } [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr, dc]) => { const nr = r + dr, nc = c + dc, key = `${nr},${nc}`; if (nr >= 0 && nc >= 0 && nr < rows && nc < cols && grid[nr][nc] === 0 && !seen.has(key)) { seen.add(key); queue.push([nr, nc, d + 1]); } }); }
     return { input: `${rows} ${cols}\n${grid.map((row) => row.join(" ")).join("\n")}`, expected: String(distance) };
   }
@@ -513,31 +512,13 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
   const choices = templates[archetype.id] || [];
   const template = choices[Math.abs(Math.floor(seed / 7)) % Math.max(1, choices.length)] || archetype.structure;
   const known = [...existingProblems.filter(Boolean), ...generatedPool()];
-  onProgress({ text: "Selecting a fresh archetype…", progress: 0.15 });
-  const model = await loadLocalBurstModel((progress) => onProgress({
-    text: progress?.text || "Loading the local Burst author…",
-    progress: progress?.progress ?? 0.2,
-  }));
-  const operation = operationFor(archetype, seed);
-  onProgress({ text: "Writing a compact local Burst recipe…", progress: 0.62 });
-  let recipe = null;
-  try {
-    const response = await model.chat.completions.create({
-      messages: [
-        { role: "system", content: "Return only compact JSON. Never output markdown." },
-        { role: "user", content: recipePrompt({ archetype, operation }) },
-      ],
-      temperature: 0.45,
-      max_tokens: 180,
-    });
-    recipe = parseJson(response?.choices?.[0]?.message?.content);
-  } catch (error) {
-    // A local model failure should not block a Burst: the deterministic recipe
-    // still produces a complete, judgeable problem from the selected archetype.
-    console.warn("Compact local Burst recipe unavailable; using deterministic recipe.", error);
-  }
-  onProgress({ text: "Building deterministic tests and validating uniqueness…", progress: 0.9 });
-  const candidate = shapeProblem(recipeProblem(recipe, archetype, seed), archetype);
+  onProgress({ text: "Selecting a fresh rank-gated archetype…", progress: 0.15 });
+  // Rank-gated templates now construct the complete question, tests, expected
+  // results, constraints, and explanation locally. No external model download
+  // or dynamically imported inference bundle is required to start a Burst.
+  onProgress({ text: "Building deterministic tests and solution notes…", progress: 0.62 });
+  const candidate = shapeProblem(recipeProblem(null, archetype, seed), archetype);
+  onProgress({ text: "Validating novelty against the local problem library…", progress: 0.9 });
   const errors = validationErrors(candidate, archetype, known);
   if (errors.length) throw new Error(`Generated Burst question rejected: ${errors.join(", ")}.`);
   const saved = [...generatedPool(), candidate].slice(-MAX_ACCEPTED);
@@ -558,8 +539,11 @@ if (typeof window !== "undefined") {
   window.setTimeout(() => { loadLibrary().catch(() => {}); }, 1800);
 }
 
-export function warmBurstQuestionModel(onProgress = () => {}) {
-  return warmLocalBurstModel(onProgress);
+export async function warmBurstQuestionModel(onProgress = () => {}) {
+  // Kept for the dashboard toggle contract. Burst templates are immediately
+  // available and do not need an AI model prewarm.
+  onProgress({ text: "Local Burst templates ready.", progress: 1 });
+  return null;
 }
 
 export function generatedQuestions(difficulty = "", seenIds = []) {
