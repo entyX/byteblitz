@@ -243,21 +243,75 @@ function recipeCase(operation, seed, index) {
 
 function recipeProblem(recipe, archetype, seed) {
   const operation = RECIPE_OPERATIONS.includes(recipe?.operation) ? recipe.operation : operationFor(archetype, seed);
-  const labels = {
-    sign: "Sign Signals", count_even: "Even Count", sum_positive: "Positive Total", reverse: "Mirror Order",
-    max_index: "Peak Position", filter_even: "Even Selection", run_count: "Run Census", alternating_sum: "Alternating Balance",
-    clamp: "Safe Range", rotate: "Circular Shift", first_above: "First Threshold",
+  const specs = {
+    sign: {
+      title: "Classify Each Signal", description: "For every integer, classify it by sign: print -1 if it is negative, 0 if it is zero, and 1 if it is positive.",
+      input: "The first line contains n. The second line contains n integers x1..xn.", output: "Print n integers, where the i-th output is the sign of xi.",
+      explanation: "Scan the numbers once. For each value, compare it with zero and append -1, 0, or 1. This takes O(n) time and O(n) output space.",
+    },
+    count_even: {
+      title: "Count the Even Signals", description: "Count how many values in the sequence are divisible by 2.",
+      input: "The first line contains n. The second line contains n integers x1..xn.", output: "Print one integer: the number of even values.",
+      explanation: "Keep a counter initialized to zero. During one scan, increase it whenever xi mod 2 equals zero. This takes O(n) time and O(1) extra space.",
+    },
+    sum_positive: {
+      title: "Add the Positive Signals", description: "Find the sum of all strictly positive values in the sequence. Negative values and zero do not contribute.",
+      input: "The first line contains n. The second line contains n integers x1..xn.", output: "Print one integer: the sum of all xi greater than zero. If there are no positive values, print 0.",
+      explanation: "Initialize the answer to zero and add xi only when xi is greater than zero. A single scan is sufficient, so the time complexity is O(n) and extra space is O(1).",
+    },
+    reverse: {
+      title: "Send the Signals Back", description: "Reverse the sequence: the last input value becomes the first output value, and so on.",
+      input: "The first line contains n. The second line contains n integers x1..xn.", output: "Print x_n, x_{n-1}, ..., x_1 separated by spaces.",
+      explanation: "Read the sequence and visit its positions from n down to 1, or reverse the stored array. The time complexity is O(n); storing the output requires O(n) space.",
+    },
+    max_index: {
+      title: "Locate the Highest Signal", description: "Find the largest value and the first position where it appears. Positions are 1-indexed.",
+      input: "The first line contains n. The second line contains n integers x1..xn.", output: "Print the maximum value followed by its smallest 1-based position.",
+      explanation: "Track the best value and its position while scanning left to right. Replace the best value only when a strictly larger value appears, which automatically preserves the first position on ties. Complexity is O(n) time and O(1) extra space.",
+    },
+    filter_even: {
+      title: "Keep the Even Signals", description: "Keep only the values divisible by 2, preserving their original order.",
+      input: "The first line contains n. The second line contains n integers x1..xn.", output: "Print all even values in input order separated by spaces. Print an empty line if none are even.",
+      explanation: "Scan from left to right and append a value whenever its remainder after division by 2 is zero. Because values are appended in scan order, the original order is preserved. Complexity is O(n).",
+    },
+    run_count: {
+      title: "Count the Consecutive Runs", description: "A run is a maximal consecutive block of equal values. Count the number of runs in the sequence.",
+      input: "The first line contains n. The second line contains n integers x1..xn.", output: "Print one integer: the number of maximal consecutive runs.",
+      explanation: "A non-empty sequence starts with one run. Scan from the second value onward and increase the answer whenever xi differs from xi-1. This takes O(n) time and O(1) extra space.",
+    },
+    alternating_sum: {
+      title: "Balance Odd and Even Positions", description: "Compute the sum of values at 1-based odd positions minus the sum of values at 1-based even positions.",
+      input: "The first line contains n. The second line contains n integers x1..xn.", output: "Print one integer: x1 - x2 + x3 - x4 + ... .",
+      explanation: "Scan once and add values at 1-based odd positions while subtracting values at even positions. The index determines the sign, giving O(n) time and O(1) extra space.",
+    },
+    clamp: {
+      title: "Clamp the Signal Range", description: "Replace every value below L with L, every value above R with R, and leave values inside [L,R] unchanged.",
+      input: "The first line contains n, L, and R. The second line contains n integers. It is guaranteed that L <= R.", output: "Print the n clamped values in their original order.",
+      explanation: "For each value x, compute max(L, min(R, x)). This directly handles all three cases in one expression and takes O(n) time.",
+    },
+    rotate: {
+      title: "Rotate the Signals", description: "Rotate the sequence to the right by k positions. Values that pass the end reappear at the beginning.",
+      input: "The first line contains n and k, where 0 <= k < n. The second line contains n integers.", output: "Print the rotated sequence in order.",
+      explanation: "The value at output position i comes from input position (i-k+n) mod n. You can also split the final k values from the rest and concatenate them. Complexity is O(n).",
+    },
+    first_above: {
+      title: "Find the First Rising Signal", description: "Find the first value strictly greater than a threshold T. Positions are 1-indexed.",
+      input: "The first line contains n and T. The second line contains n integers x1..xn.", output: "Print the smallest position i such that xi > T, or -1 if no value is greater than T.",
+      explanation: "Scan from the first value and stop at the first value greater than T. If the scan finishes without finding one, print -1. This is O(n) time and O(1) extra space.",
+    },
   };
+  const spec = specs[operation] || specs.sign;
   const tests = Array.from({ length: TEST_COUNT }, (_, index) => ({ ...recipeCase(operation, seed, index), hidden: index >= 4 }));
-  const title = `${clean(recipe?.title) || `${archetype.name}: ${labels[operation]}`} · ${Math.abs(Math.floor(seed)) % 10000}`;
-  const description = `Given a sequence of integers, apply the ${labels[operation].toLowerCase()} rule and print the required result. This Burst is generated from the ${archetype.name} archetype.`;
+  const proposedTitle = clean(recipe?.title);
+  const usableTitle = proposedTitle && !/short title|title here|example title|^title$/i.test(proposedTitle) ? proposedTitle : spec.title;
+  const title = `${usableTitle} · Variant ${Math.abs(Math.floor(seed)) % 10000}`;
   return {
     title, category: clean(archetype.primaryTopics).split(",")[0] || "arrays", difficulty: archetype.rank,
-    definition: description, description, inputFormat: "The first line contains n followed by any operation parameters. The second line contains n integers.",
-    outputFormat: "Print the result required by the operation.", constraints: ["1 <= n <= 10", "-15 <= each value <= 15"],
+    definition: spec.description, description: spec.description, inputFormat: spec.input, outputFormat: spec.output,
+    constraints: ["1 <= n <= 10", "-15 <= each value <= 15", ...(operation === "clamp" ? ["-5 <= L <= R <= 6"] : [])],
     sampleInput: tests[0].input, sampleOutput: tests[0].expected, testCases: tests, timeLimitSeconds: 300,
-    allowedTechniques: [archetype.coreTechnique || "linear scan"], forbiddenTechniques: [],
-    explanation: `Use a single scan and apply the ${labels[operation].toLowerCase()} rule.`, uniqueSignature: `${archetype.id}:${operation}:${seed}`,
+    allowedTechniques: [archetype.coreTechnique || "linear scan"], forbiddenTechniques: [], explanation: spec.explanation,
+    uniqueSignature: `${archetype.id}:${operation}:${seed}`,
   };
 }
 
