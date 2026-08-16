@@ -22,6 +22,7 @@ export function gradeForScore(value) {
   return { letter: "F", tier: "f", label: "Needs a new approach", description: "The visible solution needs fundamental changes to meet the task reliably." };
 }
 const asText = (value) => Array.isArray(value) ? value.filter(Boolean).join("\n") : String(value || "");
+const cleanProblemText = (value) => asText(value).trim();
 const cleanList = (value, fallback, limit = 6) => Array.isArray(value)
   ? value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, limit)
   : fallback;
@@ -120,8 +121,12 @@ export function reviewDecision(analysis = {}) {
   const failed = failedLocalTest || /failed at|runtime error|wrong answer|timeout|local draft failed/i.test(String(analysis.failureDiagnosis || ""));
   const actionable = issues.length ? issues : failed ? ["Fix the failing local test first; inspect the exact draft output and input handling before optimizing anything."] : [];
   const perfectMetrics = time.percent === 100 && space.percent === 100;
+  // A heuristic fallback or partial statement can describe a draft, but cannot
+  // prove it is exceptional. Reserve S for a full-context local review.
+  const fullProblemContext = analysis.problemContextComplete === true;
+  const evidenceBacked = analysis.provider !== "baseline" && fullProblemContext;
   let letter;
-  if (!failed && perfectMetrics && issues.length === 0) letter = "S";
+  if (!failed && perfectMetrics && issues.length === 0 && evidenceBacked) letter = "S";
   else if (!failed && time.percent >= 88 && space.percent >= 88 && issues.length <= 2) letter = "A";
   else if (!failed && time.percent >= 62 && space.percent >= 62) letter = "B";
   else if (!failed && time.percent >= 42) letter = "C";
@@ -175,6 +180,7 @@ function fallbackInsights(code) {
 export function fastCodeAnalysis(input) {
   const code = String(input.code || "");
   const lines = codeLineEntries(code);
+  const problemContextComplete = !!(cleanProblemText(input.problem?.description) && cleanProblemText(input.problem?.inputFormat) && cleanProblemText(input.problem?.constraints));
   const hasNames = /\b(result|count|index|left|right|seen|total|answer|output|nums)\b/i.test(code);
   const hasComments = /(^|\s)(#|\/\/)/m.test(code);
   const hasRepeatedLoops = (code.match(/\b(for|while)\b/g) || []).length >= 2;
@@ -192,6 +198,7 @@ export function fastCodeAnalysis(input) {
   const spaceComplexity = guessSpace(code);
   const base = {
     efficiencyScore: score,
+    problemContextComplete,
     timeComplexity,
     timeComplexityExplanation: `This estimate describes how runtime grows as input grows. ${insight.loop ? `${lineReference(insight.loop)} is the visible dominant traversal.` : "No dominant loop is visible in the saved source."} ${hasRepeatedLoops ? "Check whether the iteration constructs are nested or represent separate passes." : "No second traversal is visible in the saved source."}`,
     spaceComplexity,
@@ -229,6 +236,7 @@ function normalizeAnalysis(value, fallback) {
   const number = Number(value.efficiencyScore);
   const merged = {
     efficiencyScore: Number.isFinite(number) ? clamp(Math.round(number), 0, 100) : fallback.efficiencyScore,
+    problemContextComplete: fallback.problemContextComplete === true,
     timeComplexity: String(value.timeComplexity || fallback.timeComplexity),
     timeComplexityExplanation: String(value.timeComplexityExplanation || fallback.timeComplexityExplanation),
     spaceComplexity: String(value.spaceComplexity || fallback.spaceComplexity),

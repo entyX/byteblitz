@@ -667,6 +667,30 @@ export async function syncSavedSolutionsToPuzzleRecords(profile) {
 // render. Each successful submit is also preserved as a timestamped attempt.
 const solutionRef = (uid, archetypeId) => doc(db, "users", uid, "solutions", archetypeId);
 
+function generatedProblemSnapshot(puzzle) {
+  if (!puzzle?.generated) return null;
+  // Persist only the statement and analysis context. Test cases stay out of the
+  // saved snapshot, and this record is not enrolled in Training Grounds.
+  return {
+    generated: true,
+    id: puzzle.id ?? null,
+    archetypeId: puzzle.archetypeId ?? null,
+    sourceArchetypeId: puzzle.sourceArchetypeId ?? null,
+    title: puzzle.title ?? "Generated Burst",
+    difficulty: puzzle.difficulty ?? "Practice",
+    category: puzzle.category ?? null,
+    color: puzzle.color ?? null,
+    definition: puzzle.definition ?? "",
+    description: puzzle.description ?? "",
+    inputFormat: puzzle.inputFormat ?? "",
+    outputFormat: puzzle.outputFormat ?? "",
+    constraints: Array.isArray(puzzle.constraints) ? puzzle.constraints : [],
+    explanation: puzzle.explanation ?? "",
+    allowedTechniques: Array.isArray(puzzle.allowedTechniques) ? puzzle.allowedTechniques : [],
+    timeLimitSeconds: Number(puzzle.timeLimitSeconds ?? puzzle.timeLimit ?? 300),
+  };
+}
+
 export async function saveSolution(profile, puzzle, {
   code, language, timeMs = 0, mode = "training", completed = false,
   reason = null, testsPassed = 0, totalTests = 0,
@@ -677,7 +701,10 @@ export async function saveSolution(profile, puzzle, {
   const before = previous.exists() ? previous.data() : null;
   const now = Date.now();
   const source = String(code).slice(0, 100000);
-  const analysisStillMatches = String(before?.code || "") === source;
+  const snapshot = generatedProblemSnapshot(puzzle);
+  const analysisOnly = !!snapshot || !!before?.analysisOnly;
+  const snapshotChanged = JSON.stringify(before?.problemSnapshot ?? null) !== JSON.stringify(snapshot ?? before?.problemSnapshot ?? null);
+  const analysisStillMatches = String(before?.code || "") === source && !snapshotChanged;
   const everCompleted = !!before?.completed || !!completed;
   const bestTimeMs = completed
     ? (Number.isFinite(before?.bestTimeMs) ? Math.min(before.bestTimeMs, timeMs) : timeMs)
@@ -689,6 +716,8 @@ export async function saveSolution(profile, puzzle, {
     title: puzzle.title,
     difficulty: puzzle.difficulty,
     category: puzzle.category ?? null,
+    analysisOnly,
+    problemSnapshot: snapshot ?? before?.problemSnapshot ?? null,
     code: source,
     language: language || "python",
     lastMode: mode,
@@ -712,6 +741,7 @@ export async function saveSolution(profile, puzzle, {
   if (payload.isPublic && payload.publicShareId) {
     await updateDoc(doc(db, "sharedSolutions", payload.publicShareId), {
       code: source, language: payload.language, mode: payload.lastMode, bestTimeMs: payload.bestTimeMs,
+      problemSnapshot: payload.problemSnapshot, analysisOnly: payload.analysisOnly,
       analysis: payload.analysis, analysisUpdatedAt: payload.analysisUpdatedAt, createdAt: now,
     }).catch(() => {});
   }
@@ -726,7 +756,7 @@ export async function saveSolution(profile, puzzle, {
     timeMs: Number(timeMs || 0),
     savedAt: now,
   });
-  if (!before) {
+  if (!before && !payload.analysisOnly) {
     try { await updateDoc(doc(db, "users", profile.uid), { solutionsSaved: increment(1) }); } catch {}
   }
   return payload;
@@ -754,6 +784,8 @@ function normalizeSolution(id, data = {}) {
     pinned: !!data.pinned,
     analysis: data.analysis ?? null,
     analysisUpdatedAt: data.analysisUpdatedAt ?? null,
+    analysisOnly: !!data.analysisOnly,
+    problemSnapshot: data.problemSnapshot ?? null,
   };
 }
 
@@ -838,6 +870,7 @@ export async function getSavedSolutions(uid, n = 100) {
   // preserves both formats until every player writes a new solution summary.
   const snap = await getDocs(collection(db, "users", uid, "solutions"));
   return snap.docs.map((entry) => normalizeSolution(entry.id, entry.data()))
+    .filter((solution) => !solution.analysisOnly)
     .sort((a, b) => Number(b.lastSavedAt || 0) - Number(a.lastSavedAt || 0))
     .slice(0, n);
 }
@@ -998,6 +1031,8 @@ export async function setSolutionVisibility(profile, archetypeId, isPublic) {
     title: solution.title,
     difficulty: solution.difficulty,
     category: solution.category ?? null,
+    analysisOnly: !!solution.analysisOnly,
+    problemSnapshot: solution.problemSnapshot ?? null,
     code: solution.code,
     language: solution.language,
     mode: solution.lastMode,

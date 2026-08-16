@@ -128,9 +128,7 @@ class Arena {
         h("div", { class: "panel panel-pad", style: { maxWidth: "620px", width: "100%" } },
           h("div", { class: "stack gap-4" },
             rule("The arena runs fullscreen", "Your match opens in fullscreen. Leaving fullscreen ends it."),
-            this.cfg.mode === "duel"
-              ? rule("Leaving the page auto-resigns", "Switching tabs, minimising, or clicking away from this window resigns the rated match immediately. There is no warning and no undo.")
-              : rule("Leaving a solo run is neutral", "Switching tabs or windows ends an Unranked run without gaining or losing ELO."),
+            rule("Leaving the arena resigns", "Switching tabs, minimising, leaving fullscreen, closing the page, or clicking away from this window resigns the active run. There is no warning and no undo."),
             rule("Copy and paste are disabled", "The editor blocks paste, copy, and the context menu."),
             rule("The clock does not stop", `${fmtClock(this.timeLimit)} on the clock. Submit as many times as you like — only a full pass ends it.`),
           ),
@@ -623,22 +621,15 @@ class Arena {
   engageLockdown() {
     const bail = (msg) => {
       if (this.finished || !this.started || this.enteringFs) return;
-      // A duel needs a decisive result for the waiting opponent. Solo activity
-      // is different: switching focus is not evidence of a failed attempt, so
-      // it ends neutrally and does not touch the Unranked rating.
-      this.end(this.cfg.mode === "duel" ? "left" : "neutralExit", msg);
+      // Every unapproved departure uses the same loss path as the explicit
+      // Resign button. This avoids free pauses or exits during active runs.
+      this.end("resigned", msg);
     };
 
-    const onFs = () => {
-      if (this.cfg.mode !== "duel" && !document.fullscreenElement) bail("You exited fullscreen.");
-    };
-    const onVis = () => {
-      if (this.cfg.mode !== "duel" && document.hidden) bail("You switched away from the page.");
-    };
-    const onBlur = () => { if (this.cfg.mode !== "duel") bail("You left the arena window."); };
-    // Reloads, tab closes, and temporary network loss are resolved neutrally by
-    // the dedicated live-presence channel after a reconnect grace period.
-    const onPageHide = () => { if (this.cfg.mode !== "duel") bail("Solo run left."); };
+    const onFs = () => { if (!document.fullscreenElement) bail("You exited fullscreen."); };
+    const onVis = () => { if (document.hidden) bail("You switched away from the page."); };
+    const onBlur = () => bail("You left the arena window.");
+    const onPageHide = () => bail("You left the active run.");
 
     document.addEventListener("fullscreenchange", onFs);
     document.addEventListener("visibilitychange", onVis);

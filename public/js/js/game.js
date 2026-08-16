@@ -78,8 +78,9 @@ export async function startSolo(preset, hooks = {}) {
     throw error;
   }
 
-  // Meeting a problem in a real run is what reveals it in Training Grounds.
-  markProblemSeen(session.profile, problem.archetypeId);
+  // Authored problems unlock in Training Grounds. Generated Bursts remain
+  // analysis-only until their own Training Grounds support is intentionally added.
+  if (!problem.generated) markProblemSeen(session.profile, problem.archetypeId);
 
   const limit = TIME_LIMITS[difficulty] ?? 300;
   let settled = false;
@@ -123,7 +124,7 @@ export async function startSolo(preset, hooks = {}) {
             placementConfidence: res.placementConfidence,
           });
         }
-        if (solved && !profile.isGuest && !profile.isAnonymous) {
+        if (solved && !problem.generated && !profile.isGuest && !profile.isAnonymous) {
           await recordPuzzleTime(profile, problem, r.timeMs, true);
         }
         refreshGuest();
@@ -205,7 +206,7 @@ function soloResultScreen(o) {
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Run again ▸"),
-      solved && autoSaved && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
+      autoSaved && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena")),
   );
 }
@@ -582,9 +583,9 @@ export async function enterDuel(duelId, identity = null) {
     return;
   }
 
-  // Ranked counts for discovery too — the puzzle is named in Training Grounds
-  // from here on.
-  markProblemSeen(profile, problem.archetypeId);
+  // Authored ranked questions unlock in Training Grounds. Generated Bursts
+  // remain analysis-only until their own Training Grounds support is added.
+  if (!problem.generated) markProblemSeen(profile, problem.archetypeId);
 
   let latest = duel;
   let arena = null;
@@ -627,7 +628,7 @@ export async function enterDuel(duelId, identity = null) {
     onSolved: async (r) => {
       latestSubmission = r;
       try {
-        if (profile && !profile.isGuest && !profile.isAnonymous) {
+        if (profile && !problem.generated && !profile.isGuest && !profile.isAnonymous) {
           await recordPuzzleTime(profile, problem, r.timeMs, true);
         }
         await mm.submitSolve(duelId, playerNum, r.timeMs / 1000, r);

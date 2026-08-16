@@ -32,7 +32,10 @@ function setAnalysisMetadata(subject, canonicalPath) {
   });
 }
 
-async function resolveProblem(archetypeId, difficulty = "") {
+async function resolveProblem(archetypeId, difficulty = "", snapshot = null) {
+  if (snapshot && typeof snapshot === "object" && String(snapshot.description || "").trim()) {
+    return { ...snapshot, id: snapshot.id || archetypeId, archetypeId: snapshot.archetypeId || archetypeId, difficulty: snapshot.difficulty || difficulty || "Practice" };
+  }
   const fallback = { archetypeId, title: archetypeId || "Coding problem", difficulty: difficulty || "Practice", description: "Problem details are unavailable for this saved solution." };
   try {
     if (difficulty) {
@@ -518,21 +521,21 @@ export async function renderPrivateAnalysis(params, root) {
   if (profile.uid !== params.uid) {
     const share = await getPublicPuzzleSolution(params.uid, params.archetypeId).catch(() => null);
     if (!share) { privateMessage(root); return; }
-    const problem = await resolveProblem(share.archetypeId, share.difficulty);
+    const problem = await resolveProblem(share.archetypeId, share.difficulty, share.problemSnapshot);
     setAnalysisMetadata(share, `/share/${encodeURIComponent(share.id)}`);
     renderWorkspace(root, { owner: false, publicView: true, sharePath: `/share/${encodeURIComponent(share.id)}`, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
     return;
   }
   const solution = await getSavedSolution(profile.uid, params.archetypeId).catch(() => null);
   if (!solution) { root.append(h("div", { class: "wrap analysis-private-wrap" }, emptyState("No saved code is available for this analysis."))); return; }
-  const problem = await resolveProblem(solution.archetypeId, solution.difficulty);
+  const problem = await resolveProblem(solution.archetypeId, solution.difficulty, solution.problemSnapshot);
   renderWorkspace(root, { owner: true, publicView: false, autoAnalyze: params.query?.auto === "1", sharePath: solution.publicShareId ? `/share/${encodeURIComponent(solution.publicShareId)}` : null, solution, problem, analysis: solution.analysis || null, analyses: { mine: solution.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
 }
 
 export async function renderPublicAnalysis(params, root) {
   const share = await getPublicSolutionShare(params.id).catch(() => null);
   if (!share) { root.append(h("div", { class: "wrap analysis-private-wrap" }, emptyState("This solution link is unavailable or has been removed."))); return; }
-  const problem = await resolveProblem(share.archetypeId, share.difficulty);
+  const problem = await resolveProblem(share.archetypeId, share.difficulty, share.problemSnapshot);
   setAnalysisMetadata(share, `/share/${encodeURIComponent(params.id)}`);
   renderWorkspace(root, { owner: false, publicView: true, sharePath: `/share/${encodeURIComponent(share.id)}`, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
 }
