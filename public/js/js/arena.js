@@ -9,6 +9,7 @@
 import { h, clear, fmtClock, toast, confirmModal, modal } from "./ui.js";
 import { runCode, getRunTimeout, warmRuntime, highlight, LANGS, LANG_ORDER } from "./runner.js";
 import { outputMatches } from "./problems.js";
+import { openProblemExplainer } from "./problem-explainer.js";
 
 const LS_LANG = "bb_language";
 const LS_FONT = "bb_fontsize";
@@ -282,7 +283,8 @@ class Arena {
     const problemPanel = h("div", { class: "arena-problem" },
       h("div", { class: "row gap-3 mb-3 wrapflex" },
         h("span", { class: "tier-badge", style: { color: p.color } }, p.difficulty),
-        p.category ? h("span", { class: "pill" }, p.category.replace(/_/g, " ")) : null),
+        p.category ? h("span", { class: "pill" }, p.category.replace(/_/g, " ")) : null,
+        h("button", { class: "btn btn-sm", onClick: () => openProblemExplainer(p), title: "Explain the problem without code" }, "AI Explain")),
       h("h2", { class: "head mb-4" }, p.title),
 
       p.definition ? h("div", { class: "panel", style: { padding: "13px 15px", borderLeft: `2px solid ${p.color || "var(--primary)"}` } },

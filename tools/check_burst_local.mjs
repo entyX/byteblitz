@@ -31,6 +31,8 @@ for (const [index, difficulty] of Object.keys(expected).entries()) {
   if (problem.color !== TIER_COLORS[difficulty]) throw new Error(`${difficulty}: wrong color ${problem.color}`);
   if (problem.testCases.length !== 8 || problem.testCases.some((test) => !test.input || test.expected === undefined)) throw new Error(`${difficulty}: invalid tests`);
   if (problem.sampleInput !== problem.testCases[0].input || problem.sampleOutput !== problem.testCases[0].expected) throw new Error(`${difficulty}: sample mismatch`);
+  if (!problem.definition || problem.definition === problem.description) throw new Error(`${difficulty}: background is missing or duplicates task text`);
+  if (!problem.explanation || /```|function\s*\(|def\s+|class\s+/i.test(problem.explanation)) throw new Error(`${difficulty}: explanation is missing or contains code`);
   console.log(`${difficulty}: ${problem.operation} ✓`);
 }
 

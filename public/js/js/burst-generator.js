@@ -452,6 +452,22 @@ function recipeProblem(recipe, archetype, seed) {
     },
   };
   const spec = specs[operation] || specs.sign;
+  const backgrounds = {
+    pair_sum_count: "A sequence can contain the same value more than once, and each position is treated separately. You are looking for pairs of positions, not just pairs of different number values.",
+    balanced_binary: "A contiguous segment is one uninterrupted slice of the array: after choosing its first and last positions, every value between them belongs to the segment. A segment is balanced here when it contains equally many 0 values and 1 values.",
+    window_distinct: "A window is a contiguous segment with a fixed length. Slide that segment across the array one position at a time and compare how many different values each window contains.",
+    subarray_sum_count: "A contiguous subarray is one uninterrupted piece of the sequence. Choose a starting and ending position and include every value between them; you cannot skip a value in the middle. Values may be negative, so adding more values does not always make a running sum larger.",
+    interval_rooms: "Each meeting uses the time from start up to, but not including, end. For example, a meeting ending at 10 can share a room with one starting exactly at 10.",
+    grid_islands: "Cells are neighbors only when they share a side: up, down, left, or right. Diagonal cells are not connected for this problem.",
+    lis_length: "A subsequence keeps the original left-to-right order but may skip values. Strictly increasing means every chosen next value must be larger than the previous one.",
+    grid_shortest_path: "You start at the top-left cell and want to reach the bottom-right cell. An open cell is marked 0 and a blocked cell is marked 1; diagonal moves are not allowed.",
+    knapsack_value: "Every item can be taken once or left behind. The challenge is to balance value against the total weight limit rather than choosing the individually most valuable item.",
+    weighted_shortest_path: "The graph is undirected, so every road can be travelled in both directions. Each road has a positive travel cost, and the total route cost is the sum of its roads.",
+    edit_distance: "You may change one word into another using single-character insertions, deletions, and replacements. Each one-character change costs exactly one operation.",
+    tree_diameter: "A tree is a connected graph with no cycles. The diameter is the longest simple route between any two vertices, measured by its number of edges.",
+    coin_change_min: "You may use any number of each coin denomination. The target must be reached exactly, and the goal is to use as few coins as possible.",
+  };
+  const background = backgrounds[operation] || "Read the input values in their original order, apply the stated rule carefully, and print exactly the requested result.";
   const constraintsByTier = {
     Bronze: ["1 <= n <= 200,000", "-10^9 <= each value <= 10^9"],
     Silver: ["1 <= n <= 200,000", "-10^9 <= each value and target <= 10^9", "An O(n^2) solution will time out."],
@@ -466,7 +482,7 @@ function recipeProblem(recipe, archetype, seed) {
   const title = usableTitle;
   return {
     title, operation, category: clean(archetype.primaryTopics).split(",")[0] || "arrays", difficulty: archetype.rank,
-    definition: spec.description, description: spec.description, inputFormat: spec.input, outputFormat: spec.output,
+    definition: background, description: spec.description, inputFormat: spec.input, outputFormat: spec.output,
     constraints: [...(constraintsByTier[archetype.rank] || constraintsByTier.Bronze), ...(operation === "clamp" ? ["-10^9 <= L <= R <= 10^9"] : [])],
     sampleInput: tests[0].input, sampleOutput: tests[0].expected, testCases: tests, timeLimitSeconds: 300,
     allowedTechniques: [archetype.coreTechnique || "linear scan"], forbiddenTechniques: [], explanation: spec.explanation,
