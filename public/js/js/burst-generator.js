@@ -5,7 +5,7 @@
 // authored CSV files.
 // ============================================================================
 
-import { functions, httpsCallable } from "./firebase.js";
+import { auth } from "./firebase.js";
 
 const ARCHETYPES_URL = "/data/byteblitz_archetypes.md";
 const TEMPLATES_URL = "/data/byteblitz_question_templates.md";
@@ -96,6 +96,30 @@ async function loadLibrary() {
 
 function readCache(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
+}
+
+async function requestBurstProblem(payload) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in to create an AI-generated Burst question.");
+  const token = await user.getIdToken();
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch("/api/generate-burst", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body?.error || "AI question generation failed.");
+    return body?.problem;
+  } catch (error) {
+    if (error?.name === "AbortError") throw new Error("AI question generation took too long. Please try again.");
+    throw error;
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 function writeCache(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode */ }
@@ -209,17 +233,15 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
   const template = choices[Math.abs(Math.floor(seed / 7)) % Math.max(1, choices.length)] || archetype.structure;
   const known = [...existingProblems, ...generatedPool()];
   onProgress({ text: "Selecting a fresh archetype…", progress: 0.15 });
-  const generate = httpsCallable(functions, "generateBurstQuestion", { timeout: 28000 });
   let raw;
   try {
     onProgress({ text: "Writing your AI Burst question…", progress: 0.35 });
-    const result = await generate({
+    raw = await requestBurstProblem({
       difficulty,
       archetype,
       template,
       existingTitles: known.slice(-80).map((item) => item.title).filter(Boolean),
     });
-    raw = result?.data?.problem;
   } catch (error) {
     const message = String(error?.message || "AI question generation failed.");
     throw new Error(message.replace(/^internal\s*:?\s*/i, ""));
