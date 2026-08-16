@@ -905,6 +905,19 @@ export async function toggleAccomplishment(profile, archetypeId, accomplished) {
     snap = await getDoc(ref);
   }
   let data = snap.exists() ? snap.data() : null;
+  // Older v1.3 summaries can display as completed through normalization
+  // (for example, via solveCount) while their raw document lacks the newer
+  // completed boolean. Persist that truth before applying the accomplishment.
+  if (data && !data.completed && normalizeSolution(snap.id, data).completed) {
+    await updateDoc(ref, {
+      completed: true,
+      lastStatus: "completed",
+      completedSubmits: Math.max(Number(data.completedSubmits || data.solveCount || 0), 1),
+      updatedAt: Date.now(),
+    });
+    snap = await getDoc(ref);
+    data = snap.exists() ? snap.data() : null;
+  }
   if (!data?.completed) {
     const record = await getPuzzleRecord(archetypeId, profile.uid);
     if (record?.solved) {

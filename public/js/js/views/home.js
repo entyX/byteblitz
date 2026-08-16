@@ -199,7 +199,7 @@ export async function renderHome(params, root) {
       h("button", { class: "btn btn-block mt-4 c4-generation-toggle", onClick: toggleMode, "aria-pressed": generatedOnly ? "true" : "false" },
         icon(generatedOnly ? "bulb" : "target", 14), generatedOnly ? "AI-generated Burst only" : "Authored-first Burst"),
       h("p", { class: "label mt-2", style: { lineHeight: "1.5", textTransform: "none", letterSpacing: "0" } },
-        generatedOnly ? "Debug mode: only validated local AI questions are selected." : "Existing authored questions are favored; Burst generation expands the pool as you progress."),
+        generatedOnly ? "AI mode: generate and validate a fresh Burst question for this run." : "Existing authored questions are favored; Burst generation expands the pool as you progress."),
       unrankedLaunching
         ? h("div", { class: "c4-launch-status", role: "status" }, h("span", { class: "spinner" }), unrankedLaunchStatus || "Preparing your Burst question…")
         : null,

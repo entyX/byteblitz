@@ -11,6 +11,7 @@ import {
   onValue as databaseOnValue, onDisconnect as databaseOnDisconnect,
   serverTimestamp as databaseServerTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+import { getFunctions, httpsCallable as firebaseHttpsCallable } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyADxqvXuy61QfRXyd7gLV6mWavokJ3InSg",
@@ -27,6 +28,8 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
+export const functions = getFunctions(app, "us-central1");
+export const httpsCallable = firebaseHttpsCallable;
 export const rtdbRef = databaseRef;
 export const rtdbSet = databaseSet;
 export const rtdbRemove = databaseRemove;

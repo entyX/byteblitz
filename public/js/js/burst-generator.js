@@ -5,12 +5,13 @@
 // authored CSV files.
 // ============================================================================
 
-import { loadLocalCodeModel } from "./analysis-engine.js";
+import { functions, httpsCallable } from "./firebase.js";
 
 const ARCHETYPES_URL = "/data/byteblitz_archetypes.md";
 const TEMPLATES_URL = "/data/byteblitz_question_templates.md";
 const CACHE_KEY = "bb_c4_generated_burst_pool_v1";
 const USAGE_KEY = "bb_c4_archetype_usage_v1";
+const LIBRARY_CACHE_KEY = "bb_c4_generation_library_v2";
 const MAX_ACCEPTED = 240;
 const TEST_COUNT = 8;
 let libraryPromise = null;
@@ -77,11 +78,18 @@ function parseTemplates(markdown) {
 
 async function loadLibrary() {
   if (!libraryPromise) {
-    libraryPromise = Promise.all([fetch(ARCHETYPES_URL), fetch(TEMPLATES_URL)]).then(async ([a, t]) => {
-      if (!a.ok || !t.ok) throw new Error("The C4 Burst generation guide could not be loaded.");
-      const [archetypes, templates] = await Promise.all([a.text(), t.text()]);
-      return { archetypes: parseArchetypes(archetypes), templates: parseTemplates(templates) };
-    }).catch((error) => { libraryPromise = null; throw error; });
+    const cached = readCache(LIBRARY_CACHE_KEY, null);
+    if (cached?.archetypes?.length && cached?.templates && typeof cached.templates === "object") {
+      libraryPromise = Promise.resolve(cached);
+    } else {
+      libraryPromise = Promise.all([fetch(ARCHETYPES_URL), fetch(TEMPLATES_URL)]).then(async ([a, t]) => {
+        if (!a.ok || !t.ok) throw new Error("The C4 Burst generation guide could not be loaded.");
+        const [archetypes, templates] = await Promise.all([a.text(), t.text()]);
+        const library = { archetypes: parseArchetypes(archetypes), templates: parseTemplates(templates) };
+        writeCache(LIBRARY_CACHE_KEY, library);
+        return library;
+      }).catch((error) => { libraryPromise = null; throw error; });
+    }
   }
   return libraryPromise;
 }
@@ -189,6 +197,7 @@ function shapeProblem(raw, archetype) {
 }
 
 export async function generateBurstQuestion({ difficulty, seed = Date.now(), existingProblems = [], onProgress = () => {} } = {}) {
+  onProgress({ text: "Preparing the Burst generation guide…", progress: 0.04 });
   const { archetypes, templates } = await loadLibrary();
   const candidates = archetypes.filter((item) => item.rank === difficulty);
   if (!candidates.length) throw new Error(`No C4 archetype is available for ${difficulty}.`);
@@ -199,16 +208,24 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
   const choices = templates[archetype.id] || [];
   const template = choices[Math.abs(Math.floor(seed / 7)) % Math.max(1, choices.length)] || archetype.structure;
   const known = [...existingProblems, ...generatedPool()];
-  const model = await loadLocalCodeModel((progress) => onProgress({ text: progress?.text || "Preparing a Burst question…", progress: progress?.progress ?? 0 }));
-  const response = await model.chat.completions.create({
-    messages: [
-      { role: "system", content: "You generate safe, original, automatically judgeable competitive-programming problems. Output strict JSON only." },
-      { role: "user", content: promptFor({ archetype, template, rank: difficulty, existing: known }) },
-    ],
-    temperature: 0.85,
-    max_tokens: 3200,
-  });
-  const candidate = shapeProblem(parseJson(response.choices?.[0]?.message?.content), archetype);
+  onProgress({ text: "Selecting a fresh archetype…", progress: 0.15 });
+  const generate = httpsCallable(functions, "generateBurstQuestion", { timeout: 28000 });
+  let raw;
+  try {
+    onProgress({ text: "Writing your AI Burst question…", progress: 0.35 });
+    const result = await generate({
+      difficulty,
+      archetype,
+      template,
+      existingTitles: known.slice(-80).map((item) => item.title).filter(Boolean),
+    });
+    raw = result?.data?.problem;
+  } catch (error) {
+    const message = String(error?.message || "AI question generation failed.");
+    throw new Error(message.replace(/^internal\s*:?\s*/i, ""));
+  }
+  onProgress({ text: "Validating tests and uniqueness…", progress: 0.82 });
+  const candidate = shapeProblem(raw, archetype);
   const errors = validationErrors(candidate, archetype, known);
   if (errors.length) throw new Error(`Generated Burst question rejected: ${errors.join(", ")}.`);
   const saved = [...generatedPool(), candidate].slice(-MAX_ACCEPTED);
@@ -221,6 +238,12 @@ function completedEnough(seenIds, pool) {
   if (!pool.length) return false;
   const seen = new Set(seenIds || []);
   return pool.filter((item) => seen.has(item.archetypeId || item.id)).length / pool.length >= 0.8;
+}
+
+// Prewarm this small parsed guide after the dashboard settles. It is cache-backed,
+// so pressing Play later does not inherit the guide's network or parsing delay.
+if (typeof window !== "undefined") {
+  window.setTimeout(() => { loadLibrary().catch(() => {}); }, 1800);
 }
 
 export function generatedQuestions(difficulty = "") { return generatedPool().filter((item) => !difficulty || item.difficulty === difficulty); }
