@@ -25,6 +25,7 @@ assert.match(generator, /window\.setTimeout\(\(\) => \{ loadLibrary/, "the Burst
 assert.match(firebase, /getFunctions/, "the Firebase client must expose callable functions");
 assert.match(functions, /exports\.generateBurstQuestion/, "the Functions project must expose fast Burst generation");
 assert.match(functions, /GEMINI_API_KEY/, "fast Burst generation must use a server-side secret");
+assert.match(functions, /cors:\s*\[[\s\S]*byteblitzonline\.web\.app/, "fast Burst generation must allow the Hosting origin through CORS");
 assert.match(functions, /View \$\{owner\}'s solution to \$\{title\}/, "share previews must identify the solution owner and problem");
 assert.match(generator, /timeLimitSeconds !== 300/, "generated questions must enforce the five-minute limit");
 assert.match(generator, /testCases\.length !== TEST_COUNT/, "generated questions must require the complete test set");

@@ -76,6 +76,10 @@ exports.sharePreview = onRequest(async (req, res) => {
  */
 exports.generateBurstQuestion = onCall({
   region: "us-central1",
+  cors: [
+    "https://byteblitzonline.web.app",
+    "https://byteblitzonline.firebaseapp.com",
+  ],
   timeoutSeconds: 30,
   memory: "256MiB",
   secrets: [geminiApiKey],
