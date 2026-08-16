@@ -201,7 +201,8 @@ export async function renderHome(params, root) {
       h("p", { class: "label mt-2", style: { lineHeight: "1.5", textTransform: "none", letterSpacing: "0" } },
         generatedOnly ? "Debug mode: only validated local AI questions are selected." : "Existing authored questions are favored; Burst generation expands the pool as you progress."),
       unrankedLaunching
-        ? h("div", { class: "c4-launch-status", role: "status" }, h("span", { class: "spinner" }), unrankedLaunchStatus || "Preparing your Burst question…"),
+        ? h("div", { class: "c4-launch-status", role: "status" }, h("span", { class: "spinner" }), unrankedLaunchStatus || "Preparing your Burst question…")
+        : null,
       h("button", { class: "play-btn mt-4", disabled: unrankedLaunching, onClick: onPlayUnranked },
         unrankedLaunching ? "Loading…" : (p && !isPlaced(p) ? "Play placement" : "Play"), icon("play", 20)),
     );
