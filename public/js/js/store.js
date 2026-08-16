@@ -513,6 +513,9 @@ export async function markProblemSeen(profile, archetypeId) {
   if (!profile || !archetypeId) return;
   if (isGuestProfile(profile)) { markGuestSeen(archetypeId); return; }
   if (profile.seen?.[archetypeId]) return;
+  // Update this session first, so the next Burst cannot immediately select the
+  // same generated question while the asynchronous Firestore write is pending.
+  profile.seen = { ...(profile.seen || {}), [archetypeId]: true };
   try { await updateDoc(doc(db, "users", profile.uid), { [`seen.${archetypeId}`]: true }); }
   catch { /* discovery is a nicety — never fail a match over it */ }
 }

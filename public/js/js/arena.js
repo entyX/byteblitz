@@ -285,7 +285,7 @@ class Arena {
         p.category ? h("span", { class: "pill" }, p.category.replace(/_/g, " ")) : null),
       h("h2", { class: "head mb-4" }, p.title),
 
-      p.definition ? h("div", { class: "panel", style: { padding: "13px 15px", borderLeft: "2px solid var(--primary)" } },
+      p.definition ? h("div", { class: "panel", style: { padding: "13px 15px", borderLeft: `2px solid ${p.color || "var(--primary)"}` } },
         h("div", { class: "label mb-2" }, "// Background"),
         h("p", { class: "mono", style: { fontSize: "12.5px", lineHeight: "1.75", color: "var(--muted-fg)", margin: "0", whiteSpace: "pre-wrap" } }, p.definition)) : null,
 
