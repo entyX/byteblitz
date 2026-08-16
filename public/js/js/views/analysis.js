@@ -83,20 +83,27 @@ function metricCard(label, value, explanation) {
     h("p", {}, explanation || "The assistant will explain this metric after analysis."));
 }
 
+function collapseButton(collapsed, label, onClick) {
+  return h("button", { class: "analysis-collapse-btn", "data-tooltip": collapsed ? `Expand ${label}` : `Collapse ${label}`, "aria-label": collapsed ? `Expand ${label}` : `Collapse ${label}`, onClick }, collapsed ? "Expand" : "Collapse");
+}
+
 function problemPane(problem, state, rerender) {
   problem = problem || {};
   const sampleParts = [];
   if (problem.sampleInput) sampleParts.push(h("div", { class: "analysis-sample" }, h("span", { class: "label" }, "Sample input"), h("pre", { class: "io-block" }, String(problem.sampleInput))));
   if (problem.sampleOutput) sampleParts.push(h("div", { class: "analysis-sample" }, h("span", { class: "label" }, "Sample output"), h("pre", { class: "io-block" }, String(problem.sampleOutput))));
-  return h("aside", { class: "analysis-pane analysis-problem-pane" },
-    h("div", { class: "analysis-pane-head" }, h("span", { class: "label" }, "// Problem"), h("span", { class: "pill" }, problem.difficulty || "Practice")),
+  const collapsed = !!state.problemCollapsed;
+  const details = collapsed ? null : h("div", { class: "analysis-collapsible-content" },
     h("h2", { class: "head mt-3" }, problem.title || "Coding problem"),
     problem.definition ? textBlock("Background", problem.definition) : null,
     textBlock("Task", problem.description),
     problem.constraints ? textBlock("Constraints", Array.isArray(problem.constraints) ? problem.constraints.join("\n") : problem.constraints) : null,
     problem.inputFormat ? textBlock("Input format", problem.inputFormat) : null,
     problem.outputFormat ? textBlock("Output format", problem.outputFormat) : null,
-    sampleParts.length ? h("div", { class: "analysis-samples" }, ...sampleParts) : null,
+    sampleParts.length ? h("div", { class: "analysis-samples" }, ...sampleParts) : null);
+  return h("aside", { class: "analysis-pane analysis-problem-pane" },
+    h("div", { class: "analysis-pane-head" }, h("span", { class: "label" }, "// Problem"), h("div", { class: "row gap-2" }, h("span", { class: "pill" }, problem.difficulty || "Practice"), collapseButton(collapsed, "problem", () => { state.problemCollapsed = !collapsed; rerender(); }))),
+    details,
     coachPanel(state, rerender));
 }
 
@@ -295,11 +302,13 @@ function coachPanel(state, rerender) {
       state.coachMessages = [...messages, { role: "user", content: question }, { role: "assistant", content: `I couldn't complete that explanation: ${error.message || "please try again"}` }];
     } finally { state.coachBusy = false; state.modelProgress = ""; rerender(); }
   } }, icon("send", 15), "Ask");
+  const collapsed = !!state.coachCollapsed;
   return h("section", { class: "analysis-coach" },
-    h("div", { class: "between gap-3 wrapflex" }, h("div", {}, h("div", { class: "label" }, "// Ask ByteBlitz Coach"), h("h3", { class: "head mt-1" }, "Learn the next concept"))),
-    h("p", { class: "body-text mt-3" }, "Ask why an approach works, how a constraint changes the algorithm, or how to handle a particular edge case."),
-    chatLog,
-    h("div", { class: "analysis-coach-compose mt-4" }, input, send));
+    h("div", { class: "between gap-3 wrapflex" }, h("div", {}, h("div", { class: "label" }, "// Ask ByteBlitz Coach"), h("h3", { class: "head mt-1" }, "Learn the next concept")), collapseButton(collapsed, "coach", () => { state.coachCollapsed = !collapsed; rerender(); })),
+    collapsed ? null : h("div", { class: "analysis-collapsible-content" },
+      h("p", { class: "body-text mt-3" }, "Ask why an approach works, how a constraint changes the algorithm, or how to handle a particular edge case."),
+      chatLog,
+      h("div", { class: "analysis-coach-compose mt-4" }, input, send)));
 }
 
 async function runAnalysis(state, rerender) {
@@ -335,7 +344,8 @@ function analysisPane(state, rerender) {
   const improvement = state.improvements?.[payload.key];
   const improvementState = state.improvementStates?.[payload.key];
   const appliedCount = state.appliedSteps?.[payload.key] || 0;
-  const requestImprovement = h("button", { class: "btn", disabled: state.improving || !state.owner || !String(payload.displayCode || "").trim() || improvementState?.noChange, onClick: async () => {
+  const topTier = gradeForScore(payload.analysis?.efficiencyScore).letter === "S";
+  const requestImprovement = h("button", { class: "btn", disabled: state.improving || !state.owner || !String(payload.displayCode || "").trim() || (improvementState?.noChange && topTier), onClick: async () => {
     if (improvement && appliedCount < improvement.steps.length) {
       const next = improvement.steps[appliedCount];
       state.codeEdits = { ...(state.codeEdits || {}), [payload.key]: next.code || payload.displayCode };
@@ -360,8 +370,8 @@ function analysisPane(state, rerender) {
       }
     } catch (error) { toast(error.message || "Couldn't review improvements.", "err"); }
     finally { state.improving = false; state.modelProgress = ""; rerender(); }
-  } }, icon("zap", 15), state.improving ? "Reviewing…" : improvementState?.noChange ? "No changes needed" : improvement ? appliedCount < improvement.steps.length ? `Apply improvement ${appliedCount + 1}` : "Request another review" : "Request improvements");
-  const improvementNote = improvementState?.summary ? h("section", { class: "analysis-improvement-note" }, h("div", { class: "label mb-2" }, improvementState.noChange ? "// No rewrite needed" : "// Improvement plan"), h("p", {}, improvementState.summary), !improvementState.noChange && improvement?.steps?.[appliedCount] ? h("p", { class: "analysis-next-step" }, `Next: ${improvement.steps[appliedCount].title} — ${improvement.steps[appliedCount].explanation}`) : null) : null;
+  } }, icon("zap", 15), state.improving ? "Reviewing…" : improvementState?.noChange ? topTier ? "No rewrite needed" : "Request another review" : improvement ? appliedCount < improvement.steps.length ? `Apply improvement ${appliedCount + 1}` : "Request another review" : "Request improvements");
+  const improvementNote = improvementState?.summary ? h("section", { class: "analysis-improvement-note" }, h("div", { class: "label mb-2" }, improvementState.noChange ? topTier ? "// No rewrite needed" : "// Automatic rewrite unavailable" : "// Improvement plan"), h("p", {}, improvementState.summary), !improvementState.noChange && improvement?.steps?.[appliedCount] ? h("p", { class: "analysis-next-step" }, `Next: ${improvement.steps[appliedCount].title} — ${improvement.steps[appliedCount].explanation}`) : null) : null;
   const controls = h("div", { class: "analysis-actions" }, analyze, requestImprovement);
   const error = state.analysisError ? h("div", { class: "analysis-error" }, icon("x", 15), h("span", {}, state.analysisError)) : null;
   return h("aside", { class: "analysis-pane analysis-insights-pane" },
@@ -413,14 +423,44 @@ function shareControl(state, rerender) {
   return { button, panel: h("section", { class: "analysis-share-popover" }, visibility, link, privateHint) };
 }
 
+function paneGridColumns(state) {
+  const sizes = state.paneSizes || { problem: 330, analysis: 390 };
+  return `${sizes.problem}px 9px minmax(340px, 1fr) 9px ${sizes.analysis}px`;
+}
+
+function paneResizer(side, state, grid, rerender) {
+  return h("div", { class: "analysis-pane-resizer", role: "separator", tabindex: "0", "aria-orientation": "vertical", "aria-label": `Resize ${side} pane`, onPointerdown: (event) => {
+    if (window.innerWidth <= 880) return;
+    event.preventDefault();
+    const sizes = state.paneSizes || { problem: 330, analysis: 390 };
+    const initial = side === "problem" ? sizes.problem : sizes.analysis;
+    const startX = event.clientX;
+    const adjust = (move) => {
+      const delta = move.clientX - startX;
+      const next = side === "problem" ? initial + delta : initial - delta;
+      state.paneSizes = { ...sizes, [side]: Math.max(side === "problem" ? 220 : 260, Math.min(side === "problem" ? 520 : 520, next)) };
+      grid.style.gridTemplateColumns = paneGridColumns(state);
+    };
+    const finish = () => {
+      window.removeEventListener("pointermove", adjust);
+      window.removeEventListener("pointerup", finish);
+      rerender();
+    };
+    window.addEventListener("pointermove", adjust);
+    window.addEventListener("pointerup", finish, { once: true });
+  } });
+}
+
 function renderWorkspace(root, state) {
   state.solution = state.solution || {};
   state.problem = state.problem || { archetypeId: state.solution.archetypeId, title: state.solution.title || "Coding problem", description: "Problem details are unavailable for this saved solution." };
+  state.paneSizes = state.paneSizes || { problem: 330, analysis: 390 };
   clear(root);
   const page = h("div", { class: "analysis-workspace" });
   root.append(page);
   const rerender = () => renderWorkspace(root, state);
-  const body = h("div", { class: "analysis-workspace-grid" }, problemPane(state.problem, state, rerender), codePane(state, rerender), analysisPane(state, rerender));
+  const body = h("div", { class: "analysis-workspace-grid", style: { gridTemplateColumns: paneGridColumns(state) } });
+  body.append(problemPane(state.problem, state, rerender), paneResizer("problem", state, body, rerender), codePane(state, rerender), paneResizer("analysis", state, body, rerender), analysisPane(state, rerender));
   page.append(body);
   if (state.autoAnalyze && !state.autoAnalyzeStarted) {
     state.autoAnalyzeStarted = true;

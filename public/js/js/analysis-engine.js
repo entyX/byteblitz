@@ -15,8 +15,8 @@ export function gradeForScore(value) {
   const score = Number(value);
   if (!Number.isFinite(score)) return { letter: "—", tier: "unknown", label: "Review pending", description: "Run the analysis to receive a code-quality grade." };
   if (score >= 92) return { letter: "S", tier: "s", label: "Exceptional foundation", description: "The solution is highly effective for the visible task and constraints. Further changes should be justified by a specific robustness or clarity gain." };
-  if (score >= 82) return { letter: "A", tier: "a", label: "Strong, with refinements available", description: "The core approach is solid, while targeted clarity, robustness, or edge-case improvements may still be worthwhile." };
-  if (score >= 72) return { letter: "B", tier: "b", label: "Sound approach with room to improve", description: "The solution appears workable, but the review should identify at least one concrete way to strengthen clarity, robustness, or efficiency." };
+  if (score >= 82) return { letter: "A", tier: "a", label: "Strong solution", description: "The core approach is solid. Any refinement should be grounded in a concrete robustness, clarity, or edge-case finding rather than applied speculatively." };
+  if (score >= 72) return { letter: "B", tier: "b", label: "Sound solution", description: "The solution appears workable. The review should continue to look for concrete clarity, robustness, or efficiency evidence before changing source code." };
   if (score >= 62) return { letter: "C", tier: "c", label: "Partially strong foundation", description: "The approach has useful pieces but needs focused improvements before it is consistently reliable." };
   if (score >= 50) return { letter: "D", tier: "d", label: "Needs substantial revision", description: "Important correctness, clarity, or efficiency issues should be addressed before relying on this approach." };
   return { letter: "F", tier: "f", label: "Needs a new approach", description: "The visible solution needs fundamental changes to meet the task reliably." };
@@ -270,7 +270,12 @@ export async function improveCode({ code, language, problem, analysis, opponentC
   })).filter((step) => step.code.trim() && step.code.trim() !== original.trim()) : [];
   const noChange = parsed?.status === "no_change" || !steps.length;
   if (noChange) {
-    return { noChange: true, summary: String(parsed?.summary || "No safe code rewrite is justified by the visible problem details and current solution. Keep this approach, then verify it with boundary-focused tests."), steps: [], improvedCode: original };
+    const score = Number(analysis?.efficiencyScore);
+    const belowTopTier = Number.isFinite(score) && score < 92;
+    const fallbackSummary = belowTopTier
+      ? "No automatic rewrite was prepared because the review did not identify a source-level change that is safe enough to apply without guessing. The current grade still leaves room to verify edge cases, clarify the invariant, or inspect the supplied constraints more closely."
+      : "No safe code rewrite is justified by the visible problem details and current solution. Keep this approach, then verify it with boundary-focused tests.";
+    return { noChange: true, summary: belowTopTier ? fallbackSummary : String(parsed?.summary || fallbackSummary), steps: [], improvedCode: original };
   }
   return { noChange: false, summary: String(parsed.summary || "A guided improvement was prepared for this solution."), steps, improvedCode: steps[steps.length - 1].code };
 }

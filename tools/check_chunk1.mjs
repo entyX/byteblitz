@@ -109,6 +109,9 @@ assert.match(analysis, /Edits and test runs stay in this browser/, "editor chang
 assert.match(analysis, /Apply to editor/, "coach code snippets must be applicable to the local editor");
 assert.match(analysis, /coachProse/, "coach replies must render rich Markdown prose");
 assert.match(analysis, /Code grade/, "analysis must render a letter grade instead of exposing a numeric score");
+assert.match(analysis, /Automatic rewrite unavailable/, "non-S grades must not claim that no improvement exists when an automatic rewrite is unavailable");
+assert.match(analysis, /collapseButton/, "problem and coach sections must be collapsible");
+assert.match(analysis, /paneResizer/, "analysis panes must expose draggable horizontal resizers");
 assert.doesNotMatch(analysis, /Specific code references/, "analysis must not render the redundant code-reference panel");
 assert.match(analysisEngine, /function formatProblemBrief/, "analysis prompts must include complete problem context and constraints");
 assert.match(analysisEngine, /failureDiagnosis/, "analysis must explain recorded failed-test evidence");
@@ -118,9 +121,12 @@ assert.match(analysisEngine, /detailedList/, "analysis must reject shallow one-w
 assert.match(analysisEngine, /lineReference/, "fallback analysis must cite concrete source lines");
 assert.match(analysisEngine, /gradeForScore/, "analysis must compute consistent letter grades");
 assert.match(analysisEngine, /below 92/, "sub-top-tier reviews must request a concrete improvement");
+assert.match(analysisEngine, /No automatic rewrite was prepared/, "non-S no-change outcomes must explain automatic rewrite limits without contradicting the grade");
 assert.match(css, /analysis-workspace-grid/, "analysis workspace must be styled as a three-pane layout");
 assert.match(css, /\[data-tooltip\]/, "custom tooltip styling must exist for compact controls");
 assert.match(css, /analysis-editor-input/, "analysis editor must have dedicated local sandbox styling");
 assert.match(css, /grade-s/, "analysis grades must include S-tier styling");
+assert.match(css, /analysis-pane-resizer/, "analysis workspace must style draggable pane splitters");
+assert.match(css, /analysis-collapse-btn/, "analysis workspace must style collapsible controls");
 
 console.log("v1.3 chunk 1 checks passed");
