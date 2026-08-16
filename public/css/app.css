@@ -571,22 +571,18 @@ select.input { cursor: pointer; }
 }
 
 @media (min-width: 1080px) and (min-height: 620px) {
-  .home-page {
-    height: calc(100dvh - var(--nav-h, 63px) - 34px);
-    min-height: 520px;
-  }
-  .home-page .home-grid { height: 100%; }
-  .home-page .rail { flex: 1; min-height: 120px; }
-  .home-page .welcome { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  .home-page .home-news { height: 100%; max-height: none; display: flex; flex-direction: column; }
+  /* Keep desktop cards balanced, but never lock the document to viewport height.
+     The dashboard must grow and scroll when content or browser zoom needs it. */
+  .home-page { min-height: 520px; }
+  .home-page .rail { min-height: 120px; }
+  .home-page .welcome { min-height: 0; display: flex; flex-direction: column; }
+  .home-page .home-news { max-height: none; display: flex; flex-direction: column; }
   .home-page .home-news-list { flex: 1; max-height: none; }
-  /* One row of equal cards that fills whatever is left, so selecting a mode
-     can't change any card's size — the container decides, not the content. */
   .home-page .gm-grid {
-    flex: 1; min-height: 292px; margin-top: 18px;
-    grid-auto-rows: 1fr;
+    min-height: 292px; margin-top: 18px;
+    grid-auto-rows: minmax(292px, auto);
   }
-  .home-page .gm-card, .home-page .elo-card { height: auto; min-height: 0; overflow: hidden; }
+  .home-page .gm-card, .home-page .elo-card { height: auto; min-height: 0; overflow: visible; }
 }
 
 /* ── Friends rail ────────────────────────────────────────────────────────── */

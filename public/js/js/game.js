@@ -135,12 +135,15 @@ export async function startSolo(preset, hooks = {}) {
       }
     }
 
+    const canAnalyze = !!profile?.uid && !!String(r?.code || "").trim();
+    if (canAnalyze) cacheAnalysisAttempt(profile, problem, r, "unranked");
     const autoSaved = await autoSaveAttempt(profile, problem, r, { mode: "unranked", completed: solved });
     arena.showResult(soloResultScreen({
       solved, reason: r.reason, timeMs: r.timeMs, limit, difficulty, problem, res, submission: r,
       placement: placing,
       signedOut: !profile || profile.isGuest || profile.isAnonymous,
       meUid: profile?.uid || null,
+      canAnalyze,
       autoSaved,
       onAgain: () => { arena.destroy(); startSolo(); },
       onHome: () => arena.exit(),
@@ -149,7 +152,7 @@ export async function startSolo(preset, hooks = {}) {
 }
 
 function soloResultScreen(o) {
-  const { solved, reason, timeMs, difficulty, problem, res, submission, placement, signedOut, meUid, autoSaved } = o;
+  const { solved, reason, timeMs, difficulty, problem, res, submission, placement, signedOut, meUid, canAnalyze, autoSaved } = o;
   const delta = res ? Math.round(res.rating) - res.before : 0;
   const par = PAR_TIME[difficulty];
   const totalTests = problem.testCases?.length || 0;
@@ -207,7 +210,7 @@ function soloResultScreen(o) {
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Run again ▸"),
-      autoSaved && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
+      canAnalyze && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
       h("button", { class: "btn", onClick: o.onHome }, "Back to arena")),
   );
 }
@@ -380,11 +383,13 @@ export async function startTraining(difficulty, archetypeId) {
       }
     }
 
+    const canAnalyze = !!profile?.uid && !!String(r?.code || "").trim();
+    if (canAnalyze) cacheAnalysisAttempt(profile, problem, r, "training");
     const autoSaved = await autoSaveAttempt(profile, problem, r, { mode: "training", completed: solved });
     arena.showResult(trainingResultScreen({
       solved, reason: r.reason, timeMs: r.timeMs, problem, outcome, board,
       anon: !profile || profile.isGuest || profile.isAnonymous,
-      meUid: profile?.uid, autoSaved,
+      meUid: profile?.uid, canAnalyze, autoSaved,
       onAgain: () => { arena.destroy(); startTraining(difficulty, archetypeId); },
       onBack: () => arena.exit(),
     }));
@@ -392,7 +397,7 @@ export async function startTraining(difficulty, archetypeId) {
 }
 
 function trainingResultScreen(o) {
-  const { solved, reason, timeMs, problem, outcome, board, anon, meUid, autoSaved } = o;
+  const { solved, reason, timeMs, problem, outcome, board, anon, meUid, canAnalyze, autoSaved } = o;
   const myRank = board.findIndex((b) => b.uid === meUid);
 
   return h("div", { style: { maxWidth: "620px", width: "100%" } },
@@ -429,7 +434,7 @@ function trainingResultScreen(o) {
     autoSaved ? h("p", { class: "label center mb-4", style: { color: "var(--ok)" } }, "Solution saved automatically") : null,
     h("div", { class: "row gap-3 wrapflex result-actions" },
       h("button", { class: "btn btn-primary", onClick: o.onAgain }, "Try again ▸"),
-      autoSaved && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
+      canAnalyze && meUid ? h("button", { class: "btn", onClick: () => navigate(`/analysis/${encodeURIComponent(meUid)}/${encodeURIComponent(problem.archetypeId)}`) }, icon("bulb", 14), "Analyze solution") : null,
       h("button", { class: "btn", onClick: o.onBack }, "Training grounds"),
     ),
   );

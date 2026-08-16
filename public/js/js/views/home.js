@@ -394,23 +394,15 @@ export async function renderHome(params, root) {
           h("div", { class: "streak-copy" }, run ? "Current coding streak" : "Complete a run to start a streak"))),
       h("div", { class: "streak-week", "aria-label": "Activity days this week" }, days)));
 
-    // Only desktop layouts use a viewport-fit grid. Compact screens must keep
-    // normal document flow and vertical scrolling so the Play action is never
-    // clipped below a fixed-height dashboard.
+    // The dashboard is content-sized at every viewport width and height. Never
+    // write a viewport-derived height or hidden overflow here: that can remove
+    // the Play action when zoom, browser chrome, or card copy changes.
     function adjustGridHeight() {
       try {
         const grid = page.querySelector('.home-grid');
         if (!grid) return;
-        const desktopFit = window.matchMedia('(min-width: 1080px) and (min-height: 620px)').matches;
-        if (!desktopFit) {
-          grid.style.height = '';
-          grid.style.overflow = 'visible';
-          return;
-        }
-        const streakH = Math.ceil(streakHost.getBoundingClientRect().height);
-        // Keep the same bottom padding used in CSS (34px) so cards don't touch.
-        grid.style.height = `calc(100dvh - var(--nav-h, 63px) - ${streakH}px - 34px)`;
-        grid.style.overflow = 'hidden';
+        grid.style.height = '';
+        grid.style.overflow = 'visible';
       } catch (e) { /* best-effort */ }
     }
 
