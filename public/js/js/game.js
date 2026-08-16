@@ -52,7 +52,9 @@ export async function startSolo(preset, hooks = {}) {
   let problem;
   try {
     const generatedOnly = c4QuestionMode() === "generated_only";
-    const existingPool = generatedOnly ? [] : await loadPool(difficulty);
+    // The pool is cached and is required even in AI-only mode for novelty checks
+    // and to avoid creating a question that already exists in the authored set.
+    const existingPool = await loadPool(difficulty);
     problem = await selectBurstQuestion({
       difficulty,
       mode: "unranked",

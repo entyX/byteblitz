@@ -6,11 +6,12 @@
 // ============================================================================
 
 import { loadLocalBurstModel, warmLocalBurstModel } from "./burst-local-model.js";
+import { TIER_COLORS } from "./glicko.js";
 
 const ARCHETYPES_URL = "/data/byteblitz_archetypes.md";
 const TEMPLATES_URL = "/data/byteblitz_question_templates.md";
-// v2 invalidates pre-template Burst questions such as SHORT TITLE and generic formats.
-const CACHE_KEY = "bb_c4_generated_burst_pool_v2";
+// v3 invalidates pre-quality Burst questions with generic metadata or fixed colors.
+const CACHE_KEY = "bb_c4_generated_burst_pool_v3";
 const USAGE_KEY = "bb_c4_archetype_usage_v1";
 const LIBRARY_CACHE_KEY = "bb_c4_generation_library_v2";
 const MAX_ACCEPTED = 240;
@@ -117,7 +118,7 @@ function hashText(text) {
 function normalizeText(text) { return clean(text).toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim(); }
 function fingerprint(problem) {
   const item = problem || {};
-  return hashText([item.title, item.description, item.inputFormat, item.outputFormat].map(normalizeText).join("|"));
+  return hashText([item.title, item.description, item.inputFormat, item.outputFormat, item.sampleInput, item.sampleOutput].map(normalizeText).join("|"));
 }
 function tokens(problem) {
   return new Set(normalizeText(`${problem.title} ${problem.description} ${problem.inputFormat} ${problem.outputFormat}`).split(" ").filter((token) => token.length > 2));
@@ -327,7 +328,7 @@ function shapeProblem(raw, archetype) {
     sourceArchetypeId: archetype.id,
     generated: true,
     difficulty: archetype.rank,
-    color: "#F97316",
+    color: TIER_COLORS[archetype.rank] || "#F97316",
     definition: clean(source.definition),
     description: clean(source.description),
     constraints: Array.isArray(source.constraints) ? source.constraints.map(clean).filter(Boolean) : [],
@@ -353,7 +354,7 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
   const archetype = leastUsed[Math.abs(Math.floor(seed)) % leastUsed.length];
   const choices = templates[archetype.id] || [];
   const template = choices[Math.abs(Math.floor(seed / 7)) % Math.max(1, choices.length)] || archetype.structure;
-  const known = [...existingProblems, ...generatedPool()];
+  const known = [...existingProblems.filter(Boolean), ...generatedPool()];
   onProgress({ text: "Selecting a fresh archetype…", progress: 0.15 });
   const model = await loadLocalBurstModel((progress) => onProgress({
     text: progress?.text || "Loading the local Burst author…",
@@ -403,10 +404,13 @@ export function warmBurstQuestionModel(onProgress = () => {}) {
   return warmLocalBurstModel(onProgress);
 }
 
-export function generatedQuestions(difficulty = "") { return generatedPool().filter((item) => item && (!difficulty || item.difficulty === difficulty)); }
+export function generatedQuestions(difficulty = "", seenIds = []) {
+  const seen = new Set(seenIds || []);
+  return generatedPool().filter((item) => item && (!difficulty || item.difficulty === difficulty) && !seen.has(item.archetypeId || item.id));
+}
 
 export async function selectBurstQuestion({ difficulty, mode = "unranked", seed = Date.now(), existingPool = [], seenIds = [], opponentSeenIds = [], forceGenerated = false, onGenerate = () => {} } = {}) {
-  const generated = generatedQuestions(difficulty);
+  const generated = generatedQuestions(difficulty, seenIds);
   const existing = existingPool.filter(Boolean);
   const rankedMode = mode === "ranked" || mode === "rated";
   const bothMostlyComplete = rankedMode && completedEnough(seenIds, existing) && completedEnough(opponentSeenIds, existing);
@@ -416,7 +420,7 @@ export async function selectBurstQuestion({ difficulty, mode = "unranked", seed 
   if (generatedAllowed && (forceGenerated || roll === 0) && generated.length) {
     return generated[roll % generated.length];
   }
-  if (generatedAllowed && (forceGenerated || roll === 1)) {
+  if (generatedAllowed && (forceGenerated || roll === 1 || !generated.length)) {
     return generateBurstQuestion({ difficulty, seed, existingProblems: existing, onProgress: onGenerate });
   }
   if (!existing.length) return generateBurstQuestion({ difficulty, seed, existingProblems: existing, onProgress: onGenerate });
