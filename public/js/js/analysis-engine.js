@@ -115,7 +115,10 @@ export function reviewDecision(analysis = {}) {
   const time = metricRating(analysis.timeComplexity, analysis.bestTimeComplexity);
   const space = metricRating(analysis.spaceComplexity, analysis.bestSpaceComplexity);
   const issues = actionableIssueList(analysis.actionableIssues || analysis.suggestions || []);
-  const failed = /failed at|runtime error|wrong answer|timeout/i.test(String(analysis.failureDiagnosis || ""));
+  const localTestResults = Array.isArray(analysis.localTestResults) ? analysis.localTestResults : [];
+  const failedLocalTest = localTestResults.some((result) => !result.pass);
+  const failed = failedLocalTest || /failed at|runtime error|wrong answer|timeout|local draft failed/i.test(String(analysis.failureDiagnosis || ""));
+  const actionable = issues.length ? issues : failed ? ["Fix the failing local test first; inspect the exact draft output and input handling before optimizing anything."] : [];
   const perfectMetrics = time.percent === 100 && space.percent === 100;
   let letter;
   if (!failed && perfectMetrics && issues.length === 0) letter = "S";
@@ -125,7 +128,7 @@ export function reviewDecision(analysis = {}) {
   else if (!failed) letter = "D";
   else letter = "F";
   const scoreByTier = { S: 100, A: 88, B: 76, C: 64, D: 52, F: 32 };
-  return { letter, score: scoreByTier[letter], time, space, actionableIssues: issues, complete: letter === "S", canImprove: letter !== "S" && issues.length > 0 };
+  return { letter, score: scoreByTier[letter], time, space, actionableIssues: actionable, complete: letter === "S", canImprove: letter !== "S" && actionable.length > 0, failedLocalTest };
 }
 
 function submissionFailure(submissions) {
@@ -176,6 +179,8 @@ export function fastCodeAnalysis(input) {
   const hasComments = /(^|\s)(#|\/\/)/m.test(code);
   const hasRepeatedLoops = (code.match(/\b(for|while)\b/g) || []).length >= 2;
   const score = clamp(58 + (hasNames ? 9 : 0) + (hasComments ? 6 : 0) - (hasRepeatedLoops ? 9 : 0) - (lines.length > 120 ? 5 : 0), 35, 92);
+  const localTestResults = Array.isArray(input.localTestResults) ? input.localTestResults : [];
+  const failedLocalTest = localTestResults.some((result) => !result.pass);
   const submissions = Array.isArray(input.submissions) ? input.submissions : [];
   const progress = submissions.map((item, index) => ({
     submission: Number(item.submissionCount || index + 1),
@@ -201,7 +206,8 @@ export function fastCodeAnalysis(input) {
     actionableIssues: insight.suggestions.filter((item) => /output|concatenation|accumulator|boundary|invariant/i.test(item)),
     approach: insight.approach,
     opponentComparison: input.opponentCode ? "Compare the opponent’s data flow and number of passes against the same constraints. Prefer the version with a simpler invariant or a proven lower cost, not merely different syntax." : "No opponent source was available for a direct comparison.",
-    failureDiagnosis: submissionFailure(submissions),
+    failureDiagnosis: failedLocalTest ? `Local draft failed ${localTestResults.filter((result) => !result.pass).length} test(s). Grade this exact draft from the recorded failure instead of inheriting the original submission review.` : submissionFailure(submissions),
+    localTestResults,
     matchReview: input.matchContext?.lost ? "Review the first submission that stopped improving and compare its recorded assumptions with the problem constraints. The timeline below preserves the progression that led to the loss." : "Use the submission timeline to preserve changes that improved test coverage and identify any unnecessary detours.",
     submissionProgress: progress,
     codeReferences: insight.references,
@@ -246,6 +252,7 @@ function normalizeAnalysis(value, fallback) {
           note: String(entry.note || "Submission retained for review."),
         }))
       : fallback.submissionProgress,
+    localTestResults: Array.isArray(value.localTestResults) ? value.localTestResults : fallback.localTestResults,
     actionableIssues: actionableIssueList(value.actionableIssues || value.suggestions || fallback.actionableIssues || []),
     provider: "local",
   };
@@ -309,7 +316,11 @@ function analysisPrompt(input, subjectLabel) {
     failure: entry.failure || entry.failedTest || entry.error || null,
     code: index >= sourceWindowStart ? codeText(entry.code, 2200) : "Earlier source retained; metrics and any failure detail are included.",
   }));
-  return `Review ${subjectLabel} as an exacting human competitive-programming reviewer. Read the complete problem statement, constraints, input/output formats, and samples before judging the code. Every claim must be grounded in a concrete line, control path, or supplied constraint; never invent a hidden test. First determine whether there is any unresolved source-level issue. A source-level issue is actionable only when a safe code change can directly address it. Do not call a comment preference, stylistic taste, or speculative edge case a weakness. Grade policy: S means the visible solution meets the best feasible time and space target, has no recorded failure, and has zero actionable issues; S must have no weaknesses, no optimization suggestions, and no code improvement. A means the solution is very good with one or two evidence-backed edge-case, robustness, clarity, or efficiency issues. B means it has a recorded failure, a meaningful efficiency gap, or several clear issues. C through F represent progressively more serious correctness or efficiency problems. Make complexity claims consistent with the supplied best targets. When a local edit is supplied, compare it to the original submission and explicitly explain what changed, what improved, and what still needs verification. Every strength, weakness, and suggestion must be a complete sentence of at least 12 words and identify a specific code fragment or behavior. Return exactly 2–4 strengths. Return 0 weaknesses and 0 suggestions for S; otherwise return 1–4 evidence-backed weaknesses and 1–4 matching suggestions. ` + `Return ONLY strict JSON with: efficiencyScore (0-100 integer), timeComplexity, timeComplexityExplanation, bestTimeComplexity, spaceComplexity, spaceComplexityExplanation, bestSpaceComplexity, actionableIssues (array of only source-level changes that are safe and necessary), codeQuality, codeQualityExplanation, strengths (array), weaknesses (array), suggestions (array), approach, opponentComparison, failureDiagnosis, matchReview, codeReferences (array), submissionProgress (array of {submission, testsPassed, note}).\n\nPROBLEM\n${formatProblemBrief(input.problem)}\n\n${subjectLabel.toUpperCase()}\nLanguage: ${input.language || "code"}\n${codeText(input.code)}\n\nORIGINAL SUBMISSION BASELINE\n${codeText(input.originalCode, 12000) || "This is the original submission."}\n\nOTHER SUBMISSION FOR COMPARISON\n${codeText(input.opponentCode, 12000) || "Not available"}\n\nMATCH CONTEXT\n${JSON.stringify(input.matchContext || {})}\n\nSUBMISSION PROGRESSION\n${JSON.stringify(submissionTimeline)}`;
+  return `Review ${subjectLabel} as an exacting human competitive-programming reviewer. Read the complete problem statement, constraints, input/output formats, and samples before judging the code. Every claim must be grounded in a concrete line, control path, or supplied constraint; never invent a hidden test. First determine whether there is any unresolved source-level issue. A source-level issue is actionable only when a safe code change can directly address it. Do not call a comment preference, stylistic taste, or speculative edge case a weakness. Grade policy: S means the visible solution meets the best feasible time and space target, has no recorded failure, and has zero actionable issues; S must have no weaknesses, no optimization suggestions, and no code improvement. A means the solution is very good with one or two evidence-backed edge-case, robustness, clarity, or efficiency issues. B means it has a recorded failure, a meaningful efficiency gap, or several clear issues. C through F represent progressively more serious correctness or efficiency problems. Make complexity claims consistent with the supplied best targets. When a local edit is supplied, compare the exact LOCAL DRAFT and its LOCAL TEST RESULTS to the original submission. A failed local test is decisive evidence that this draft is not S or A, regardless of the original review; state the failing count and diagnose the exact draft path before discussing optimization. Explain what changed, what improved, and what still needs verification. Every strength, weakness, and suggestion must be a complete sentence of at least 12 words and identify a specific code fragment or behavior. Return exactly 2–4 strengths. Return 0 weaknesses and 0 suggestions for S; otherwise return 1–4 evidence-backed weaknesses and 1–4 matching suggestions. ` + `Return ONLY strict JSON with: efficiencyScore (0-100 integer), timeComplexity, timeComplexityExplanation, bestTimeComplexity, spaceComplexity, spaceComplexityExplanation, bestSpaceComplexity, actionableIssues (array of only source-level changes that are safe and necessary), codeQuality, codeQualityExplanation, strengths (array), weaknesses (array), suggestions (array), approach, opponentComparison, failureDiagnosis, matchReview, codeReferences (array), submissionProgress (array of {submission, testsPassed, note}).\n\nPROBLEM\n${formatProblemBrief(input.problem)}\n\n${subjectLabel.toUpperCase()}\nLanguage: ${input.language || "code"}\n${codeText(input.code)}\n\nORIGINAL SUBMISSION BASELINE\n${codeText(input.originalCode, 12000) || "This is the original submission."}\n\nOTHER SUBMISSION FOR COMPARISON\n${codeText(input.opponentCode, 12000) || "Not available"}\n\nMATCH CONTEXT\n${JSON.stringify(input.matchContext || {})}\n\nLOCAL TEST RESULTS
+${JSON.stringify(input.localTestResults || [])}
+
+SUBMISSION PROGRESSION
+${JSON.stringify(submissionTimeline)}`;
 }
 
 export async function analyzeCode(input, onProgress = () => {}) {

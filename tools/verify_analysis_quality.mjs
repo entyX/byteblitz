@@ -26,7 +26,8 @@ if (metricRating("Likely O(N)", "O(N) single-pass target").letter !== "S" || met
 }
 const complete = reviewDecision({ timeComplexity: "O(N)", bestTimeComplexity: "O(N) single-pass target", spaceComplexity: "O(1)", bestSpaceComplexity: "O(1) auxiliary-space target", actionableIssues: [], failureDiagnosis: "No detailed failed-test trace was recorded." });
 const oneIssue = reviewDecision({ timeComplexity: "O(N)", bestTimeComplexity: "O(N) single-pass target", spaceComplexity: "O(1)", bestSpaceComplexity: "O(1) auxiliary-space target", actionableIssues: ["Replace repeated output construction with one final join so the data flow stays explicit."], failureDiagnosis: "No detailed failed-test trace was recorded." });
-if (!complete.complete || complete.letter !== "S" || oneIssue.complete || oneIssue.letter !== "A" || !oneIssue.canImprove) {
+const failedDraft = reviewDecision({ timeComplexity: "O(N)", bestTimeComplexity: "O(N) single-pass target", spaceComplexity: "O(1)", bestSpaceComplexity: "O(1) auxiliary-space target", actionableIssues: [], localTestResults: [{ pass: false, error: "Wrong answer" }], failureDiagnosis: "No detailed failed-test trace was recorded." });
+if (!complete.complete || complete.letter !== "S" || oneIssue.complete || oneIssue.letter !== "A" || !oneIssue.canImprove || failedDraft.letter !== "F" || failedDraft.complete || !failedDraft.failedLocalTest) {
   throw new Error("Unified review rubric does not keep S completion and actionable A-tier issues consistent.");
 }
 console.log("analysis quality, grades, metric ratings, and review rubric: PASS");

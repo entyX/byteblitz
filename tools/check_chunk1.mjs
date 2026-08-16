@@ -120,6 +120,8 @@ assert.match(analysis, /Review conclusion/, "S-tier reports must state the final
 assert.match(analysis, /originalAnalysis/, "coaching and local analysis must retain the original review baseline");
 assert.match(analysis, /materiallyDifferentCode/, "unchanged coach snippets must be detected before application");
 assert.match(analysis, /localAnalysisSources/, "local analysis must be tied to the exact unsaved source being reviewed");
+assert.match(analysis, /localTestResults/, "local analysis must carry exact local test results into the review");
+assert.match(analysis, /await runSandboxTests/, "Analyze local edits must run the draft tests before grading");
 assert.doesNotMatch(analysis, /Specific code references/, "analysis must not render the redundant code-reference panel");
 assert.match(analysisEngine, /function formatProblemBrief/, "analysis prompts must include complete problem context and constraints");
 assert.match(analysisEngine, /failureDiagnosis/, "analysis must explain recorded failed-test evidence");
@@ -137,6 +139,7 @@ assert.match(analysisEngine, /metricRating/, "analysis must grade time and space
 assert.match(analysisEngine, /reviewDecision/, "one review decision contract must govern grades, metrics, and improvements");
 assert.match(analysisEngine, /S means the visible solution/, "the model prompt must define S tier as complete with no actionable issue");
 assert.match(analysisEngine, /decision\.complete/, "S-tier decisions must prevent improvement generation and coach rewrite advice");
+assert.match(analysisEngine, /failedLocalTest/, "failed local tests must override inherited original-review evidence");
 assert.match(css, /analysis-workspace-grid/, "analysis workspace must be styled as a three-pane layout");
 assert.match(css, /\[data-tooltip\]/, "custom tooltip styling must exist for compact controls");
 assert.match(css, /analysis-editor-input/, "analysis editor must have dedicated local sandbox styling");

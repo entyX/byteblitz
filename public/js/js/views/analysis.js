@@ -222,6 +222,8 @@ function codePane(state, rerender) {
   const changeRows = improvement?.steps?.slice(0, state.appliedSteps?.[activeKey] || 0).map((step, index) => h("div", { class: "analysis-code-change" }, h("strong", {}, `${index + 1}. ${step.title}`), h("p", {}, step.explanation))) || [];
   const editorTextarea = h("textarea", { class: "analysis-editor-input", spellcheck: "false", onInput: (event) => {
     state.codeEdits = { ...(state.codeEdits || {}), [activeKey]: event.target.value };
+    state.editorResults = [];
+    state.editorRuntimeStatus = "Draft changed; run tests again before analyzing.";
     if (state.primaryAnalysisLabel) state.primaryAnalysisLabel.textContent = materiallyDifferentCode(event.target.value, submittedCode) ? "Analyze local edits" : "Refresh analysis";
   } });
   editorTextarea.value = displayCode;
@@ -264,9 +266,11 @@ function reportContent(analysis, state) {
     metricCard("Time complexity", analysis.timeComplexity, analysis.timeComplexityExplanation, analysis.bestTimeComplexity, decision.time),
     metricCard("Space complexity", analysis.spaceComplexity, analysis.spaceComplexityExplanation, analysis.bestSpaceComplexity, decision.space),
     metricCard("Code quality", analysis.codeQuality, analysis.codeQualityExplanation));
+  const localFailures = Array.isArray(analysis.localTestResults) ? analysis.localTestResults.filter((result) => !result.pass) : [];
   const sections = [
     score,
     metrics,
+    localFailures.length ? textBlock("Local draft test evidence", `${localFailures.length} local test${localFailures.length === 1 ? "" : "s"} failed for this exact draft. The original submission review is not being used to grade this version.`, "analysis-failure-block") : null,
     textBlock("Your approach", analysis.approach),
     listBlock("Strengths", analysis.strengths, "good"),
     ...(decision.complete ? [textBlock("Review conclusion", "This solution is S tier under the current evidence: it meets the feasible targets and has no unresolved source-level issue. No code change is recommended.", "analysis-complete-block")] : [listBlock("Weaknesses", analysis.weaknesses, "warn"), listBlock("Optimization suggestions", analysis.suggestions, "primary"), textBlock("Why the other approach may be better", analysis.opponentComparison)]),
@@ -334,12 +338,15 @@ async function runAnalysis(state, rerender) {
   const payload = selectedPayload(state);
   if (!String(payload.displayCode || "").trim()) return;
   const subjectLabel = payload.key === "opponent" ? "opponent code" : "your code";
+  if (payload.isLocalEdit) {
+    await runSandboxTests(state, payload.key, payload.selected?.language || state.solution.language || "python", rerender);
+  }
   state.running = true;
   state.modelProgress = "Reading the problem and code…";
   state.analysisError = "";
   rerender();
   try {
-    const analyzed = await analyzeCode({ code: payload.displayCode, originalCode: payload.originalCode, language: payload.selected?.language || state.solution.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext, subjectLabel: payload.isLocalEdit ? "your unsaved local edits compared with the original submission" : subjectLabel }, (progress) => { state.modelProgress = progress?.text || "Analyzing…"; rerender(); });
+    const analyzed = await analyzeCode({ code: payload.displayCode, originalCode: payload.originalCode, language: payload.selected?.language || state.solution.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext, localTestResults: payload.isLocalEdit ? (state.editorResults || []) : [], subjectLabel: payload.isLocalEdit ? "your unsaved local edits compared with the original submission" : subjectLabel }, (progress) => { state.modelProgress = progress?.text || "Analyzing…"; rerender(); });
     if (payload.isLocalEdit) {
       state.localAnalyses = { ...(state.localAnalyses || {}), [payload.key]: analyzed };
       state.localAnalysisSources = { ...(state.localAnalysisSources || {}), [payload.key]: payload.displayCode };
