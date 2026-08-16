@@ -304,7 +304,7 @@ function recipeProblem(recipe, archetype, seed) {
   const tests = Array.from({ length: TEST_COUNT }, (_, index) => ({ ...recipeCase(operation, seed, index), hidden: index >= 4 }));
   const proposedTitle = clean(recipe?.title);
   const usableTitle = proposedTitle && !/short title|title here|example title|^title$/i.test(proposedTitle) ? proposedTitle : spec.title;
-  const title = `${usableTitle} · Variant ${Math.abs(Math.floor(seed)) % 10000}`;
+  const title = usableTitle;
   return {
     title, category: clean(archetype.primaryTopics).split(",")[0] || "arrays", difficulty: archetype.rank,
     definition: spec.description, description: spec.description, inputFormat: spec.input, outputFormat: spec.output,
