@@ -226,6 +226,7 @@ async function runAnalysis(state, rerender) {
 
 function analysisPane(state, rerender) {
   const payload = selectedPayload(state);
+  const subjectLabel = payload.key === "opponent" ? "opponent code" : "your code";
   const analyze = h("button", { class: "btn btn-primary", disabled: state.running || !String(payload.displayCode || "").trim(), onClick: () => runAnalysis(state, rerender) }, icon("bulb", 15), payload.analysis ? "Refresh analysis" : "Start analysis");
   const improve = h("button", { class: "btn", disabled: state.improving || !state.owner || !String(payload.displayCode || "").trim(), onClick: async () => {
     state.improving = true;
