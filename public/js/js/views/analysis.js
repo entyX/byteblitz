@@ -11,6 +11,7 @@ import { loadAllPools, problemById, outputMatches } from "../problems.js";
 import { navigate } from "../router.js";
 import { analyzeCode, askCodeCoach, fastCodeAnalysis, improveCode, gradeForScore, metricRating, reviewDecision } from "../analysis-engine.js";
 import { runCode, getRunTimeout, warmRuntime, highlight } from "../runner.js";
+import { getCachedAnalysisAttempt } from "../analysis-attempt-cache.js";
 
 function setAnalysisMetadata(subject, canonicalPath) {
   const owner = subject.ownerUsername || subject.username || "A ByteBlitz player";
@@ -526,7 +527,10 @@ export async function renderPrivateAnalysis(params, root) {
     renderWorkspace(root, { owner: false, publicView: true, sharePath: `/share/${encodeURIComponent(share.id)}`, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
     return;
   }
-  const solution = await getSavedSolution(profile.uid, params.archetypeId).catch(() => null);
+  const savedSolution = await getSavedSolution(profile.uid, params.archetypeId).catch(() => null);
+  // Generated Bursts intentionally stay out of My Solutions. If its private
+  // write has not arrived yet, use the same-session post-match snapshot instead.
+  const solution = savedSolution || getCachedAnalysisAttempt(profile.uid, params.archetypeId);
   if (!solution) { root.append(h("div", { class: "wrap analysis-private-wrap" }, emptyState("No saved code is available for this analysis."))); return; }
   const problem = await resolveProblem(solution.archetypeId, solution.difficulty, solution.problemSnapshot);
   renderWorkspace(root, { owner: true, publicView: false, autoAnalyze: params.query?.auto === "1", sharePath: solution.publicShareId ? `/share/${encodeURIComponent(solution.publicShareId)}` : null, solution, problem, analysis: solution.analysis || null, analyses: { mine: solution.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });

@@ -13,6 +13,7 @@ import {
   randomProblem, problemForSeed, problemById, loadPool, TESTS_PER_PROBLEM,
 } from "./problems.js";
 import { selectBurstQuestion, c4QuestionMode } from "./burst-generator.js";
+import { cacheAnalysisAttempt } from "./analysis-attempt-cache.js";
 import {
   TIME_LIMITS, tierFor, scoresFor, displayRating, displayPlacementRating, PAR_TIME,
   isPlaced, placementLeft, PLACEMENT_GAMES,
@@ -236,6 +237,10 @@ async function saveAttempt(profile, problem, submission, { mode, completed }) {
 
 async function autoSaveAttempt(profile, problem, submission, { mode, completed }) {
   if (!profile || profile.isGuest || profile.isAnonymous || !String(submission?.code || "").trim()) return false;
+  // Keep a same-session handoff as well as the private save. This guarantees
+  // post-match analysis access for an analysis-only generated Burst even while
+  // the asynchronous Firestore write is still completing.
+  cacheAnalysisAttempt(profile, problem, { ...submission, passed: completed ? problem.testCases?.length ?? submission?.passed : submission?.passed }, mode);
   try {
     await saveAttempt(profile, problem, submission, { mode, completed });
     return true;
