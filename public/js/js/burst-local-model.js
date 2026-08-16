@@ -9,8 +9,10 @@ const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm@0.2.84";
 const FAST_MODEL_ID = "SmolLM2-360M-Instruct-q4f16_1-MLC";
 const QUALITY_MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 const MODEL_ID = (() => {
-  try { return localStorage.getItem("bb_burst_model") === "quality" ? QUALITY_MODEL_ID : FAST_MODEL_ID; }
-  catch { return FAST_MODEL_ID; }
+  // Reliability is the default for strict eight-test JSON. Players may opt into
+  // the smaller model with localStorage.setItem("bb_burst_model", "fast").
+  try { return localStorage.getItem("bb_burst_model") === "fast" ? FAST_MODEL_ID : QUALITY_MODEL_ID; }
+  catch { return QUALITY_MODEL_ID; }
 })();
 let engine = null;
 let enginePromise = null;
@@ -20,7 +22,7 @@ export function setLocalBurstModelPreference(preference) {
 }
 
 export function localBurstModelPreference() {
-  try { return localStorage.getItem("bb_burst_model") === "quality" ? "quality" : "fast"; } catch { return "fast"; }
+  try { return localStorage.getItem("bb_burst_model") === "fast" ? "fast" : "quality"; } catch { return "quality"; }
 }
 
 export function localBurstModelStatus() {

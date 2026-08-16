@@ -51,14 +51,15 @@ export async function startSolo(preset, hooks = {}) {
 
   let problem;
   try {
-    const existingPool = await loadPool(difficulty);
+    const generatedOnly = c4QuestionMode() === "generated_only";
+    const existingPool = generatedOnly ? [] : await loadPool(difficulty);
     problem = await selectBurstQuestion({
       difficulty,
       mode: "unranked",
       seed: Date.now() + Math.random() * 100000,
       existingPool,
       seenIds: Object.keys(seenMap(session.profile)),
-      forceGenerated: c4QuestionMode() === "generated_only",
+      forceGenerated: generatedOnly,
       onGenerate: (progress) => {
         hooks.onProgress?.(progress);
         if (progress?.text) console.debug("C4 Burst", progress.text);

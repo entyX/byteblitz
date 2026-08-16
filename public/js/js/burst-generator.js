@@ -155,17 +155,19 @@ function validationErrors(problem, archetype, existing) {
 }
 
 function promptFor({ archetype, template, rank, existing }) {
-  return `You are the ByteBlitz Burst question author. Generate one original, self-contained ${rank} problem for a five-minute competitive-programming round. The archetype and template guide below are authoritative. Do not copy any existing problem. Use only the allowed techniques and do not require forbidden techniques. The problem must be automatically judgeable with exactly eight deterministic tests and no hidden interpretation.
+  return `Create one original ${rank} competitive-programming problem for a five-minute round. Return ONLY one JSON object, with no markdown and no commentary. It must be self-contained, deterministic, and judgeable with exactly eight tests.
 
-Return ONLY JSON with: title, category, difficulty, archetypeId, definition, description, inputFormat, outputFormat, constraints (array), sampleInput, sampleOutput, testCases (exactly 8 objects with input and expected), timeLimitSeconds (300), allowedTechniques (array), forbiddenTechniques (array), explanation, uniqueSignature.
+Required keys: title, category, difficulty, archetypeId, definition, description, inputFormat, outputFormat, constraints, sampleInput, sampleOutput, testCases, timeLimitSeconds, allowedTechniques, forbiddenTechniques, explanation, uniqueSignature.
 
-ARCHETYPE
-${JSON.stringify(archetype)}
+Rules: difficulty must be ${rank}; timeLimitSeconds must be 300; testCases must be an array of exactly 8 objects, each containing input and expected strings; testCases[0] must equal sampleInput/sampleOutput; use only allowed techniques; do not use forbidden techniques; do not copy an existing title.
+
+ARCHETYPE GUIDE
+${JSON.stringify({ id: archetype.id, rank: archetype.rank, topics: archetype.primaryTopics, technique: archetype.coreTechnique, structure: archetype.structure, insight: archetype.requiredInsight, forbidden: archetype.forbidden, constraints: archetype.constraints })}
 
 TEMPLATE
 ${template}
 
-EXISTING TITLES TO AVOID
+TITLES TO AVOID
 ${existing.filter(Boolean).slice(-40).map((item) => item.title).filter(Boolean).join("\n")}`;
 }
 
@@ -221,17 +223,24 @@ export async function generateBurstQuestion({ difficulty, seed = Date.now(), exi
     progress: progress?.progress ?? 0.2,
   }));
   onProgress({ text: "Writing your local AI Burst question…", progress: 0.62 });
-  const response = await model.chat.completions.create({
-    messages: [
-      { role: "system", content: "You generate safe, original, automatically judgeable competitive-programming problems. Output strict JSON only." },
-      { role: "user", content: promptFor({ archetype, template, rank: difficulty, existing: known }) },
-    ],
-    temperature: 0.45,
-    max_tokens: 1800,
-  });
+  const messages = [
+    { role: "system", content: "You are a strict JSON-only competitive-programming problem author. Never output markdown or explanations outside the JSON object." },
+    { role: "user", content: promptFor({ archetype, template, rank: difficulty, existing: known }) },
+  ];
+  const request = { messages, temperature: 0.35, max_tokens: 2600 };
+  let response;
+  try {
+    response = await model.chat.completions.create({ ...request, response_format: { type: "json_object" } });
+  } catch {
+    response = await model.chat.completions.create(request);
+  }
+  let parsed = parseJson(response?.choices?.[0]?.message?.content);
+  if (!parsed) {
+    onProgress({ text: "Retrying the local Burst draft…", progress: 0.78 });
+    response = await model.chat.completions.create({ ...request, temperature: 0.2, max_tokens: 3000 });
+    parsed = parseJson(response?.choices?.[0]?.message?.content);
+  }
   onProgress({ text: "Validating tests and uniqueness…", progress: 0.9 });
-  const content = response?.choices?.[0]?.message?.content;
-  const parsed = parseJson(content);
   if (!parsed) throw new Error("The local Burst author returned an empty or invalid question. Please try again.");
   const candidate = shapeProblem(parsed, archetype);
   const errors = validationErrors(candidate, archetype, known);
