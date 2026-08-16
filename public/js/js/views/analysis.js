@@ -158,7 +158,7 @@ function renderWorkspace(root, state) {
       }
       toast(state.analysisError, "err", 6000);
     } finally { state.running = false; state.modelProgress = ""; rerender(); }
-  } }, state.running ? "Analyzing locally…" : state.analysis ? "Refresh analysis" : "Analyze code"),
+  } }, state.running ? "Analyzing locally…" : state.analysis ? "Refresh analysis" : "Analyze code");
   page.append(
     h("section", { class: "analysis-hero" },
       h("div", { class: "between gap-4 wrapflex" },
