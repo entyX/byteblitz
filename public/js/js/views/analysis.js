@@ -44,9 +44,11 @@ function analysisChip(label, value) {
 }
 
 function listPanel(title, items, tone = "") {
+  const values = Array.isArray(items) && items.length ? items : ["No observations yet."];
+  const rows = values.map((item) => h("li", {}, item));
   return h("section", { class: "analysis-list-panel " + tone },
     h("div", { class: "label mb-3" }, "// " + title),
-    h("ul", {}, ...(items || ["No observations yet."].map((item) => h("li", {}, item))));
+    h("ul", {}, ...rows));
 }
 
 function analysisReport(analysis, context) {
