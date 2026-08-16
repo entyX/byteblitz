@@ -14,6 +14,8 @@ const templates = read("public/data/byteblitz_question_templates.md");
 
 assert.ok((archetypes.match(/^##\s+/gm) || []).length >= 70, "C4 archetype guide must contain the supplied archetype catalogue");
 assert.ok((templates.match(/^##\s+/gm) || []).length >= 70, "C4 template guide must contain the supplied template catalogue");
+const firstRankLine = archetypes.split(/\r?\n/).find((line) => /^\*\*RANK:\*\*/.test(line));
+assert.equal(firstRankLine?.replace(/^\*\*RANK:\*\*\s*/, ""), "Bronze", "the supplied Bronze rank metadata must parse correctly");
 assert.match(generator, /loadLocalCodeModel/, "Burst generation must reuse the browser-local model");
 assert.match(generator, /timeLimitSeconds !== 300/, "generated questions must enforce the five-minute limit");
 assert.match(generator, /testCases\.length !== TEST_COUNT/, "generated questions must require the complete test set");

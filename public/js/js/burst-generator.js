@@ -27,8 +27,13 @@ function parseArchetypes(markdown) {
     const header = rows.shift() || "";
     const match = header.match(/^(\S+)\s+[—-]\s+(.+)$/);
     const get = (label) => {
-      const row = rows.find((line) => line.toUpperCase().startsWith(`**${label.toUpperCase()}:`));
-      return row ? row.replace(new RegExp(`^\\*\\*${label}\\*\\*:\\s*`, "i"), "").replace(/\*\*$/g, "").trim() : "";
+      const row = rows.find((line) => {
+        const match = line.match(/^\*\*([^*]+)\*\*\s*(.*)$/);
+        return match && match[1].replace(/:$/, "").trim().toUpperCase() === label.toUpperCase();
+      });
+      if (!row) return "";
+      const match = row.match(/^\*\*([^*]+)\*\*\s*(.*)$/);
+      return match?.[2]?.trim() || "";
     };
     return {
       id: match?.[1] || header.split(" ")[0],
