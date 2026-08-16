@@ -394,9 +394,9 @@ export async function renderTraining(params, root) {
               completed ? `${solution.completedSubmits || 1} accepted submit${(solution.completedSubmits || 1) === 1 ? "" : "s"} · best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete save${(solution.incompleteSaves || 1) === 1 ? "" : "s"}`)),
           h("span", { class: "pill" + (completed ? " pill-ok" : "") }, solution.language)),
         h("div", { class: "row gap-2 wrapflex mt-3" },
-          h("button", { class: "btn btn-sm solution-view-btn", onClick: () => openSavedSolution(pz, solution) },
+          h("button", { class: "btn btn-sm solution-view-btn", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(pz.archetypeId)}`) },
             icon("pencil", 14), "View solution"),
-          h("button", { class: "btn btn-sm btn-primary", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(pz.archetypeId)}`) },
+          h("button", { class: "btn btn-sm btn-primary", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(pz.archetypeId)}?auto=1`) },
             icon("bulb", 14), "Analyze My Code"),
           accomplishment, visibility),
         publicLinkHost,
@@ -665,7 +665,7 @@ export async function renderTraining(params, root) {
       }
     } }, icon("trash", 15));
     const play = h("button", { class: "icon-btn ui-tooltip solution-play-icon", "data-tooltip": "Play puzzle", "aria-label": "Play puzzle", onClick: () => startTraining(solution.difficulty, solution.archetypeId) }, icon("play", 13));
-    const analyze = h("button", { class: "btn btn-sm btn-primary solution-analyze-btn", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(solution.archetypeId)}`) }, icon("bulb", 14), "Analyze");
+    const analyze = h("button", { class: "btn btn-sm btn-primary solution-analyze-btn", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(solution.archetypeId)}?auto=1`) }, icon("bulb", 14), "Analyze");
     return h("article", { class: "solution-card" + (completed ? " completed" : " incomplete") },
       h("div", { class: "between gap-3" },
         h("div", { class: "row gap-2" }, h("span", { class: "pill" + (completed ? " pill-ok" : "") }, status), play, trash),
@@ -674,7 +674,7 @@ export async function renderTraining(params, root) {
       h("p", { class: "label mt-2", style: { textTransform: "none", letterSpacing: "0" } }, `${solution.difficulty} · ${(solution.category || "general").replace(/_/g, " ")} · ${solution.lastMode}`),
       h("div", { class: "solution-card-meta mt-4" }, h("span", {}, completed ? `Best ${fmtTime(solution.bestTimeMs)}` : `${solution.incompleteSaves || 1} incomplete ${solution.incompleteSaves === 1 ? "draft" : "drafts"}`), h("span", {}, `${solution.saveCount || 1} saved`)),
       h("div", { class: "solution-card-actions mt-5" },
-        h("button", { class: "btn btn-sm solution-view-btn", onClick: () => openSavedSolution(solution, solution) }, icon("pencil", 14), "View solution"),
+        h("button", { class: "btn btn-sm solution-view-btn", onClick: () => navigate(`/analysis/${encodeURIComponent(profile.uid)}/${encodeURIComponent(solution.archetypeId)}`) }, icon("pencil", 14), "View solution"),
         analyze));
   }
 

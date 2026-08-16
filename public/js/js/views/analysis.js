@@ -5,7 +5,7 @@
 
 import { h, clear, emptyState, icon, fmtTime, toast } from "../ui.js";
 import { session } from "../session.js";
-import { getSavedSolution, getPublicPuzzleSolution, getPublicSolutionShare, saveSolutionAnalysis } from "../store.js";
+import { getSavedSolution, getPublicPuzzleSolution, getPublicSolutionShare, saveSolutionAnalysis, setSolutionVisibility } from "../store.js";
 import { getDuel, getDuelSubmissionHistory } from "../matchmaking.js";
 import { loadPool, problemById } from "../problems.js";
 import { navigate } from "../router.js";
@@ -78,6 +78,7 @@ function metricCard(label, value, explanation) {
 }
 
 function problemPane(problem, state, rerender) {
+  problem = problem || {};
   const sampleParts = [];
   if (problem.sampleInput) sampleParts.push(h("div", { class: "analysis-sample" }, h("span", { class: "label" }, "Sample input"), h("pre", { class: "io-block" }, String(problem.sampleInput))));
   if (problem.sampleOutput) sampleParts.push(h("div", { class: "analysis-sample" }, h("span", { class: "label" }, "Sample output"), h("pre", { class: "io-block" }, String(problem.sampleOutput))));
@@ -197,30 +198,35 @@ function coachPanel(state, rerender) {
     h("div", { class: "analysis-coach-compose mt-4" }, input, send));
 }
 
+async function runAnalysis(state, rerender) {
+  if (state.running) return;
+  const payload = selectedPayload(state);
+  if (!String(payload.displayCode || "").trim()) return;
+  const subjectLabel = payload.key === "opponent" ? "opponent code" : "your code";
+  state.running = true;
+  state.modelProgress = "Reading the problem and code…";
+  state.analysisError = "";
+  rerender();
+  try {
+    const analyzed = await analyzeCode({ code: payload.displayCode, language: payload.selected?.language || state.solution.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext, subjectLabel }, (progress) => { state.modelProgress = progress?.text || "Analyzing…"; rerender(); });
+    state.analyses = { ...(state.analyses || {}), [payload.key]: analyzed };
+    if (payload.key === "mine") state.analysis = analyzed;
+    if (state.owner && payload.key === "mine") {
+      try { state.analysis = await saveSolutionAnalysis(session.profile, state.solution.archetypeId, analyzed, { source: state.matchContext?.duelId ? "duel" : "training", duelId: state.matchContext?.duelId }); state.analyses.mine = state.analysis; } catch {}
+    }
+    toast("Analysis ready.", "ok");
+  } catch (error) {
+    state.analysisError = error.message || "Analysis could not start.";
+    const baseline = fastCodeAnalysis({ code: payload.displayCode, language: payload.selected?.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext });
+    state.analyses = { ...(state.analyses || {}), [payload.key]: baseline };
+    if (payload.key === "mine") state.analysis = baseline;
+    toast(state.analysisError, "err", 5000);
+  } finally { state.running = false; state.modelProgress = ""; rerender(); }
+}
+
 function analysisPane(state, rerender) {
   const payload = selectedPayload(state);
-  const subjectLabel = payload.key === "opponent" ? "opponent code" : "your code";
-  const analyze = h("button", { class: "btn btn-primary", disabled: state.running || !String(payload.displayCode || "").trim(), onClick: async () => {
-    state.running = true;
-    state.modelProgress = "Reading the problem and code…";
-    state.analysisError = "";
-    rerender();
-    try {
-      const analyzed = await analyzeCode({ code: payload.displayCode, language: payload.selected?.language || state.solution.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext, subjectLabel }, (progress) => { state.modelProgress = progress?.text || "Analyzing…"; rerender(); });
-      state.analyses = { ...(state.analyses || {}), [payload.key]: analyzed };
-      if (payload.key === "mine") state.analysis = analyzed;
-      if (state.owner && payload.key === "mine") {
-        try { state.analysis = await saveSolutionAnalysis(session.profile, state.solution.archetypeId, analyzed, { source: state.matchContext?.duelId ? "duel" : "training", duelId: state.matchContext?.duelId }); state.analyses.mine = state.analysis; } catch {}
-      }
-      toast("Analysis ready.", "ok");
-    } catch (error) {
-      state.analysisError = error.message || "Analysis could not start.";
-      const baseline = fastCodeAnalysis({ code: payload.displayCode, language: payload.selected?.language, problem: state.problem, opponentCode: payload.other?.code || "", submissions: state.submissions, matchContext: state.matchContext });
-      state.analyses = { ...(state.analyses || {}), [payload.key]: baseline };
-      if (payload.key === "mine") state.analysis = baseline;
-      toast(state.analysisError, "err", 5000);
-    } finally { state.running = false; state.modelProgress = ""; rerender(); }
-  } }, icon("bulb", 15), payload.analysis ? "Refresh analysis" : "Start analysis");
+  const analyze = h("button", { class: "btn btn-primary", disabled: state.running || !String(payload.displayCode || "").trim(), onClick: () => runAnalysis(state, rerender) }, icon("bulb", 15), payload.analysis ? "Refresh analysis" : "Start analysis");
   const improve = h("button", { class: "btn", disabled: state.improving || !state.owner || !String(payload.displayCode || "").trim(), onClick: async () => {
     state.improving = true;
     state.modelProgress = "Preparing a guided improvement…";
@@ -250,7 +256,44 @@ function analysisPane(state, rerender) {
     reportContent(payload.analysis, state));
 }
 
+function shareControl(state) {
+  const solution = state.solution || {};
+  const link = h("div", { class: "analysis-share-link" });
+  const renderLink = () => {
+    const sharePath = state.solution?.publicShareId ? `/share/${encodeURIComponent(state.solution.publicShareId)}` : state.sharePath;
+    clear(link);
+    if (!sharePath || (!state.publicView && !state.solution?.isPublic)) return;
+    const url = `${window.location.origin}${sharePath}`;
+    link.append(h("span", { class: "label" }, state.publicView ? "Public analysis link" : "Share link"), h("a", { href: sharePath, target: "_blank", rel: "noopener", class: "solution-share-link" }, url));
+  };
+  renderLink();
+  if (state.publicView) return link;
+  if (!state.owner) return null;
+  const visibility = h("label", { class: "solution-visibility-switch compact", "data-tooltip": solution.completed ? "Make code and analysis public" : "Complete the solution before sharing" },
+    h("input", { type: "checkbox", checked: !!solution.isPublic, disabled: !solution.completed }),
+    h("span", { class: "solution-switch-ui" }),
+    h("span", { class: "label" }, solution.isPublic ? "Public" : "Private"));
+  const toggle = visibility.querySelector("input");
+  toggle?.addEventListener("change", async () => {
+    toggle.disabled = true;
+    try {
+      const updated = await setSolutionVisibility(session.profile, solution.archetypeId, toggle.checked);
+      state.solution = { ...state.solution, ...updated };
+      state.sharePath = updated.publicShareId ? `/share/${encodeURIComponent(updated.publicShareId)}` : null;
+      visibility.querySelector(".label").textContent = state.solution.isPublic ? "Public" : "Private";
+      renderLink();
+      toast(state.solution.isPublic ? "Public code and analysis link ready." : "Solution is private again.", "ok");
+    } catch (error) {
+      toggle.checked = !toggle.checked;
+      toast(error.message || "Couldn't update visibility.", "err");
+    } finally { toggle.disabled = !state.solution.completed; }
+  });
+  return h("div", { class: "analysis-share-control" }, visibility, link);
+}
+
 function renderWorkspace(root, state) {
+  state.solution = state.solution || {};
+  state.problem = state.problem || { archetypeId: state.solution.archetypeId, title: state.solution.title || "Coding problem", description: "Problem details are unavailable for this saved solution." };
   clear(root);
   const page = h("div", { class: "analysis-workspace" });
   root.append(page);
@@ -259,9 +302,13 @@ function renderWorkspace(root, state) {
   const returnLabel = state.publicView ? "Try a problem" : "Training Grounds";
   const header = h("header", { class: "analysis-workspace-head" },
     h("div", {}, h("div", { class: "eyebrow mb-2" }, state.matchContext?.duelId ? "// Post-match review" : state.publicView ? "// Public solution review" : "// Personal code review"), h("h1", { class: "head" }, title)),
-    h("div", { class: "row gap-2 wrapflex" }, h("span", { class: "pill" }, state.solution.language || "code"), h("button", { class: "btn btn-sm", onClick: () => navigate("/training") }, returnLabel)));
+    h("div", { class: "row gap-2 wrapflex" }, shareControl(state), h("span", { class: "pill" }, state.solution.language || "code"), h("button", { class: "btn btn-sm", onClick: () => navigate("/training") }, returnLabel)));
   const body = h("div", { class: "analysis-workspace-grid" }, problemPane(state.problem, state, rerender), codePane(state, rerender), analysisPane(state, rerender));
   page.append(header, body);
+  if (state.autoAnalyze && !state.autoAnalyzeStarted) {
+    state.autoAnalyzeStarted = true;
+    setTimeout(() => runAnalysis(state, rerender), 0);
+  }
 }
 
 export async function renderPrivateAnalysis(params, root) {
@@ -272,13 +319,13 @@ export async function renderPrivateAnalysis(params, root) {
     if (!share) { privateMessage(root); return; }
     const problem = await resolveProblem(share.archetypeId);
     setAnalysisMetadata(share, `/share/${encodeURIComponent(share.id)}`);
-    renderWorkspace(root, { owner: false, publicView: true, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
+    renderWorkspace(root, { owner: false, publicView: true, sharePath: `/share/${encodeURIComponent(share.id)}`, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
     return;
   }
   const solution = await getSavedSolution(profile.uid, params.archetypeId).catch(() => null);
   if (!solution) { root.append(h("div", { class: "wrap analysis-private-wrap" }, emptyState("No saved code is available for this analysis."))); return; }
   const problem = await resolveProblem(solution.archetypeId);
-  renderWorkspace(root, { owner: true, publicView: false, solution, problem, analysis: solution.analysis || null, analyses: { mine: solution.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
+  renderWorkspace(root, { owner: true, publicView: false, autoAnalyze: params.query?.auto === "1", sharePath: solution.publicShareId ? `/share/${encodeURIComponent(solution.publicShareId)}` : null, solution, problem, analysis: solution.analysis || null, analyses: { mine: solution.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
 }
 
 export async function renderPublicAnalysis(params, root) {
@@ -286,7 +333,7 @@ export async function renderPublicAnalysis(params, root) {
   if (!share) { root.append(h("div", { class: "wrap analysis-private-wrap" }, emptyState("This solution link is unavailable or has been removed."))); return; }
   const problem = await resolveProblem(share.archetypeId);
   setAnalysisMetadata(share, `/share/${encodeURIComponent(params.id)}`);
-  renderWorkspace(root, { owner: false, publicView: true, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
+  renderWorkspace(root, { owner: false, publicView: true, sharePath: `/share/${encodeURIComponent(share.id)}`, solution: share, problem, analysis: share.analysis || null, analyses: { mine: share.analysis || null }, submissions: [], coachMessages: [], codeEdits: {}, improvements: {}, appliedSteps: {} });
 }
 
 export async function renderDuelAnalysis(params, root) {

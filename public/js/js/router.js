@@ -35,7 +35,8 @@ export function startRouter(target) {
 export function refresh() { resolve(); }
 
 async function resolve() {
-  const path = currentPath();
+  const rawPath = currentPath();
+  const [path, queryString = ""] = rawPath.split("?");
 
   try { currentCleanup?.(); } catch {}
   currentCleanup = null;
@@ -45,6 +46,7 @@ async function resolve() {
     if (!m) continue;
     const params = {};
     r.keys.forEach((k, i) => (params[k] = decodeURIComponent(m[i + 1])));
+    params.query = Object.fromEntries(new URLSearchParams(queryString).entries());
     while (renderTarget.firstChild) renderTarget.removeChild(renderTarget.firstChild);
     try {
       const cleanup = await r.handler(params, renderTarget);
